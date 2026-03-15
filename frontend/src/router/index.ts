@@ -1,4 +1,5 @@
 import CitasVue from '@/modulos/cliente/vistas/CitasVue.vue'
+import RecetasVue from '@/modulos/cliente/vistas/RecetasVue.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -11,6 +12,11 @@ const router = createRouter({
       path: '/citas',
       name: 'citas',
       component: CitasVue,
+    },
+    {
+      path: '/recetas',
+      name: 'recetas',
+      component: RecetasVue,
     }
     
   ],
