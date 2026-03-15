@@ -54,47 +54,75 @@
             </tbody>
             </table>
 
+            <div class="calendar-actions">
             <button class="button" type="button" @click="showDialog = true" :disabled="!selectedDay">
-            Agregar cita
+                Agregar cita
             </button>
+            <button class="button button-white" type="button" @click="showHistoryDialog = true">
+                Ver historial
+            </button>
+            </div>
         </div>
 
-            <div class="events-container">
-                <div v-if="selectedDayEvents.length === 0" class="event-card empty-state">
-                <div class="event-name">
-                    No hay citas programadas para {{ fullMonths[visibleMonth] }} {{ selectedDay }}.
-                </div>
-                </div>
-
-                <div
-                v-for="event in selectedDayEvents"
-                :key="`${event.occasion}-${event.day}-${event.month}-${event.year}`"
-                class="event-card"
-                :class="{ cancelled: event.cancelled }"
-                >
-                <div class="event-name">{{ event.occasion }}</div>
-                <div v-if="event.cancelled" class="event-cancelled">Cancelada</div>
-                <div v-else class="event-count">{{ event.invited_count }} personas</div>
-                </div>
+        <div class="events-container">
+            <div v-if="selectedDayEvents.length === 0" class="event-card empty-state">
+            <div class="event-name">
+                No hay citas programadas para {{ fullMonths[visibleMonth] }} {{ selectedDay }}.
             </div>
+            </div>
+
+            <div
+            v-for="event in selectedDayEvents"
+            :key="`${event.occasion}-${event.day}-${event.month}-${event.year}`"
+            class="event-card"
+            :class="{ cancelled: event.cancelled }"
+            >
+            <div class="event-name">{{ event.occasion }}</div>
+            <div v-if="event.cancelled" class="event-cancelled">Cancelada</div>
+            <div v-else class="event-count">{{ event.invited_count }} personas</div>
+            </div>
+        </div>
         </div>
 
         <div v-if="showDialog" class="dialog-backdrop" @click.self="closeDialog">
-            <div class="dialog">
-                <h2 class="dialog-header">Agregar nueva cita</h2>
-                <form class="form" @submit.prevent="saveEvent">
-                <label class="form-label" for="name">Nombre de la cita</label>
-                <input id="name" v-model.trim="eventForm.name" class="input" type="text" maxlength="36" />
+        <div class="dialog">
+            <h2 class="dialog-header">Agregar nueva cita</h2>
+            <form class="form" @submit.prevent="saveEvent">
+            <label class="form-label" for="name">Nombre de la cita</label>
+            <input id="name" v-model.trim="eventForm.name" class="input" type="text" maxlength="36" />
 
-                <label class="form-label" for="count">Número de personas</label>
-                <input id="count" v-model.number="eventForm.count" class="input" type="number" min="0" />
+            <label class="form-label" for="count">Número de personas</label>
+            <input id="count" v-model.number="eventForm.count" class="input" type="number" min="0" />
 
-                <div class="actions">
-                    <button class="button" type="button" @click="closeDialog">Cancelar</button>
-                    <button class="button button-white" type="submit">Guardar</button>
-                </div>
-                </form>
+            <div class="actions">
+                <button class="button" type="button" @click="closeDialog">Cancelar</button>
+                <button class="button button-white" type="submit">Guardar</button>
             </div>
+            </form>
+        </div>
+        </div>
+
+        <div v-if="showHistoryDialog" class="dialog-backdrop" @click.self="showHistoryDialog = false">
+        <div class="dialog history-dialog">
+            <h2 class="dialog-header">Historial de citas</h2>
+            <div v-if="historyEvents.length === 0" class="event-card empty-state history-empty-state">
+            <div class="event-name">Todavía no hay citas registradas.</div>
+            </div>
+
+            <ul v-else class="history-list">
+            <li v-for="event in historyEvents" :key="event.id" class="history-item">
+                <div class="event-name">{{ event.occasion }}</div>
+                <div class="event-count">
+                {{ event.day }} {{ fullMonths[event.month - 1] }} {{ event.year }} ·
+                {{ event.invited_count }} personas
+                </div>
+            </li>
+            </ul>
+
+            <div class="actions">
+            <button class="button" type="button" @click="showHistoryDialog = false">Cerrar</button>
+            </div>
+        </div>
         </div>
     </section>
 </template>
@@ -111,7 +139,7 @@
     cancelled?: boolean
     }
 
-    const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dic']
+    const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
     const fullMonths = [
     'Enero',
     'Febrero',
@@ -133,6 +161,7 @@
     const visibleMonth = ref(now.getMonth())
     const selectedDay = ref(now.getDate())
     const showDialog = ref(false)
+    const showHistoryDialog = ref(false)
 
     const eventForm = reactive({
     name: '',
@@ -151,6 +180,19 @@
         event.month === visibleMonth.value + 1 &&
         event.year === visibleYear.value
     )
+    )
+
+    const historyEvents = computed(() =>
+    events.value
+        .map((event) => ({
+        ...event,
+        id: `${event.year}-${event.month}-${event.day}-${event.occasion}-${event.invited_count}`
+        }))
+        .sort((a, b) => {
+        const dateA = new Date(a.year, a.month - 1, a.day).getTime()
+        const dateB = new Date(b.year, b.month - 1, b.day).getTime()
+        return dateB - dateA
+        })
     )
 
     const calendarRows = computed(() => {
@@ -313,12 +355,19 @@
     }
 
     .button {
-    margin-top: 0.8rem;
     border: 1px solid #2e86de;
     background: #2e86de;
     color: #fff;
     border-radius: 8px;
     padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    }
+
+    .calendar-actions {
+    margin-top: 0.8rem;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
     }
 
     .button:disabled {
@@ -374,6 +423,30 @@
     padding: 1rem;
     }
 
+    .history-dialog {
+    max-height: 80vh;
+    overflow: auto;
+    }
+
+    .history-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+    }
+
+    .history-item {
+    border-left: 6px solid #2e86de;
+    background: #f8fbff;
+    border-radius: 8px;
+    padding: 0.7rem;
+    }
+
+    .history-empty-state {
+    margin-bottom: 0.6rem;
+    }
+
     .form {
     display: grid;
     gap: 0.55rem;
@@ -395,6 +468,7 @@
     gap: 0.6rem;
     margin-top: 0.4rem;
     }
+
     @media (max-width: 900px) {
     .calendar-layout {
         grid-template-columns: 1fr;
