@@ -1,145 +1,119 @@
 <template>
     <section class="citas-view">
-        <h3>Citas</h3>
-
         <div class="calendar-layout">
-        <div class="calendar-container">
-            <div class="year-header">
-            <button class="nav-button" type="button" @click="prevYear">‹</button>
-            <span class="year">{{ visibleYear }}</span>
-            <button class="nav-button" type="button" @click="nextYear">›</button>
-            </div>
+        <article class="calendar-card">
+            <div class="calendar-toolbar">
+            <button class="nav-button" type="button" @click="prevMonth">‹</button>
+            <div class="month-selector">
+                <button class="month-label month-label-button" type="button" @click="toggleMonthMenu">
+                <h2>{{ fullMonths[visibleMonth] }}</h2>
+                <span>{{ visibleYear }}</span>
+                </button>
 
-            <table class="months-table">
-            <tbody>
-                <tr class="months-row">
-                <td
-                    v-for="(month, index) in shortMonths"
+                <div v-if="showMonthMenu" class="month-menu">
+                <button
+                    v-for="(month, index) in fullMonths"
                     :key="month"
-                    class="month"
-                    :class="{ 'active-month': index === visibleMonth }"
-                    @click="setMonth(index)"
+                    type="button"
+                    class="month-menu-item"
+                    :class="{ active: index === visibleMonth }"
+                    @click="selectMonthFromMenu(index)"
                 >
                     {{ month }}
-                </td>
-                </tr>
-            </tbody>
-            </table>
-
-            <table class="days-table">
-            <tbody>
-                <tr>
-                <td v-for="day in weekDays" :key="day" class="day">{{ day }}</td>
-                </tr>
-            </tbody>
-            </table>
-
-            <table class="dates-table">
-            <tbody>
-                <tr v-for="(week, weekIndex) in calendarRows" :key="`week-${weekIndex}`">
-                <td
-                    v-for="dateCell in week"
-                    :key="dateCell.key"
-                    class="table-date"
-                    :class="{
-                    nil: !dateCell.day,
-                    'active-date': dateCell.day === selectedDay,
-                    'event-date': dateCell.day && hasEvents(dateCell.day)
-                    }"
-                    @click="dateCell.day && selectDay(dateCell.day)"
-                >
-                    {{ dateCell.day ?? '' }}
-                </td>
-                </tr>
-            </tbody>
-            </table>
-
-            <div class="calendar-actions">
-            <button class="button" type="button" @click="showDialog = true" :disabled="!selectedDay">
-                Agregar cita
-            </button>
-            <button class="button button-white" type="button" @click="showHistoryDialog = true">
-                Ver historial
-            </button>
-            </div>
-        </div>
-
-        <div class="events-container">
-            <div v-if="selectedDayEvents.length === 0" class="event-card empty-state">
-            <div class="event-name">
-                No hay citas programadas para {{ fullMonths[visibleMonth] }} {{ selectedDay }}.
-            </div>
-            </div>
-
-            <div
-            v-for="event in selectedDayEvents"
-            :key="`${event.occasion}-${event.day}-${event.month}-${event.year}`"
-            class="event-card"
-            :class="{ cancelled: event.cancelled }"
-            >
-            <div class="event-name">{{ event.occasion }}</div>
-            <div v-if="event.cancelled" class="event-cancelled">Cancelada</div>
-            <div v-else class="event-count">{{ event.invited_count }} personas</div>
-            </div>
-        </div>
-        </div>
-
-        <div v-if="showDialog" class="dialog-backdrop" @click.self="closeDialog">
-        <div class="dialog">
-            <h2 class="dialog-header">Agregar nueva cita</h2>
-            <form class="form" @submit.prevent="saveEvent">
-            <label class="form-label" for="name">Nombre de la cita</label>
-            <input id="name" v-model.trim="eventForm.name" class="input" type="text" maxlength="36" />
-
-            <label class="form-label" for="count">Número de personas</label>
-            <input id="count" v-model.number="eventForm.count" class="input" type="number" min="0" />
-
-            <div class="actions">
-                <button class="button" type="button" @click="closeDialog">Cancelar</button>
-                <button class="button button-white" type="submit">Guardar</button>
-            </div>
-            </form>
-        </div>
-        </div>
-
-        <div v-if="showHistoryDialog" class="dialog-backdrop" @click.self="showHistoryDialog = false">
-        <div class="dialog history-dialog">
-            <h2 class="dialog-header">Historial de citas</h2>
-            <div v-if="historyEvents.length === 0" class="event-card empty-state history-empty-state">
-            <div class="event-name">Todavía no hay citas registradas.</div>
-            </div>
-
-            <ul v-else class="history-list">
-            <li v-for="event in historyEvents" :key="event.id" class="history-item">
-                <div class="event-name">{{ event.occasion }}</div>
-                <div class="event-count">
-                {{ event.day }} {{ fullMonths[event.month - 1] }} {{ event.year }} ·
-                {{ event.invited_count }} personas
+                </button>
                 </div>
-            </li>
-            </ul>
-
-            <div class="actions">
-            <button class="button" type="button" @click="showHistoryDialog = false">Cerrar</button>
             </div>
+            <button class="nav-button" type="button" @click="nextMonth">›</button>
+            </div>
+
+            <div class="weekdays-grid">
+            <span v-for="day in weekDays" :key="day">{{ day }}</span>
+            </div>
+
+            <div class="dates-grid">
+            <button
+                v-for="dateCell in calendarCells"
+                :key="dateCell.key"
+                type="button"
+                class="date-cell"
+                :class="{
+                empty: !dateCell.day,
+                active: dateCell.day === selectedDay,
+                'has-appointments': dateCell.day && hasAppointments(dateCell.day),
+                today: dateCell.day === todayDay && isCurrentVisibleMonth
+                }"
+                :disabled="!dateCell.day"
+                @click="dateCell.day && selectDay(dateCell.day)"
+            >
+                <span>{{ dateCell.day ?? '' }}</span>
+                <small v-if="dateCell.day && appointmentCountByDay[dateCell.day]">
+                {{ appointmentCountByDay[dateCell.day] }}
+                </small>
+            </button>
+            </div>
+        </article>
+
+        <article class="details-card details-card-layout">
+            <div class="section-heading">
+            <div>
+                <h2>{{ selectedDateLabel }}</h2>
+                <p>Citas registradas para el día seleccionado.</p>
+            </div>
+            <span class="counter">{{ selectedDayAppointments.length }}</span>
+            </div>
+
+            <div v-if="selectedDayAppointments.length === 0" class="empty-state">
+            No hay citas para este día. Puedes usar <strong>Agregar cita</strong> para registrar una nueva.
+            </div>
+
+            <div v-else class="appointment-list">
+            <article
+                v-for="appointment in selectedDayAppointments"
+                :key="appointment.id"
+                class="appointment-card"
+            >
+                <div class="appointment-card__header">
+                <div>
+                    <h3>{{ appointment.doctor }}</h3>
+                    <p>{{ appointment.specialty }}</p>
+                </div>
+                <span class="tag">{{ appointment.building }}</span>
+                </div>
+
+                <dl>
+                <div>
+                    <dt>Hora</dt>
+                    <dd>{{ formatTime(appointment.time) }}</dd>
+                </div>
+                <div>
+                    <dt>Pago</dt>
+                    <dd>{{ appointment.paymentMethod }} · {{ appointment.paymentReference }}</dd>
+                </div>
+                </dl>
+
+                <p v-if="appointment.notes" class="notes">{{ appointment.notes }}</p>
+            </article>
+            </div>
+
+            <div class="details-actions details-actions-bottom">
+            <RouterLink class="button" :to="{ name: 'agregar-cita' }">Agregar cita</RouterLink>
+            <RouterLink class="button button-white" :to="{ name: 'historial-citas' }">
+                Ver historial
+            </RouterLink>
+            </div>
+        </article>
         </div>
-        </div>
+
     </section>
 </template>
 
 <script setup lang="ts">
-    import { computed, reactive, ref } from 'vue'
+    import { computed, ref, watch } from 'vue'
+    import { RouterLink } from 'vue-router'
+    import { useCitas } from '../controladores/useCita'
 
-    type CalendarEvent = {
-    occasion: string
-    invited_count: number
-    year: number
-    month: number
-    day: number
-    cancelled?: boolean
-    }
+    const { appointments } = useCitas()
 
-    const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
     const fullMonths = [
     'Enero',
     'Febrero',
@@ -160,318 +134,353 @@
     const visibleYear = ref(now.getFullYear())
     const visibleMonth = ref(now.getMonth())
     const selectedDay = ref(now.getDate())
-    const showDialog = ref(false)
-    const showHistoryDialog = ref(false)
+    const todayDay = now.getDate()
+    const showMonthMenu = ref(false)
 
-    const eventForm = reactive({
-    name: '',
-    count: 0
-    })
-
-    const events = ref<CalendarEvent[]>([])
+    const isCurrentVisibleMonth = computed(
+    () => visibleYear.value === now.getFullYear() && visibleMonth.value === now.getMonth()
+    )
 
     const daysInMonth = computed(() => new Date(visibleYear.value, visibleMonth.value + 1, 0).getDate())
     const firstDayOfMonth = computed(() => new Date(visibleYear.value, visibleMonth.value, 1).getDay())
 
-    const selectedDayEvents = computed(() =>
-    events.value.filter(
-        (event) =>
-        event.day === selectedDay.value &&
-        event.month === visibleMonth.value + 1 &&
-        event.year === visibleYear.value
-    )
+    watch([visibleMonth, visibleYear], () => {
+    if (selectedDay.value > daysInMonth.value) {
+        selectedDay.value = daysInMonth.value
+    }
+    })
+
+    const appointmentsInVisibleMonth = computed(() =>
+    appointments.value.filter((appointment) => {
+        const appointmentDate = new Date(`${appointment.date}T${appointment.time}:00`)
+
+        return (
+        appointmentDate.getFullYear() === visibleYear.value && appointmentDate.getMonth() === visibleMonth.value
+        )
+    })
     )
 
-    const historyEvents = computed(() =>
-    events.value
-        .map((event) => ({
-        ...event,
-        id: `${event.year}-${event.month}-${event.day}-${event.occasion}-${event.invited_count}`
-        }))
-        .sort((a, b) => {
-        const dateA = new Date(a.year, a.month - 1, a.day).getTime()
-        const dateB = new Date(b.year, b.month - 1, b.day).getTime()
-        return dateB - dateA
-        })
-    )
+    const appointmentCountByDay = computed<Record<number, number>>(() => {
+    return appointmentsInVisibleMonth.value.reduce<Record<number, number>>((accumulator, appointment) => {
+        const day = new Date(`${appointment.date}T${appointment.time}:00`).getDate()
+        accumulator[day] = (accumulator[day] ?? 0) + 1
+        return accumulator
+    }, {})
+    })
 
-    const calendarRows = computed(() => {
+    const calendarCells = computed(() => {
     const cells: Array<{ key: string; day: number | null }> = []
 
-    for (let i = 0; i < firstDayOfMonth.value; i += 1) {
-        cells.push({ key: `blank-${i}`, day: null })
+    for (let index = 0; index < firstDayOfMonth.value; index += 1) {
+        cells.push({ key: `blank-${index}`, day: null })
     }
 
     for (let day = 1; day <= daysInMonth.value; day += 1) {
-        cells.push({ key: `day-${day}`, day })
+        cells.push({ key: `day-${visibleYear.value}-${visibleMonth.value}-${day}`, day })
     }
 
     while (cells.length % 7 !== 0) {
         cells.push({ key: `tail-${cells.length}`, day: null })
     }
 
-    const weeks: Array<Array<{ key: string; day: number | null }>> = []
-    for (let i = 0; i < cells.length; i += 7) {
-        weeks.push(cells.slice(i, i + 7))
-    }
-
-    return weeks
+    return cells
     })
 
-    function setMonth(month: number) {
-    visibleMonth.value = month
-    selectedDay.value = Math.min(selectedDay.value, daysInMonth.value)
-    }
+    const selectedDayAppointments = computed(() =>
+    appointmentsInVisibleMonth.value
+        .filter((appointment) => new Date(`${appointment.date}T${appointment.time}:00`).getDate() === selectedDay.value)
+        .sort((firstAppointment, secondAppointment) => firstAppointment.time.localeCompare(secondAppointment.time))
+    )
 
-    function nextYear() {
-    visibleYear.value += 1
-    selectedDay.value = Math.min(selectedDay.value, daysInMonth.value)
-    }
+    const selectedDateLabel = computed(() => {
+    return `${selectedDay.value} de ${fullMonths[visibleMonth.value]} de ${visibleYear.value}`
+    })
 
-    function prevYear() {
-    visibleYear.value -= 1
-    selectedDay.value = Math.min(selectedDay.value, daysInMonth.value)
-    }
+    const hasAppointments = (day: number) => Boolean(appointmentCountByDay.value[day])
 
-    function selectDay(day: number) {
+    const selectDay = (day: number) => {
     selectedDay.value = day
     }
 
-    function hasEvents(day: number) {
-    return events.value.some(
-        (event) => event.day === day && event.month === visibleMonth.value + 1 && event.year === visibleYear.value
-    )
+    const setMonth = (month: number) => {
+    visibleMonth.value = month
     }
 
-    function closeDialog() {
-    showDialog.value = false
-    eventForm.name = ''
-    eventForm.count = 0
+    const toggleMonthMenu = () => {
+    showMonthMenu.value = !showMonthMenu.value
     }
 
-    function saveEvent() {
-    if (!eventForm.name || eventForm.count < 0) {
+    const selectMonthFromMenu = (month: number) => {
+    setMonth(month)
+    showMonthMenu.value = false
+    }
+
+    const prevMonth = () => {
+    if (visibleMonth.value === 0) {
+        visibleMonth.value = 11
+        visibleYear.value -= 1
+        showMonthMenu.value = false
         return
     }
 
-    events.value.push({
-        occasion: eventForm.name,
-        invited_count: eventForm.count,
-        year: visibleYear.value,
-        month: visibleMonth.value + 1,
-        day: selectedDay.value
-    })
-
-    closeDialog()
+    visibleMonth.value -= 1
+    showMonthMenu.value = false
     }
+
+    const nextMonth = () => {
+    if (visibleMonth.value === 11) {
+        visibleMonth.value = 0
+        visibleYear.value += 1
+        showMonthMenu.value = false
+        return
+    }
+
+    visibleMonth.value += 1
+    showMonthMenu.value = false
+    }
+
+    const formatTime = (time: string) =>
+    new Intl.DateTimeFormat('es-MX', {
+        timeStyle: 'short'
+    }).format(new Date(`2026-01-01T${time}:00`))
 </script>
 
 <style scoped>
     .citas-view {
-    padding: 1.5rem;
-    }
-
-    .calendar-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
     display: grid;
-    grid-template-columns: minmax(320px, 2fr) minmax(260px, 1fr);
-    gap: 1.25rem;
+    gap: 1.5rem;
     }
-
-    .calendar-container,
-    .events-container {
+    .calendar-card,
+    .details-card,
+    .appointment-card {
     background: #fff;
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
     }
-
-    .year-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
+    h1,
+    h2,
+    h3,
+    p {
+    margin: 0;
     }
-
-    .year {
-    font-weight: 700;
-    font-size: 1.25rem;
-    }
-
-    .nav-button {
-    border: 0;
-    background: transparent;
-    font-size: 1.5rem;
-    cursor: pointer;
-    }
-
-    table {
-    width: 100%;
-    border-collapse: collapse;
-    }
-
-    .month,
-    .day,
-    .table-date {
-    text-align: center;
-    padding: 0.45rem;
-    }
-
-    .month {
-    font-size: 0.85rem;
-    cursor: pointer;
-    }
-
-    .active-month {
-    color: #fff;
-    background: #2e86de;
-    border-radius: 6px;
-    }
-
-    .day {
-    font-size: 0.8rem;
-    color: #6a6a6a;
-    }
-
-    .table-date {
-    cursor: pointer;
-    border-radius: 6px;
-    }
-
-    .table-date.nil {
-    cursor: default;
-    }
-
-    .table-date:hover:not(.nil) {
-    background: #f1f4f9;
-    }
-
-    .active-date {
-    background: #2e86de;
-    color: #fff;
-    }
-
-    .event-date {
-    font-weight: 700;
-    }
-
     .button {
-    border: 1px solid #2e86de;
-    background: #2e86de;
+    background: #2563eb;
     color: #fff;
-    border-radius: 8px;
-    padding: 0.5rem 0.9rem;
-    cursor: pointer;
+    border: 1px solid #2563eb;
+    border-radius: 999px;
+    padding: 0.85rem 1.4rem;
+    text-decoration: none;
+    font-weight: 700;
     }
-
-    .calendar-actions {
-    margin-top: 0.8rem;
-    display: flex;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-    }
-
-    .button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    }
-
     .button-white {
     background: #fff;
-    color: #2e86de;
+    color: #2563eb;
     }
-
-    .events-container {
+    .calendar-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: 1.5rem;
+    }
+    .calendar-card,
+    .details-card {
+    padding: 1.5rem;
+    }
+    .details-card-layout {
     display: flex;
     flex-direction: column;
-    gap: 0.7rem;
+    min-height: 100%;
     }
-
-    .event-card {
-    border-left: 6px solid #2e86de;
-    background: #f8fbff;
-    border-radius: 8px;
-    padding: 0.7rem;
+    .calendar-toolbar,
+    .section-heading,
+    .appointment-card__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
     }
-
-    .event-card.cancelled,
-    .empty-state {
-    border-left-color: #ff1744;
+    .month-selector {
+    position: relative;
     }
-
-    .event-name {
-    font-weight: 600;
+    .month-label {
+    text-align: center;
     }
-
-    .event-count,
-    .event-cancelled {
-    font-size: 0.9rem;
-    color: #515151;
+    .month-label-button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0.35rem 0.75rem;
     }
-
-    .dialog-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
+    .month-menu {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(260px, 80vw);
+    background: #fff;
+    border: 1px solid #dbeafe;
+    border-radius: 18px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+    padding: 0.75rem;
     display: grid;
-    place-items: center;
+    gap: 0.45rem;
+    z-index: 10;
     }
-
-    .dialog {
-    width: min(420px, 92vw);
+    .month-menu-item {
+    border: 1px solid #dbeafe;
     background: #fff;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0.7rem 0.9rem;
+    text-align: left;
+    color: #2563eb;
+    font-weight: 700;
     }
-
-    .history-dialog {
-    max-height: 80vh;
-    overflow: auto;
+    .month-menu-item.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
     }
-
-    .history-list {
-    list-style: none;
+    .month-label span,
+    .section-heading p,
+    .empty-state,
+    .notes,
+    .appointment-card p,
+    dt,
+    small {
+    color: #475569;
+    }
+    .nav-button {
+    border: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 1.35rem;
+    font-weight: 700;
+    }
+    .weekdays-grid,
+    .dates-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.5rem;
+    }
+    .date-cell {
+    border: 1px solid #dbeafe;
+    background: #fff;
+    border-radius: 14px;
+    }
+    .weekdays-grid {
+    margin-bottom: 0.5rem;
+    }
+    .weekdays-grid span {
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #64748b;
+    }
+    .dates-grid {
+    grid-auto-rows: minmax(76px, auto);
+    }
+    .date-cell {
+    padding: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-weight: 700;
+    }
+    .date-cell.has-appointments {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    }
+    .date-cell.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+    }
+    .date-cell.active small,
+    .date-cell.active span {
+    color: inherit;
+    }
+    .date-cell.today {
+    outline: 2px solid #bfdbfe;
+    }
+    .date-cell.empty {
+    border-style: dashed;
+    opacity: 0.45;
+    }
+    .date-cell:disabled {
+    cursor: default;
+    }
+    .counter,
+    .tag {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    }
+    .appointment-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+    }
+    .details-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    }
+    .details-actions-bottom {
+    margin-top: auto;
+    padding-top: 2rem;
+    }
+    .appointment-card {
+    padding: 1.25rem;
+    border: 1px solid #e2e8f0;
+    }
+    dl {
+    display: grid;
+    gap: 0.8rem;
     margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 0.55rem;
     }
-
-    .history-item {
-    border-left: 6px solid #2e86de;
-    background: #f8fbff;
-    border-radius: 8px;
-    padding: 0.7rem;
+    dt {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     }
-
-    .history-empty-state {
-    margin-bottom: 0.6rem;
-    }
-
-    .form {
-    display: grid;
-    gap: 0.55rem;
-    }
-
-    .form-label {
+    dd {
+    margin: 0.25rem 0 0;
     font-weight: 600;
     }
-
-    .input {
-    border: 1px solid #cfd7e3;
-    border-radius: 8px;
-    padding: 0.45rem;
+    .notes,
+    .empty-state {
+    margin-top: 1rem;
     }
-
-    .actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.6rem;
-    margin-top: 0.4rem;
-    }
-
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
     .calendar-layout {
         grid-template-columns: 1fr;
+    }
+    }
+    @media (max-width: 768px) {
+    .calendar-toolbar,
+    .section-heading,
+    .appointment-card__header,
+    .details-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .weekdays-grid,
+    .dates-grid {
+        gap: 0.35rem;
+    }
+
+    .date-cell {
+        min-height: 68px;
     }
     }
 </style>
