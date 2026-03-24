@@ -3,7 +3,6 @@
         <header class="header">
         <div>
             <h2>Mis recetas médicas</h2>
-            <p class="subtitle">Revisa tus medicamentos, vigencia de receta e indicaciones de uso.</p>
         </div>
         <button class="button" type="button" @click="showDialog = true">Solicitar renovación</button>
         </header>
@@ -183,7 +182,17 @@
 
 <style scoped>
     .recetas-view {
-    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+    display: grid;
+    gap: 1.5rem;
+    }
+
+    h2,
+    h3,
+    p {
+    margin: 0;
     }
 
     .header {
@@ -191,46 +200,57 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1rem;
     }
 
     .subtitle {
-    margin: 0.25rem 0 0;
-    color: #6a6a6a;
+    margin-top: 0.35rem;
+    color: #475569;
+    }
+
+    .button {
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.85rem 1.4rem;
+    font-weight: 700;
+    cursor: pointer;
+    }
+
+    .button-white {
+    background: #fff;
+    color: #2563eb;
     }
 
     .filters {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 0.85rem;
     }
 
     .recipes-grid {
     display: grid;
-    gap: 0.85rem;
+    gap: 1rem;
     }
 
     .recipe-card,
     .empty-state,
-    .requests-panel {
+    .requests-panel,
+    .dialog {
     background: #fff;
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    }
-
-    .requests-panel {
-    margin-top: 1rem;
+    border-radius: 20px;
+    padding: 1.25rem;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
     }
 
     .request-list {
-    margin: 0.6rem 0 0;
-    padding-left: 1rem;
+    margin: 0.75rem 0 0;
+    padding-left: 1.1rem;
+    color: #475569;
     }
 
     .request-item {
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
     }
 
     .card-top {
@@ -241,37 +261,48 @@
     }
 
     .tag {
-    padding: 0.2rem 0.6rem;
+    background: #dbeafe;
+    color: #1d4ed8;
     border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
     }
 
     .status-active {
-    background: #e8f8ef;
-    color: #1f8a4d;
+    background: #dcfce7;
+    color: #15803d;
     }
 
     .status-warning {
-    background: #fff8e6;
-    color: #a66a00;
+    background: #fef3c7;
+    color: #a16207;
     }
 
     .status-stopped {
-    background: #ffecef;
-    color: #c0392b;
+    background: #fee2e2;
+    color: #b91c1c;
     }
 
     .meta,
     .line,
     .description {
-    margin: 0.45rem 0 0;
+    margin-top: 0.5rem;
+    color: #475569;
     }
 
     .input {
-    border: 1px solid #cfd7e3;
-    border-radius: 8px;
-    padding: 0.55rem;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    padding: 0.7rem 0.85rem;
+    font: inherit;
+    color: #0f172a;
+    min-height: 46px;
+    }
+
+    .input:focus {
+    outline: 2px solid #bfdbfe;
+    outline-offset: 1px;
     }
 
     .select,
@@ -279,38 +310,24 @@
     width: 100%;
     }
 
-    .button {
-    border: 1px solid #2e86de;
-    background: #2e86de;
-    color: #fff;
-    border-radius: 8px;
-    padding: 0.5rem 0.9rem;
-    cursor: pointer;
-    }
-
-    .button-white {
-    background: #fff;
-    color: #2e86de;
-    }
-
     .dialog-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(15, 23, 42, 0.35);
     display: grid;
     place-items: center;
+    padding: 1rem;
+    z-index: 20;
     }
 
     .dialog {
-    width: min(520px, 92vw);
-    background: #fff;
-    border-radius: 12px;
-    padding: 1rem;
+    width: min(520px, 100%);
     }
 
     .form {
     display: grid;
-    gap: 0.55rem;
+    gap: 0.65rem;
+    margin-top: 0.75rem;
     }
 
     .actions {
@@ -325,7 +342,8 @@
         grid-template-columns: 1fr;
     }
 
-    .header {
+    .header,
+    .actions {
         flex-direction: column;
         align-items: flex-start;
     }
