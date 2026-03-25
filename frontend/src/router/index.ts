@@ -3,6 +3,8 @@ import AgregarcitaVue from '@/modulos/cliente/vistas/AgregarcitaVue.vue'
 import HistorialcitasVue from '@/modulos/cliente/vistas/HistorialcitasVue.vue'
 import RecetasVue from '@/modulos/cliente/vistas/RecetasVue.vue'
 import PerfilVue from '@/modulos/cliente/vistas/PerfilVue.vue'
+import InicioSesionVue from '@/modulos/principal/vistas/InicioSesionVue.vue'
+import CrearCuentaVue from '@/modulos/principal/vistas/CrearCuentaVue.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -10,7 +12,17 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: { name: 'citas' }
+      redirect: { name: 'inicio-sesion' }
+    },
+    {
+      path: '/inicio-sesion',
+      name: 'inicio-sesion',
+      component: InicioSesionVue
+    },
+    {
+      path: '/crear-cuenta',
+      name: 'crear-cuenta',
+      component: CrearCuentaVue
     },
     {
       path: '/citas',

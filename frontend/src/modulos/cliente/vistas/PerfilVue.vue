@@ -32,10 +32,7 @@
 
             <div class="form-field full-row">
             <label for="telefono">Número de teléfono</label>
-            <div class="phone-group">
-                <input id="codigo" v-model.trim="profile.codigoPais" class="input code" type="text" />
-                <input id="telefono" v-model.trim="profile.telefono" class="input" type="tel" />
-            </div>
+            <input id="telefono" v-model.trim="profile.telefono" class="input" type="tel" />
             </div>
 
             <div class="form-field">
@@ -141,12 +138,6 @@
     .input:focus {
     outline: 2px solid #bfdbfe;
     outline-offset: 1px;
-    }
-
-    .phone-group {
-    display: grid;
-    grid-template-columns: 90px 1fr;
-    gap: 0.6rem;
     }
 
     .button {

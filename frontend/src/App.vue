@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import menuVue from './modulos/principal/vistas/menuVue.vue';
-import { RouterView } from 'vue-router';
+import { computed } from 'vue'
+import menuVue from './modulos/principal/vistas/menuVue.vue'
+import { RouterView, useRoute } from 'vue-router'
 
+const route = useRoute()
+const rutasSinMenu = new Set(['inicio-sesion', 'crear-cuenta'])
+const mostrarMenu = computed(() => !rutasSinMenu.has(String(route.name)))
 </script>
 
 <template>
-  <header>
-    <menuVue/>
+  <header v-if="mostrarMenu">
+    <menuVue />
   </header>
-  <RouterView/>
+  <RouterView />
 </template>
 
 <style scoped></style>

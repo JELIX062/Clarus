@@ -1,0 +1,132 @@
+<template>
+    <main class="login-view">
+        <section class="login-card" aria-labelledby="titulo-login">
+        <p class="brand">CLARUS</p>
+        <h1 id="titulo-login">Inicio de sesión</h1>
+        <p class="description">Ingresa con tu correo para administrar citas, recetas y tu perfil.</p>
+
+        <form class="login-form" @submit.prevent="iniciarSesion">
+            <label>
+            Correo electrónico
+            <input v-model="correo" type="email" placeholder="Correo" required />
+            </label>
+
+            <label>
+            Contraseña
+            <input v-model="contrasena" type="password" placeholder="••••••••" required minlength="6" />
+            </label>
+
+            <button type="submit">Entrar</button>
+        </form>
+
+        <p class="help">¿Aún no tienes cuenta? <RouterLink :to="{ name: 'crear-cuenta' }">Crear cuenta</RouterLink></p>
+        </section>
+    </main>
+</template>
+
+<script setup lang="ts">
+    import { ref } from 'vue'
+    import { RouterLink, useRouter } from 'vue-router'
+
+    const router = useRouter()
+
+    const correo = ref('')
+    const contrasena = ref('')
+    const recordarme = ref(false)
+
+    const iniciarSesion = () => {
+    void router.push({ name: 'citas' })
+    }
+</script>
+
+<style scoped>
+    .login-view {
+    min-height: calc(100vh - 1px);
+    display: grid;
+    place-items: center;
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, #f2f6ff 0%, #eaf9f5 100%);
+    }
+
+    .login-card {
+    width: min(100%, 420px);
+    padding: 2rem;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 14px 36px rgba(17, 24, 39, 0.12);
+    }
+
+    .brand {
+    margin: 0;
+    color: #009688;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    }
+
+    h1 {
+    margin: 0.4rem 0;
+    font-size: 1.9rem;
+    }
+
+    .description {
+    margin: 0 0 1.4rem;
+    color: #6b7280;
+    }
+
+    .login-form {
+    display: grid;
+    gap: 1rem;
+    }
+
+    label {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.94rem;
+    color: #111827;
+    }
+
+    input {
+    padding: 0.72rem;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    font-size: 1rem;
+    }
+
+    .remember-row {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.9rem;
+    color: #4b5563;
+    }
+
+    button {
+    border: none;
+    border-radius: 10px;
+    background: #009688;
+    color: #fff;
+    padding: 0.78rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    }
+
+    button:hover {
+    background: #017f73;
+    }
+
+    .help {
+    margin: 1.1rem 0 0;
+    font-size: 0.9rem;
+    color: #6b7280;
+    }
+
+    .help a {
+    color: #009688;
+    text-decoration: none;
+    }
+
+    .help a:hover {
+    text-decoration: underline;
+    }
+</style>
