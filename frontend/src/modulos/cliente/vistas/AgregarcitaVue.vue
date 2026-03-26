@@ -310,12 +310,12 @@
     }
     .page-title {
     margin: 0 0 1rem;
-    color: #0f172a;
+    color: var(--clarus-midnight);
     }
     .form-card {
-    background: #fff;
+    background: var(--clarus-ivory);
     border-radius: 20px;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 45px var(--clarus-shadow);
     padding: 1.75rem;
     }
     .form-grid {
@@ -327,7 +327,7 @@
     display: grid;
     gap: 0.45rem;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--clarus-midnight);
     }
     label span {
     font-size: 0.95rem;
@@ -336,7 +336,7 @@
     select {
     width: 100%;
     border-radius: 14px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--clarus-border);
     padding: 0.85rem 1rem;
     font: inherit;
     }
@@ -344,10 +344,10 @@
     grid-column: 1 / -1;
     }
     .payment-card {
-    border: 1px solid #dbeafe;
+    border: 1px solid var(--clarus-gold-soft);
     border-radius: 18px;
     padding: 1.25rem;
-    background: #f8fbff;
+    background: var(--clarus-ivory);
     }
     .payment-card__header {
     margin-bottom: 1rem;
@@ -357,7 +357,7 @@
     margin: 0;
     }
     .payment-card__header p {
-    color: #475569;
+    color: var(--clarus-oxford);
     margin-top: 0.35rem;
     }
     .payment-grid {
@@ -366,9 +366,9 @@
     gap: 1rem;
     }
     .button {
-    background: #2563eb;
-    color: #fff;
-    border: 1px solid #2563eb;
+    background: var(--clarus-midnight);
+    color: var(--clarus-ivory);
+    border: 1px solid var(--clarus-midnight);
     border-radius: 999px;
     padding: 0.85rem 1.4rem;
     text-decoration: none;
@@ -376,8 +376,8 @@
     cursor: pointer;
     }
     .button-white {
-    background: #fff;
-    color: #2563eb;
+    background: var(--clarus-ivory);
+    color: var(--clarus-midnight);
     }
     .actions {
     display: flex;

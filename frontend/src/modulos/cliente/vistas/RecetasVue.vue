@@ -204,13 +204,13 @@
 
     .subtitle {
     margin-top: 0.35rem;
-    color: #475569;
+    color: var(--clarus-oxford);
     }
 
     .button {
-    border: 1px solid #2563eb;
-    background: #2563eb;
-    color: #fff;
+    border: 1px solid var(--clarus-midnight);
+    background: var(--clarus-midnight);
+    color: var(--clarus-ivory);
     border-radius: 999px;
     padding: 0.85rem 1.4rem;
     font-weight: 700;
@@ -218,8 +218,8 @@
     }
 
     .button-white {
-    background: #fff;
-    color: #2563eb;
+    background: var(--clarus-ivory);
+    color: var(--clarus-midnight);
     }
 
     .filters {
@@ -237,16 +237,16 @@
     .empty-state,
     .requests-panel,
     .dialog {
-    background: #fff;
+    background: var(--clarus-ivory);
     border-radius: 20px;
     padding: 1.25rem;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 45px var(--clarus-shadow);
     }
 
     .request-list {
     margin: 0.75rem 0 0;
     padding-left: 1.1rem;
-    color: #475569;
+    color: var(--clarus-oxford);
     }
 
     .request-item {
@@ -261,8 +261,8 @@
     }
 
     .tag {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--clarus-gold-soft);
+    color: var(--clarus-midnight);
     border-radius: 999px;
     padding: 0.35rem 0.75rem;
     font-size: 0.85rem;
@@ -288,20 +288,20 @@
     .line,
     .description {
     margin-top: 0.5rem;
-    color: #475569;
+    color: var(--clarus-oxford);
     }
 
     .input {
-    border: 1px solid #dbeafe;
+    border: 1px solid var(--clarus-gold-soft);
     border-radius: 12px;
     padding: 0.7rem 0.85rem;
     font: inherit;
-    color: #0f172a;
+    color: var(--clarus-midnight);
     min-height: 46px;
     }
 
     .input:focus {
-    outline: 2px solid #bfdbfe;
+    outline: 2px solid var(--clarus-gold);
     outline-offset: 1px;
     }
 
@@ -313,7 +313,7 @@
     .dialog-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.35);
+    background: rgba(26, 43, 60, 0.55);
     display: grid;
     place-items: center;
     padding: 1rem;

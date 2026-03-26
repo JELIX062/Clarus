@@ -45,20 +45,20 @@
     display: grid;
     place-items: center;
     padding: 2rem 1rem;
-    background: linear-gradient(135deg, #f2f6ff 0%, #eaf9f5 100%);
+    background: linear-gradient(135deg, var(--clarus-ivory) 0%, var(--clarus-gold-soft) 100%);
     }
 
     .login-card {
     width: min(100%, 420px);
     padding: 2rem;
     border-radius: 20px;
-    background: #fff;
-    box-shadow: 0 14px 36px rgba(17, 24, 39, 0.12);
+    background: var(--clarus-ivory);
+    box-shadow: 0 14px 36px var(--clarus-shadow);
     }
 
     .brand {
     margin: 0;
-    color: #009688;
+    color: var(--clarus-gold);
     font-weight: 700;
     letter-spacing: 0.08em;
     }
@@ -70,7 +70,7 @@
 
     .description {
     margin: 0 0 1.4rem;
-    color: #6b7280;
+    color: var(--clarus-oxford);
     }
 
     .login-form {
@@ -82,13 +82,13 @@
     display: grid;
     gap: 0.35rem;
     font-size: 0.94rem;
-    color: #111827;
+    color: var(--clarus-midnight);
     }
 
     input {
     padding: 0.72rem;
     border-radius: 10px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--clarus-border);
     font-size: 1rem;
     }
 
@@ -103,8 +103,8 @@
     button {
     border: none;
     border-radius: 10px;
-    background: #009688;
-    color: #fff;
+    background: var(--clarus-gold);
+    color: var(--clarus-ivory);
     padding: 0.78rem;
     font-size: 1rem;
     font-weight: 600;
@@ -112,17 +112,17 @@
     }
 
     button:hover {
-    background: #017f73;
+    background: var(--clarus-midnight-soft);
     }
 
     .help {
     margin: 1.1rem 0 0;
     font-size: 0.9rem;
-    color: #6b7280;
+    color: var(--clarus-oxford);
     }
 
     .help a {
-    color: #009688;
+    color: var(--clarus-gold);
     text-decoration: none;
     }
 

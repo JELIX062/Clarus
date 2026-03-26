@@ -1,0 +1,25 @@
+:root {
+    --clarus-midnight: #1A2B3C;
+    --clarus-gold: #C5A059;
+    --clarus-ivory: #F9F9F7;
+    --clarus-oxford: #4A4A4A;
+    --clarus-midnight-soft: #24384c;
+    --clarus-gold-soft: #eadfc7;
+    --clarus-border: #d7d4ce;
+    --clarus-shadow: rgba(26, 43, 60, 0.18);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    background: var(--clarus-ivory);
+    color: var(--clarus-midnight);
+}
+
+#app {
+    min-height: 100vh;
+}

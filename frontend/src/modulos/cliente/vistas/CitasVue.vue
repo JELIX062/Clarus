@@ -256,9 +256,9 @@
     .calendar-card,
     .details-card,
     .appointment-card {
-    background: #fff;
+    background: var(--clarus-ivory);
     border-radius: 20px;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 45px var(--clarus-shadow);
     }
     h1,
     h2,
@@ -267,17 +267,17 @@
     margin: 0;
     }
     .button {
-    background: #2563eb;
-    color: #fff;
-    border: 1px solid #2563eb;
+    background: var(--clarus-midnight);
+    color: var(--clarus-ivory);
+    border: 1px solid var(--clarus-midnight);
     border-radius: 999px;
     padding: 0.85rem 1.4rem;
     text-decoration: none;
     font-weight: 700;
     }
     .button-white {
-    background: #fff;
-    color: #2563eb;
+    background: var(--clarus-ivory);
+    color: var(--clarus-midnight);
     }
     .calendar-layout {
     display: grid;
@@ -319,28 +319,28 @@
     left: 50%;
     transform: translateX(-50%);
     width: min(260px, 80vw);
-    background: #fff;
-    border: 1px solid #dbeafe;
+    background: var(--clarus-ivory);
+    border: 1px solid var(--clarus-gold-soft);
     border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 18px 45px var(--clarus-shadow);
     padding: 0.75rem;
     display: grid;
     gap: 0.45rem;
     z-index: 10;
     }
     .month-menu-item {
-    border: 1px solid #dbeafe;
-    background: #fff;
+    border: 1px solid var(--clarus-gold-soft);
+    background: var(--clarus-ivory);
     border-radius: 12px;
     padding: 0.7rem 0.9rem;
     text-align: left;
-    color: #2563eb;
+    color: var(--clarus-midnight);
     font-weight: 700;
     }
     .month-menu-item.active {
-    background: #2563eb;
-    color: #fff;
-    border-color: #2563eb;
+    background: var(--clarus-midnight);
+    color: var(--clarus-ivory);
+    border-color: var(--clarus-midnight);
     }
     .month-label span,
     .section-heading p,
@@ -349,15 +349,15 @@
     .appointment-card p,
     dt,
     small {
-    color: #475569;
+    color: var(--clarus-oxford);
     }
     .nav-button {
     border: 0;
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 999px;
-    background: #eff6ff;
-    color: #2563eb;
+    background: var(--clarus-gold-soft);
+    color: var(--clarus-midnight);
     font-size: 1.35rem;
     font-weight: 700;
     }
@@ -368,8 +368,8 @@
     gap: 0.5rem;
     }
     .date-cell {
-    border: 1px solid #dbeafe;
-    background: #fff;
+    border: 1px solid var(--clarus-gold-soft);
+    background: var(--clarus-ivory);
     border-radius: 14px;
     }
     .weekdays-grid {
@@ -379,7 +379,7 @@
     text-align: center;
     font-size: 0.88rem;
     font-weight: 700;
-    color: #64748b;
+    color: var(--clarus-oxford);
     }
     .dates-grid {
     grid-auto-rows: minmax(76px, auto);
@@ -393,20 +393,20 @@
     font-weight: 700;
     }
     .date-cell.has-appointments {
-    background: #eff6ff;
-    border-color: #93c5fd;
+    background: var(--clarus-gold-soft);
+    border-color: var(--clarus-gold);
     }
     .date-cell.active {
-    background: #2563eb;
-    color: #fff;
-    border-color: #2563eb;
+    background: var(--clarus-midnight);
+    color: var(--clarus-ivory);
+    border-color: var(--clarus-midnight);
     }
     .date-cell.active small,
     .date-cell.active span {
     color: inherit;
     }
     .date-cell.today {
-    outline: 2px solid #bfdbfe;
+    outline: 2px solid var(--clarus-gold);
     }
     .date-cell.empty {
     border-style: dashed;
@@ -417,8 +417,8 @@
     }
     .counter,
     .tag {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--clarus-gold-soft);
+    color: var(--clarus-midnight);
     border-radius: 999px;
     padding: 0.4rem 0.75rem;
     font-size: 0.85rem;
@@ -440,7 +440,7 @@
     }
     .appointment-card {
     padding: 1.25rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--clarus-border);
     }
     dl {
     display: grid;

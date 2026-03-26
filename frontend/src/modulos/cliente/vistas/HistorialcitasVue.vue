@@ -72,9 +72,9 @@
     }
     .page-header,
     .history-card {
-    background: #fff;
+    background: var(--clarus-ivory);
     border-radius: 20px;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 45px var(--clarus-shadow);
     }
     .page-header {
     padding: 2rem;
@@ -87,7 +87,7 @@
     .eyebrow {
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #2563eb;
+    color: var(--clarus-midnight);
     font-weight: 700;
     margin: 0 0 0.5rem;
     }
@@ -97,7 +97,7 @@
     margin: 0;
     }
     .page-header p:last-child {
-    color: #475569;
+    color: var(--clarus-oxford);
     margin-top: 0.75rem;
     }
     .history-grid {
@@ -117,7 +117,7 @@
     .section-heading span,
     .empty-state,
     .history-list span {
-    color: #475569;
+    color: var(--clarus-oxford);
     }
     .history-list {
     list-style: none;
@@ -127,24 +127,24 @@
     gap: 0.85rem;
     }
     .history-list li {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--clarus-border);
     border-radius: 16px;
     padding: 1rem;
     display: grid;
     gap: 0.25rem;
     }
     .button {
-    background: #2563eb;
-    color: #fff;
-    border: 1px solid #2563eb;
+    background: var(--clarus-midnight);
+    color: var(--clarus-ivory);
+    border: 1px solid var(--clarus-midnight);
     border-radius: 999px;
     padding: 0.85rem 1.4rem;
     text-decoration: none;
     font-weight: 700;
     }
     .button-white {
-    background: #fff;
-    color: #2563eb;
+    background: var(--clarus-ivory);
+    color: var(--clarus-midnight);
     }
     @media (max-width: 768px) {
     .page-header {

@@ -29,5 +29,27 @@
 </script>
 
 <style scoped>
+    .navbar {
+        background: var(--clarus-midnight) !important;
+        box-shadow: 0 10px 24px var(--clarus-shadow);
+    }
 
+    .navbar-brand,
+    .item {
+        color: var(--clarus-ivory) !important;
+    }
+
+    .navbar-brand {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+    }
+
+    .item.router-link-active {
+        color: var(--clarus-gold) !important;
+        font-weight: 700;
+    }
+
+    .item:hover {
+        color: var(--clarus-gold) !important;
+    }
 </style>

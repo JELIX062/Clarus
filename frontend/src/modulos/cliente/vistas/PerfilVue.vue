@@ -160,4 +160,91 @@
         grid-template-columns: 1fr;
     }
     }
+</style><style scoped>
+    .perfil-view {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+    display: grid;
+    gap: 1.5rem;
+    }
+
+    h2,
+    p {
+    margin: 0;
+    }
+
+    .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    }
+
+    .subtitle {
+    margin-top: 0.35rem;
+    color: var(--clarus-oxford);
+    }
+
+    .profile-card {
+    background: var(--clarus-ivory);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 18px 45px var(--clarus-shadow);
+    }
+
+    .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    }
+
+    .form-field {
+    display: grid;
+    gap: 0.4rem;
+    }
+
+    .full-row {
+    grid-column: 1 / -1;
+    }
+
+    label {
+    font-weight: 700;
+    color: #334155;
+    }
+
+    .input {
+    border: 1px solid var(--clarus-gold-soft);
+    border-radius: 12px;
+    padding: 0.7rem 0.85rem;
+    font: inherit;
+    min-height: 46px;
+    color: var(--clarus-midnight);
+    }
+
+    .input:focus {
+    outline: 2px solid var(--clarus-gold);
+    outline-offset: 1px;
+    }
+
+    .button {
+    border: 1px solid var(--clarus-midnight);
+    background: var(--clarus-midnight);
+    color: var(--clarus-ivory);
+    border-radius: 999px;
+    padding: 0.85rem 1.4rem;
+    font-weight: 700;
+    cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    }
 </style>
