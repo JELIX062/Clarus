@@ -9,10 +9,10 @@
             <div class="navbar-nav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav_item margin">
-                        <router-link class="nav-link item" to="/citas">Citas</router-link>
+                        <router-link class="nav-link item" :to="rutaCitas">Citas</router-link>
                     </li>
                     <li class="nav_item margin">
-                        <router-link class="nav-link item" to="/recetas">Recetas</router-link>
+                        <router-link class="nav-link item" :to="rutaExpedientes">{{ etiquetaExpedientes }}</router-link>
                     </li>
                     <li class="nav_item margin">
                         <router-link class="nav-link item" to="/perfil">Perfil</router-link>
@@ -25,6 +25,19 @@
 </template>
 
 <script setup lang="ts">
+    import { computed } from 'vue'
+    import { useSesion } from '../controladores/useSesion'
+
+    const { rolUsuario } = useSesion()
+
+    const etiquetaExpedientes = computed(() =>
+      rolUsuario.value === 'doctor' ? 'Expedientes' : 'Recetas'
+    )
+
+    const rutaCitas = computed(() => (rolUsuario.value === 'doctor' ? '/doctor/citas' : '/citas'))
+    const rutaExpedientes = computed(() =>
+      rolUsuario.value === 'doctor' ? '/doctor/expedientes' : '/recetas'
+    )
 
 </script>
 

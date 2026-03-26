@@ -16,6 +16,14 @@
             <input v-model="contrasena" type="password" placeholder="••••••••" required minlength="6" />
             </label>
 
+            <label>
+            Rol
+            <select v-model="rol" required>
+                <option value="paciente">Paciente</option>
+                <option value="doctor">Doctor</option>
+            </select>
+            </label>
+
             <button type="submit">Entrar</button>
         </form>
 
@@ -27,14 +35,17 @@
 <script setup lang="ts">
     import { ref } from 'vue'
     import { RouterLink, useRouter } from 'vue-router'
+    import { useSesion } from '../controladores/useSesion'
 
     const router = useRouter()
+    const { setRolUsuario } = useSesion()
 
     const correo = ref('')
     const contrasena = ref('')
-    const recordarme = ref(false)
+    const rol = ref<'paciente' | 'doctor'>('paciente')
 
     const iniciarSesion = () => {
+    setRolUsuario(rol.value)
     void router.push({ name: 'citas' })
     }
 </script>
@@ -85,7 +96,8 @@
     color: var(--clarus-midnight);
     }
 
-    input {
+    input,
+    select {
     padding: 0.72rem;
     border-radius: 10px;
     border: 1px solid var(--clarus-border);

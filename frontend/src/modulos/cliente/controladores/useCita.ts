@@ -81,12 +81,16 @@ export const useCitas = () => {
         }
         ]
     }
+    const removeAppointment = (appointmentId: string) => {
+        appointments.value = appointments.value.filter((appointment) => appointment.id !== appointmentId)
+    }
 
     return {
         appointments,
         sortedAppointments,
         upcomingAppointments,
         pastAppointments,
-        addAppointment
+        addAppointment,
+        removeAppointment
     }
 }

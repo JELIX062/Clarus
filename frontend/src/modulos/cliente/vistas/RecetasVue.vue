@@ -2,9 +2,9 @@
     <section class="recetas-view">
         <header class="header">
         <div>
-            <h2>Mis recetas médicas</h2>
+            <h2>{{ tituloVista }}</h2>
         </div>
-        <button class="button" type="button" @click="showDialog = true">Solicitar renovación</button>
+        <button v-if="!esDoctor" class="button" type="button" @click="showDialog = true">Solicitar renovación</button>
         </header>
 
         <div class="filters">
@@ -12,7 +12,7 @@
             v-model.trim="searchTerm"
             class="input"
             type="search"
-            placeholder="Buscar por medicamento"
+            placeholder="Buscar por doctor"
         />
         <select v-model="selectedStatus" class="input select">
             <option value="Todas">Todos los estados</option>
@@ -67,6 +67,7 @@
                 id="notes"
                 v-model.trim="renewalForm.notes"
                 class="input textarea"
+
                 rows="3"
                 placeholder="Ej: Me quedan 3 tabletas"
             ></textarea>
@@ -92,6 +93,7 @@
 
 <script setup lang="ts">
     import { computed, reactive, ref } from 'vue'
+    import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
     type PrescriptionStatus = 'Vigente' | 'Por vencer' | 'Vencida'
 
@@ -129,6 +131,7 @@
     }
 
     const prescriptions = ref<Prescription[]>([])
+    const { rolUsuario } = useSesion()
 
     const renewalRequests = ref<RenewalRequest[]>([])
     const searchTerm = ref('')
@@ -155,6 +158,9 @@
         return matchesStatus && matchesSearch
     })
     })
+
+    const esDoctor = computed(() => rolUsuario.value === 'doctor')
+    const tituloVista = computed(() => (esDoctor.value ? 'Expedientes médicos' : 'Mis recetas médicas'))
 
     function closeDialog() {
     showDialog.value = false
