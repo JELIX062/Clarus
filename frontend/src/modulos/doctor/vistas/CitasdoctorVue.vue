@@ -76,6 +76,7 @@
                 <div>
                     <h3>{{ appointment.doctor }}</h3>
                     <p>{{ appointment.specialty }}</p>
+                    <p class="patient-name">Paciente: {{ appointment.patientName }}</p>
                 </div>
                 <span class="tag">{{ appointment.building }}</span>
                 </div>
@@ -104,6 +105,7 @@
                 Ver historial de citas
             </RouterLink>
             </div>
+            
         </article>
         </div>
     </section>
@@ -111,7 +113,6 @@
 
 <script setup lang="ts">
     import { computed, ref, watch } from 'vue'
-    import { RouterLink } from 'vue-router'
     import { useCitas } from '@/modulos/cliente/controladores/useCita'
 
     const { appointments, removeAppointment } = useCitas()
@@ -445,6 +446,11 @@
     .notes,
     .empty-state {
     margin-top: 1rem;
+    }
+
+        .patient-name {
+    margin-top: 0.35rem;
+    font-weight: 700;
     }
 
     @media (max-width: 960px) {

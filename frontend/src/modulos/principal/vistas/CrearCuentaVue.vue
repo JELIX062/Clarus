@@ -3,7 +3,7 @@
         <section class="signup-card" aria-labelledby="titulo-registro">
         <p class="brand">CLARUS</p>
         <h1 id="titulo-registro">Crear cuenta</h1>
-        <p class="description">Captura los mismos datos de perfil para completar tu registro.</p>
+        <p class="description">{{ descripcionFormulario }}</p>
 
         <form class="signup-form" @submit.prevent="crearCuenta">
             <label>
@@ -67,7 +67,7 @@
 
             <p v-if="error" class="error">{{ error }}</p>
 
-            <button type="submit">Crear cuenta</button>
+            <button type="submit">{{ textoBoton }}</button>
         </form>
 
         <p class="help">
@@ -79,10 +79,12 @@
 </template>
 
 <script setup lang="ts">
-    import { reactive, ref } from 'vue'
+    import { computed, reactive, ref } from 'vue'
     import { RouterLink, useRouter } from 'vue-router'
+    import { useSesion } from '../controladores/useSesion'
 
     const router = useRouter()
+    const { rolUsuario } = useSesion()
 
     const formulario = reactive({
     nombres: '',
@@ -98,6 +100,13 @@
     const contrasena = ref('')
     const confirmacionContrasena = ref('')
     const error = ref('')
+    const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
+    const descripcionFormulario = computed(() =>
+        esRecepcionista.value
+        ? 'Captura los datos del paciente para crear una nueva cuenta.'
+        : 'Captura los mismos datos de perfil para completar tu registro.'
+    )
+    const textoBoton = computed(() => (esRecepcionista.value ? 'Registrar paciente' : 'Crear cuenta'))
 
     const crearCuenta = () => {
     if (contrasena.value !== confirmacionContrasena.value) {
@@ -106,7 +115,7 @@
     }
 
     error.value = ''
-    console.log('Cuenta creada', { ...formulario })
+    console.log(esRecepcionista.value ? 'Cuenta de paciente creada' : 'Cuenta creada', { ...formulario })
     void router.push({ name: 'perfil' })
     }
 </script>

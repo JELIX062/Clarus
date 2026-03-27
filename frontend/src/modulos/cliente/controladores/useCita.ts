@@ -7,12 +7,14 @@ export type Appointment = {
     specialty: string
     date: string
     time: string
+    patientName: string
     paymentMethod: string
     paymentReference: string
+    paid: boolean
     notes: string
-    }
+}
 
-export type AppointmentInput = Omit<Appointment, 'id'>
+export type AppointmentInput = Omit<Appointment, 'id' | 'paid'>
 
 const STORAGE_KEY = 'clarus-citas'
 
@@ -31,7 +33,16 @@ const parseStoredAppointments = (): Appointment[] => {
 
     try {
         const parsedAppointments = JSON.parse(storedAppointments) as Appointment[]
-        return Array.isArray(parsedAppointments) ? parsedAppointments : [...defaultAppointments]
+
+        if (!Array.isArray(parsedAppointments)) {
+            return [...defaultAppointments]
+        }
+
+        return parsedAppointments.map((appointment) => ({
+            ...appointment,
+            patientName: appointment.patientName ?? 'Paciente no especificado',
+            paid: appointment.paid ?? false
+        }))
     } catch {
         return [...defaultAppointments]
     }
@@ -77,10 +88,23 @@ export const useCitas = () => {
         ...appointments.value,
         {
             id: crypto.randomUUID(),
+            paid: false,
             ...appointment
         }
         ]
     }
+
+    const registerPayment = (appointmentId: string) => {
+        appointments.value = appointments.value.map((appointment) =>
+            appointment.id === appointmentId
+                ? {
+                    ...appointment,
+                    paid: true
+                }
+                : appointment
+        )
+    }
+
     const removeAppointment = (appointmentId: string) => {
         appointments.value = appointments.value.filter((appointment) => appointment.id !== appointmentId)
     }
@@ -91,6 +115,7 @@ export const useCitas = () => {
         upcomingAppointments,
         pastAppointments,
         addAppointment,
+        registerPayment,
         removeAppointment
     }
 }

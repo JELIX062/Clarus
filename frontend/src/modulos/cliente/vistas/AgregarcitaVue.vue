@@ -38,6 +38,12 @@
             </label>
 
             <label>
+            <span>Nombre del paciente</span>
+            <input v-model.trim="form.patientName" type="text" placeholder="Nombre completo" required />
+            </label>
+
+
+            <label>
             <span>Método de pago</span>
             <select v-model="form.paymentMethod" required>
                 <option disabled value="">Selecciona una opción</option>
@@ -196,6 +202,7 @@
     doctor: '',
     date: '',
     time: '',
+    patientName: '',
     paymentMethod: '',
     cardType: '',
     cardNumber: '',
@@ -283,12 +290,13 @@
         return
     }
 
-    addAppointment({
+     addAppointment({
         building: form.building,
         doctor: form.doctor,
         specialty: selectedDoctor.value.specialty,
         date: form.date,
         time: form.time,
+        patientName: form.patientName,
         paymentMethod: form.paymentMethod,
         paymentReference: buildPaymentReference(),
         notes: form.notes

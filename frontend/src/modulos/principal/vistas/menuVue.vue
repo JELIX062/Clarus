@@ -12,7 +12,7 @@
                         <router-link class="nav-link item" :to="rutaCitas">Citas</router-link>
                     </li>
                     <li class="nav_item margin">
-                        <router-link class="nav-link item" :to="rutaExpedientes">{{ etiquetaExpedientes }}</router-link>
+                        <router-link class="nav-link item" :to="rutaSecundaria">{{ etiquetaSecundaria }}</router-link>
                     </li>
                     <li class="nav_item margin">
                         <router-link class="nav-link item" to="/perfil">Perfil</router-link>
@@ -30,14 +30,18 @@
 
     const { rolUsuario } = useSesion()
 
-    const etiquetaExpedientes = computed(() =>
-      rolUsuario.value === 'doctor' ? 'Expedientes' : 'Recetas'
-    )
+    const etiquetaSecundaria = computed(() => {
+      if (rolUsuario.value === 'doctor') return 'Expedientes'
+      if (rolUsuario.value === 'recepcionista') return 'Nueva cuenta'
+      return 'Recetas'
+    })
 
     const rutaCitas = computed(() => (rolUsuario.value === 'doctor' ? '/doctor/citas' : '/citas'))
-    const rutaExpedientes = computed(() =>
-      rolUsuario.value === 'doctor' ? '/doctor/expedientes' : '/recetas'
-    )
+    const rutaSecundaria = computed(() => {
+      if (rolUsuario.value === 'doctor') return '/doctor/expedientes'
+      if (rolUsuario.value === 'recepcionista') return '/crear-cuenta'
+      return '/recetas'
+    })
 
 </script>
 

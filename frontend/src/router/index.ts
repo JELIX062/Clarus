@@ -80,7 +80,11 @@ router.beforeEach((to) => {
     return { name: 'doctor-expedientes' }
   }
 
-  if (rolUsuario.value === 'paciente' && (to.name === 'doctor-citas' || to.name === 'doctor-expedientes')) {
+  if (rolUsuario.value === 'recepcionista' && to.name === 'recetas') {
+    return { name: 'citas' }
+  }
+
+  if (rolUsuario.value !== 'doctor' && (to.name === 'doctor-citas' || to.name === 'doctor-expedientes')) {
     return { name: 'citas' }
   }
 

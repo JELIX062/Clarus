@@ -80,6 +80,9 @@
                 <div>
                     <h3>{{ appointment.doctor }}</h3>
                     <p>{{ appointment.specialty }}</p>
+                    <p v-if="esDoctor || esRecepcionista" class="patient-name">
+                    Paciente: {{ appointment.patientName }}
+                    </p>
                 </div>
                 <span class="tag">{{ appointment.building }}</span>
                 </div>
@@ -92,20 +95,42 @@
                 <div>
                     <dt>Pago</dt>
                     <dd>{{ appointment.paymentMethod }} · {{ appointment.paymentReference }}</dd>
+                    <small :class="appointment.paid ? 'payment-status paid' : 'payment-status pending'">
+                    {{ appointment.paid ? 'Pagado' : 'Pendiente de pago' }}
+                    </small>
                 </div>
                 </dl>
 
                 <p v-if="appointment.notes" class="notes">{{ appointment.notes }}</p>
 
-                <button v-if="esDoctor" class="button button-danger" type="button" @click="cancelarCita(appointment.id)">
+                <button
+                v-if="esDoctor || esRecepcionista"
+                class="button button-danger"
+                type="button"
+                @click="cancelarCita(appointment.id)"
+                >
                 Cancelar cita
+                </button>
+                <button
+                v-if="esRecepcionista && !appointment.paid"
+                class="button button-success"
+                type="button"
+                @click="recibirPago(appointment.id)"
+                >
+                Recibir pago
                 </button>
             </article>
             </div>
 
             <div class="details-actions details-actions-bottom">
-            <RouterLink v-if="!esDoctor" class="button" :to="{ name: 'agregar-cita' }">Agregar cita</RouterLink>
-            <RouterLink class="button button-white" :to="{ name: 'historial-citas' }">
+            <RouterLink v-if="!esDoctor" class="button" :to="{ name: 'agregar-cita' }">
+                {{ esRecepcionista ? "Agendar cita para paciente" : "Agregar cita" }}
+            </RouterLink>
+            <RouterLink
+            v-if="!esRecepcionista"
+            class="button button-white"
+            :to="{ name: 'historial-citas' }"
+            >
                 {{ esDoctor ? "Ver historial general" : "Ver historial" }}
             </RouterLink>
             </div>
@@ -121,7 +146,7 @@
     import { useCitas } from '../controladores/useCita'
     import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
-    const { appointments, removeAppointment } = useCitas()
+    const { appointments, removeAppointment, registerPayment } = useCitas()
     const { rolUsuario } = useSesion()
 
     const fullMonths = [
@@ -146,7 +171,6 @@
     const selectedDay = ref(now.getDate())
     const todayDay = now.getDate()
     const showMonthMenu = ref(false)
-
     const isCurrentVisibleMonth = computed(
     () => visibleYear.value === now.getFullYear() && visibleMonth.value === now.getMonth()
     )
@@ -207,6 +231,7 @@
     })
 
     const esDoctor = computed(() => rolUsuario.value === 'doctor')
+    const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
 
     const hasAppointments = (day: number) => Boolean(appointmentCountByDay.value[day])
 
@@ -255,6 +280,10 @@
     removeAppointment(appointmentId)
     }
 
+    const recibirPago = (appointmentId: string) => {
+    registerPayment(appointmentId)
+    }
+
     const formatTime = (time: string) =>
     new Intl.DateTimeFormat('es-MX', {
         timeStyle: 'short'
@@ -299,6 +328,11 @@
     margin-top: 1rem;
     background: #b42318;
     border-color: #b42318;
+    }
+    .button-success {
+    margin-top: 0.6rem;
+    background: #047857;
+    border-color: #047857;
     }
     .calendar-layout {
     display: grid;
@@ -476,6 +510,22 @@
     dd {
     margin: 0.25rem 0 0;
     font-weight: 600;
+    }
+    .payment-status {
+    display: inline-block;
+    margin-top: 0.3rem;
+    font-weight: 700;
+    font-size: 0.82rem;
+    }
+    .payment-status.pending {
+    color: #b45309;
+    }
+    .payment-status.paid {
+    color: #047857;
+    }
+    .patient-name {
+    margin-top: 0.4rem;
+    font-weight: 700;
     }
     .notes,
     .empty-state {

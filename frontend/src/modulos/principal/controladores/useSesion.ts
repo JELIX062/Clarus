@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-export type RolUsuario = 'paciente' | 'doctor'
+export type RolUsuario = 'paciente' | 'doctor' | 'recepcionista'
 
 const STORAGE_KEY = 'clarus-rol-usuario'
 
@@ -10,7 +10,12 @@ const parseStoredRole = (): RolUsuario => {
     }
 
     const storedRole = window.localStorage.getItem(STORAGE_KEY)
-    return storedRole === 'doctor' ? 'doctor' : 'paciente'
+
+    if (storedRole === 'doctor' || storedRole === 'recepcionista') {
+        return storedRole
+    }
+
+    return 'paciente'
 }
 
 const rolUsuario = ref<RolUsuario>(parseStoredRole())

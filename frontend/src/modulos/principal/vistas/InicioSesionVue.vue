@@ -21,6 +21,7 @@
             <select v-model="rol" required>
                 <option value="paciente">Paciente</option>
                 <option value="doctor">Doctor</option>
+                <option value="recepcionista">Recepcionista</option>
             </select>
             </label>
 
@@ -42,10 +43,16 @@
 
     const correo = ref('')
     const contrasena = ref('')
-    const rol = ref<'paciente' | 'doctor'>('paciente')
+    const rol = ref<'paciente' | 'doctor' | 'recepcionista'>('paciente')
 
     const iniciarSesion = () => {
     setRolUsuario(rol.value)
+
+    if (rol.value === 'doctor') {
+        void router.push({ name: 'doctor-citas' })
+        return
+    }
+
     void router.push({ name: 'citas' })
     }
 </script>
