@@ -2,8 +2,8 @@ import mysql from 'mysql2/promise';
 
 const conexion = mysql.createPool({
     host: 'localhost',
-    user: 'root',
-    password: '',
+    user: 'Equipo14',
+    password: 'Equipo14',
     database: 'clarus'
 })
 
@@ -13,5 +13,14 @@ export const obtieneUsuario = async () => {
         return results;
     }catch(err){
         return {error: "No se puede obtener el usuario"}
+    }
+}
+
+export const encuentraUsuario = async (id_usuario:number) => {
+    try {
+        const[results] = await conexion.query('SELECT * FROM usuario WHERE id_usuario = ? LIMIT 1',[id_usuario]);
+        return results;
+    }catch{
+        return {error: "No se encuentra el usuario"}
     }
 }
