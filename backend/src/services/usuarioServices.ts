@@ -1,5 +1,7 @@
 import mysql from 'mysql2/promise';
 import type { UsuarioNuevo } from './typesUsuarios.js';
+import bcrypt from 'bcrypt';
+
 const conexion = mysql.createPool({
     host: 'localhost',
     user: 'Equipo14',
@@ -25,12 +27,17 @@ export const encuentraUsuario = async (id_usuario:number) => {
     }
 }
 
-export const agregaUsuario = async (nuevo:UsuarioNuevo) => {
-try {
-    const [results] =  await conexion.query('INSERT INTO usuario(nombre,apellido_paterno,apellido_materno,correo,telefono,contraseña) values(?,?,?,?,?,?,)',
-        [nuevo.nombre,nuevo.apellido_paterno,nuevo.apellido_materno ?? null,nuevo.correo,nuevo.telefono ?? null,nuevo.contraseña]);
-    return results;
-} catch (err) {
-    return { error: 'No se puede agregar el usuario' };
-}
+export const agregaUsuario = async (nuevo: UsuarioNuevo) => {
+    try {
+        const hash = await bcrypt.hash(nuevo.contraseña, 10);  // 👈 2. Hashea la contraseña
+
+        const [results] = await conexion.query(
+            'INSERT INTO usuario(nombre,apellido_paterno,apellido_materno,correo,telefono,contrasena_hash) values(?,?,?,?,?,?)',
+            [nuevo.nombre, nuevo.apellido_paterno, nuevo.apellido_materno ?? null, nuevo.correo, nuevo.telefono ?? null, hash]  // 👈 3. Usa hash
+        );
+        return results;
+    } catch (err) {
+        console.log("ERROR EN BD:", err);
+        return { error: 'No se puede agregar el usuario' };
+    }
 }
