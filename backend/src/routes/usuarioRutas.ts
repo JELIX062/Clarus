@@ -1,6 +1,7 @@
 import express from 'express';
-import type {Request,Response} from 'express';
+import type { Request, Response } from 'express';
 import * as usuarioServices from '../services/usuarioServices.js';
+
 const router =express.Router();
 
 //http://localhost:3001/api/usuario/
@@ -10,8 +11,25 @@ router.get('/',async(_req: Request, res: Response)=>{
 })
 
 //http://localhost:3001/api/usuario/1 ← numero de id del usuario
-router.get('/',async(req: Request, res: Response)=>{
+router.get('/:id_usuario',async(req: Request, res: Response)=>{
     let usuario = await usuarioServices.encuentraUsuario(Number(req.params.id_usuario)); 
     res.send(usuario);
 })
+
+router.post('/',async(req: Request, res: Response)=>{
+    try{
+        const {nombre,apellido_paterno,apellido_materno,correo,contrasena} = req.body;
+        const nuevoUsuario = await usuarioServices.agregaUsuario({
+            nombre,
+            apellido_paterno,
+            apellido_materno,
+            correo,
+            contrasena
+        });
+        res.send(nuevoUsuario);
+    }catch(e){
+        res.send('No se puede agregar el usuario');
+        //res.status(400).send('Error en los datos')
+    }
+});
 export default router;

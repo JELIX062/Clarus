@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-
+import type { UsuarioNuevo } from './typesUsuarios.js';
 const conexion = mysql.createPool({
     host: 'localhost',
     user: 'Equipo14',
@@ -23,4 +23,14 @@ export const encuentraUsuario = async (id_usuario:number) => {
     }catch{
         return {error: "No se encuentra el usuario"}
     }
+}
+
+export const agregaUsuario = async (nuevo:UsuarioNuevo) => {
+try {
+    const [results] =  await conexion.query('INSERT INTO usuario(nombre,apellido_paterno,apellido_materno,correo,telefono,contraseña) values(?,?,?,?,?,?,)',
+        [nuevo.nombre,nuevo.apellido_paterno,nuevo.apellido_materno ?? null,nuevo.correo,nuevo.telefono ?? null,nuevo.contrasena]);
+    return results;
+} catch (err) {
+    return { error: 'No se puede agregar el usuario' };
+}
 }
