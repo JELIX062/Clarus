@@ -18,13 +18,13 @@ router.get('/:id_usuario',async(req: Request, res: Response)=>{
 
 router.post('/',async(req: Request, res: Response)=>{
     try{
-        const {nombre,apellido_paterno,apellido_materno,correo,contrasena} = req.body;
+        const {nombre,apellido_paterno,apellido_materno,correo,contraseña} = req.body;
         const nuevoUsuario = await usuarioServices.agregaUsuario({
             nombre,
             apellido_paterno,
             apellido_materno,
             correo,
-            contrasena
+            contraseña
         });
         res.send(nuevoUsuario);
     }catch(e){

@@ -15,12 +15,12 @@ export type UsuarioNuevo = Omit<
   Usuario,
   'id_usuario' | 'id_rol' | 'activo' | 'fecha_registro' | 'ultimo_acceso'
 > & {
-  contrasena: string;
+  contraseña: string;
 };
 
 export interface UsuarioLogin {
   correo: string;
-  contrasena: string;
+  contraseña: string;
 }
 
 export type UsuarioEditar = Partial<
