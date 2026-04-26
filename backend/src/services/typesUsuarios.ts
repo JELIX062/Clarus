@@ -1,28 +1,55 @@
+// Interfaz principal del usuario en la base de datos
 export interface Usuario {
-  id_usuario: number;
-  id_rol: number;
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno?: string | null;
-  correo: string;
-  telefono?: string | null;
-  activo: number;
-  fecha_registro: string;
-  ultimo_acceso?: string | null;
+    id_usuario: number;
+    id_rol: number;
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno?: string | null;
+    correo: string;
+    telefono?: string | null;
+    contrasena_hash: string;
+    activo: number;
+    fecha_registro: string;
+    ultimo_acceso?: string | null;
 }
 
-export type UsuarioNuevo = Omit<
-  Usuario,
-  'id_usuario' | 'id_rol' | 'activo' | 'fecha_registro' | 'ultimo_acceso'
-> & {
-  contraseña: string;
+// Tipo para registrar un nuevo usuario desde el frontend
+export type UsuarioNuevo = {
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno?: string | null;
+    correo: string;
+    telefono?: string | null;
+    contraseña: string;
+    fecha_nacimiento?: string;
+    sexo?: string;
+    tipo_sangre?: string;
 };
 
+// Tipo para login
 export interface UsuarioLogin {
-  correo: string;
-  contraseña: string;
+    correo: string;
+    contraseña: string;
 }
 
-export type UsuarioEditar = Partial<
-  Omit<Usuario, 'id_usuario' | 'id_rol' | 'activo' | 'fecha_registro' | 'ultimo_acceso'>
->;
+// Tipo para editar usuario
+export type UsuarioEditar = {
+    nombre?: string;
+    apellido_paterno?: string;
+    apellido_materno?: string | null;
+    correo?: string;
+    telefono?: string | null;
+};
+
+// Interfaz principal del paciente en la base de datos
+export interface Paciente {
+    id_paciente: number;
+    id_usuario: number;
+    fecha_nacimiento: string;
+    sexo: string;
+    tipo_sangre: string;
+    saldo_pendiente: number;
+}
+
+// Tipo para editar datos del paciente
+export type PacienteNuevo = Omit<Paciente, 'id_paciente'>;
