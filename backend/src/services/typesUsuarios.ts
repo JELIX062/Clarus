@@ -32,24 +32,20 @@ export interface UsuarioLogin {
     contraseña: string;
 }
 
-// Tipo para editar usuario
-export type UsuarioEditar = {
-    nombre?: string;
-    apellido_paterno?: string;
-    apellido_materno?: string | null;
-    correo?: string;
-    telefono?: string | null;
-};
-
 // Interfaz principal del paciente en la base de datos
 export interface Paciente {
     id_paciente: number;
     id_usuario: number;
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno?: string | null;
+    correo: string;
+    telefono?: string | null;
     fecha_nacimiento: string;
     sexo: string;
     tipo_sangre: string;
     saldo_pendiente: number;
 }
 
-// Tipo para editar datos del paciente
+// Tipo para editar paciente — omite solo el id
 export type PacienteNuevo = Omit<Paciente, 'id_paciente'>;

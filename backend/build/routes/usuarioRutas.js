@@ -13,21 +13,23 @@ router.get('/:id_usuario', async (req, res) => {
 });
 router.post('/', async (req, res) => {
     try {
-        const { nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña } = req.body;
+        const { nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña, fecha_nacimiento, sexo, tipo_sangre } = req.body;
         const nuevoUsuario = await usuarioServices.agregaUsuario({
             nombre,
             apellido_paterno,
             apellido_materno,
             correo,
             telefono,
-            contraseña
+            contraseña,
+            fecha_nacimiento,
+            sexo,
+            tipo_sangre
         });
         res.send(nuevoUsuario);
     }
     catch (e) {
         console.log("ERROR:", e);
         res.send('No se puede agregar el usuario');
-        //res.status(400).send('Error en los datos')
     }
 });
 export default router;
