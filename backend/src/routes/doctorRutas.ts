@@ -16,29 +16,64 @@ router.get('/:id_doctor', async (req: Request, res: Response) => {
     res.send(doctor);
 });
 
-// http://localhost:3001/api/doctor
+// http://localhost:3001/api/doctor/
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { id_usuario, id_sucursal, especialidad, rfc, cedula_profesional, tarifa_consulta } = req.body;
-        const resultado = await doctorServices.agregaDoctor({ id_usuario, id_sucursal, especialidad, rfc, cedula_profesional, tarifa_consulta });
+        const { nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña, id_sucursal, especialidad, rfc, cedula_profesional, tarifa_consulta } = req.body;
+        const resultado = await doctorServices.registraDoctor({
+            nombre,
+            apellido_paterno,
+            apellido_materno,
+            correo,
+            telefono,
+            contraseña,
+            id_sucursal,
+            especialidad,
+            rfc,
+            cedula_profesional,
+            tarifa_consulta,
+            id_usuario: 0
+        });
         res.send(resultado);
     } catch(e) {
-        console.log("ERROR:", e);
-        res.send('No se puede agregar el doctor');
+        res.status(400).send('No se puede registrar el doctor');
     }
 });
 
-// http://localhost:3001/api/doctor/1 + numero de id del doctor
-router.put('/:id_doctor', async (req: Request, res: Response) => {
-    const { especialidad, tarifa_consulta, id_sucursal } = req.body;
-    const resultado = await doctorServices.editaDoctor(Number(req.params.id_doctor), { especialidad, tarifa_consulta, id_sucursal });
-    res.send(resultado);
+// http://localhost:3001/api/doctor
+router.put('/', async (req: Request, res: Response) => {
+    try {
+    const { id_doctor, id_usuario, nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña, especialidad, rfc, cedula_profesional, tarifa_consulta, id_sucursal } = req.body;
+    const resultado = await doctorServices.editaDoctor({        
+        id_doctor,
+        id_usuario,
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        correo,
+        telefono,
+        contraseña,
+        especialidad,
+        rfc,
+        cedula_profesional,
+        tarifa_consulta,
+        id_sucursal
+    });
+        res.send(resultado);
+    } catch(e) {
+        res.status(400).send('No se puede editar el doctor');
+    }
 });
 
-// http://localhost:3001/api/doctor/desactivar/1 + numero de id del doctor
-router.put('/desactivar/:id_doctor', async (req: Request, res: Response) => {
-    const resultado = await doctorServices.desactivaDoctor(Number(req.params.id_doctor));
-    res.send(resultado);
+// http://localhost:3001/api/doctor
+router.delete('/', async (req: Request, res: Response) => {
+    try {
+        const { id_doctor } = req.body;
+        const eliminado = await doctorServices.borrarDoctor(Number(id_doctor));
+        res.send(eliminado);
+    } catch(e) {
+        res.status(400).send('Error en los datos');
+    }
 });
 
 export default router;

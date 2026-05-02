@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import bcrypt from 'bcrypt';
 export const obtienePacientes = async () => {
     try {
         const [results] = await conexion.query('SELECT * FROM paciente');
@@ -17,20 +18,40 @@ export const encuentraPaciente = async (id_paciente) => {
         return { error: "No se encuentra el paciente" };
     }
 };
+export const agregaPaciente = async (nuevo) => {
+    try {
+        const hash = await bcrypt.hash(nuevo.contraseña, 10);
+        const [result] = await conexion.query('INSERT INTO usuario(id_rol, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena_hash) values(?,?,?,?,?,?,?)', [4, nuevo.nombre, nuevo.apellido_paterno, nuevo.apellido_materno ?? null, nuevo.correo, nuevo.telefono ?? null, hash]);
+        const id_usuario = result.insertId;
+        await conexion.query('INSERT INTO paciente(id_usuario, fecha_nacimiento, sexo, tipo_sangre, saldo_pendiente) values(?,?,?,?,?)', [id_usuario, nuevo.fecha_nacimiento ?? null, nuevo.sexo ?? null, nuevo.tipo_sangre ?? null, 0.00]);
+        return { mensaje: 'Paciente registrado correctamente', id_usuario };
+    }
+    catch (err) {
+        console.log("ERROR EN BD:", err);
+        return { error: 'No se puede agregar el usuario' };
+    }
+};
 export const editaPaciente = async (datos) => {
     try {
-        // Verifica que el paciente exista
-        const [existe] = await conexion.query('SELECT id_paciente FROM paciente WHERE id_paciente = ? LIMIT 1', [datos.id_paciente]);
+        const [existe] = await conexion.query('SELECT id_paciente FROM paciente WHERE id_paciente = ? AND id_usuario = ? LIMIT 1', [datos.id_paciente, datos.id_usuario]);
         if (existe.length === 0) {
-            return { error: 'No se encuentra el paciente' };
+            return { error: 'No se encuentra el paciente o los datos no corresponden' };
         }
-        await conexion.query(`UPDATE usuario SET 
+        let queryUsuario = `UPDATE usuario SET
                 nombre = ?,
                 apellido_paterno = ?,
                 apellido_materno = ?,
                 correo = ?,
-                telefono = ?
-            WHERE id_usuario = (SELECT id_usuario FROM paciente WHERE id_paciente = ?)`, [datos.nombre, datos.apellido_paterno, datos.apellido_materno, datos.correo, datos.telefono, datos.id_paciente]);
+                telefono = ?`;
+        let paramsUsuario = [datos.nombre, datos.apellido_paterno, datos.apellido_materno, datos.correo, datos.telefono];
+        if (datos.contraseña) {
+            const hash = await bcrypt.hash(datos.contraseña, 10);
+            queryUsuario += ', contrasena_hash = ?';
+            paramsUsuario.push(hash);
+        }
+        queryUsuario += ' WHERE id_usuario = (SELECT id_usuario FROM paciente WHERE id_paciente = ?)';
+        paramsUsuario.push(datos.id_paciente);
+        await conexion.query(queryUsuario, paramsUsuario);
         await conexion.query(`UPDATE paciente SET
                 fecha_nacimiento = ?,
                 sexo = ?,
@@ -41,5 +62,24 @@ export const editaPaciente = async (datos) => {
     catch (err) {
         console.log("ERROR EN BD:", err);
         return { error: "No se puede editar el paciente" };
+    }
+};
+export const borrarPaciente = async (id_paciente) => {
+    try {
+        // Obtiene el id_usuario antes de borrar
+        const [paciente] = await conexion.query('SELECT id_usuario FROM paciente WHERE id_paciente = ? LIMIT 1', [id_paciente]);
+        if (paciente.length === 0) {
+            return { error: 'No se encuentra el paciente' };
+        }
+        const id_usuario = paciente[0].id_usuario;
+        // Borra primero el paciente por la llave foránea
+        await conexion.query('DELETE FROM paciente WHERE id_paciente = ?', [id_paciente]);
+        // Borra el usuario
+        await conexion.query('DELETE FROM usuario WHERE id_usuario = ?', [id_usuario]);
+        return { mensaje: 'Paciente eliminado correctamente' };
+    }
+    catch (err) {
+        console.log("ERROR EN BD:", err);
+        return { error: "No se puede borrar el paciente" };
     }
 };

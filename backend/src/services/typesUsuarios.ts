@@ -47,5 +47,36 @@ export interface Paciente {
     saldo_pendiente: number;
 }
 
-// Tipo para editar paciente — omite solo el id
+// Tipo para editar paciente
 export type PacienteNuevo = Omit<Paciente, 'id_paciente'>;
+
+// Tipo para editar paciente
+export type PacienteEditar = Paciente & {
+    contraseña?: string;
+};
+
+// Interfaz principal del doctor en la base de datos
+export interface Doctor {
+    id_doctor: number;
+    id_usuario: number;
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno?: string | null;
+    correo: string;
+    telefono?: string | null;
+    especialidad: string;
+    rfc: string;
+    cedula_profesional: string;
+    tarifa_consulta: number;
+    id_sucursal: number;
+}
+
+// Tipo para registrar un nuevo doctor
+export type DoctorNuevo = Omit<Doctor, 'id_doctor'> & {
+    contraseña: string;
+};
+
+// Tipo para editar doctor
+export type DoctorEditar = Doctor & {
+    contraseña?: string;
+};
