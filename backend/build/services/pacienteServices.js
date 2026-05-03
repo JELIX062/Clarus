@@ -2,7 +2,11 @@ import conexion from '../database/conexion.js';
 import bcrypt from 'bcrypt';
 export const obtienePacientes = async () => {
     try {
-        const [results] = await conexion.query('SELECT * FROM paciente');
+        const [results] = await conexion.query(`
+            SELECT p.*, u.nombre, u.apellido_paterno, u.apellido_materno, u.correo, u.telefono
+            FROM paciente p
+            INNER JOIN usuario u ON p.id_usuario = u.id_usuario
+        `);
         return results;
     }
     catch (err) {
@@ -11,7 +15,12 @@ export const obtienePacientes = async () => {
 };
 export const encuentraPaciente = async (id_paciente) => {
     try {
-        const [results] = await conexion.query('SELECT * FROM paciente WHERE id_paciente = ? LIMIT 1', [id_paciente]);
+        const [results] = await conexion.query(`
+            SELECT p.*, u.nombre, u.apellido_paterno, u.apellido_materno, u.correo, u.telefono
+            FROM paciente p
+            INNER JOIN usuario u ON p.id_usuario = u.id_usuario
+            WHERE p.id_paciente = ? LIMIT 1
+        `, [id_paciente]);
         return results;
     }
     catch {
