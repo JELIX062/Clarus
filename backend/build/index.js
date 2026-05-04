@@ -8,6 +8,11 @@ import sucursalRutas from './routes/sucursalRutas.js';
 import consultorioRutas from './routes/consultorioRutas.js';
 import expedienteRutas from './routes/expedienteRutas.js';
 import citaRutas from './routes/citaRutas.js';
+import horarioDoctorRutas from './routes/horarioDoctorRutas.js';
+import bloqueoHorarioRutas from './routes/bloqueoHorarioRutas.js';
+import pagoRutas from './routes/pagoRutas.js';
+import administradorRutas from './routes/administradorRutas.js';
+import consultaFisicaRutas from './routes/consultaFisicaRutas.js';
 // Creamos la aplicacion a través del paquete express
 // Y la llamamos a su constructor
 const app = express();
@@ -23,6 +28,11 @@ app.use('/api/sucursal', sucursalRutas);
 app.use('/api/consultorio', consultorioRutas);
 app.use('/api/expediente', expedienteRutas);
 app.use('/api/cita', citaRutas);
+app.use('/api/horario', horarioDoctorRutas);
+app.use('/api/bloqueo', bloqueoHorarioRutas);
+app.use('/api/pago', pagoRutas);
+app.use('/api/administrador', administradorRutas);
+app.use('/api/consultafisica', consultaFisicaRutas);
 // Puerto para escuchar la peticion del frontend
 const PUERTO = 3001;
 // encendemos el servidor y lo ponemos en escucha

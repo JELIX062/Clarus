@@ -16,6 +16,22 @@ router.get('/:id_usuario',async(req: Request, res: Response)=>{
     res.send(usuario);
 })
 
+// http://localhost:3001/api/usuario/login
+router.post('/login', async (req: Request, res: Response) => {
+    try {
+        const { correo, contraseña } = req.body;
 
+        if (!correo || !contraseña) {
+            res.status(400).send({ error: 'Correo y contraseña son requeridos' });
+            return;
+        }
+
+        const resultado = await usuarioServices.login(correo, contraseña);
+        res.send(resultado);
+
+    } catch(e) {
+        res.status(400).send({ error: 'Error al iniciar sesión' });
+    }
+});
 
 export default router;

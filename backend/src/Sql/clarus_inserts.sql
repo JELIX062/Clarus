@@ -15,12 +15,12 @@ INSERT INTO Rol (nombre, descripcion) VALUES
 -- 2. Usuario
 -- ------------------------------------------------------------
 INSERT INTO Usuario (id_rol, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena_hash, activo) VALUES
-(1, 'Rebeca',   'Godoy',     'Castro',    'rebeca.godoy@clarus.com',      '6671000001', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1),
-(2, 'Diego',    'Velázquez', 'Sanchez',    'diego.velazquez@clarus.com',   '6671000002', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1),
-(2, 'Bruno',    'López',     'Acosta',    'bruno.lopez@clarus.com',       '6671000003', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1),
-(3, 'Santiago', 'Cuan',      'Villalobos',    'santiago.cuan@clarus.com',     '6671000004', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1),
-(4, 'Joel',     'Félix',     'Rubio', 'joel.felix@clarus.com',        '6671000005', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1),
-(4, 'David',    'Félix',     'Rubio', 'david.felix@clarus.com',       '6671000006', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1);
+(1, 'Rebeca',   'Godoy',     'Castro',    'rebeca.godoy@clarus.com',      '6671000001', '$2b$10$nG9o7XzZk/A/Pk/J8.5U/OwdbxTT33KdHy3bgjGI4OKu3ngc1TIIO', 1),
+(2, 'Diego',    'Velázquez', 'Sanchez',    'diego.velazquez@clarus.com',   '6671000002', '$2b$10$nG9o7XzZk/A/Pk/J8.5U/OwdbxTT33KdHy3bgjGI4OKu3ngc1TIIO', 1),
+(2, 'Bruno',    'López',     'Acosta',    'bruno.lopez@clarus.com',       '6671000003', '$2b$10$nG9o7XzZk/A/Pk/J8.5U/OwdbxTT33KdHy3bgjGI4OKu3ngc1TIIO', 1),
+(3, 'Santiago', 'Cuan',      'Villalobos',    'santiago.cuan@clarus.com',     '6671000004', '$2b$10$nG9o7XzZk/A/Pk/J8.5U/OwdbxTT33KdHy3bgjGI4OKu3ngc1TIIO', 1),
+(4, 'Joel',     'Félix',     'Rubio', 'joel.felix@clarus.com',        '6671000005', '$2b$10$nG9o7XzZk/A/Pk/J8.5U/OwdbxTT33KdHy3bgjGI4OKu3ngc1TIIO', 1),
+(4, 'David',    'Félix',     'Rubio', 'david.felix@clarus.com',       '6671000006', '$2b$10$nG9o7XzZk/A/Pk/J8.5U/OwdbxTT33KdHy3bgjGI4OKu3ngc1TIIO', 1);
 
 -- ------------------------------------------------------------
 -- 3. Administrador

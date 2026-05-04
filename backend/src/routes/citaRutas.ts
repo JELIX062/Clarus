@@ -29,9 +29,10 @@ router.get('/doctor/:id_doctor', async (req: Request, res: Response) => {
 });
 
 // http://localhost:3001/api/cita
+// http://localhost:3001/api/cita
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { id_paciente, id_doctor, id_consultorio, id_recepcionista, fecha, hora_inicio, hora_fin, motivo_consulta, costo_total, registrado_por } = req.body;
+        const { id_paciente, id_doctor, id_consultorio, id_recepcionista, fecha, hora_inicio, hora_fin, motivo_consulta, costo_total, registrado_por, metodo_pago, referencia } = req.body;
         const resultado = await citaServices.registraCita({
             id_paciente,
             id_doctor,
@@ -43,7 +44,9 @@ router.post('/', async (req: Request, res: Response) => {
             estado: 'Programada',
             motivo_consulta,
             costo_total,
-            registrado_por
+            registrado_por,
+            metodo_pago,
+            referencia
         });
         res.send(resultado);
     } catch(e) {
@@ -80,6 +83,17 @@ router.put('/cancelar', async (req: Request, res: Response) => {
     try {
         const { id_cita, motivo, cancelado_por } = req.body;
         const resultado = await citaServices.cancelaCita(Number(id_cita), motivo, Number(cancelado_por));
+        res.send(resultado);
+    } catch(e) {
+        res.status(400).send('Error en los datos');
+    }
+});
+
+// http://localhost:3001/api/cita/atendida
+router.put('/atendida', async (req: Request, res: Response) => {
+    try {
+        const { id_cita, id_doctor } = req.body;
+        const resultado = await citaServices.marcaCitaAtendida(Number(id_cita), Number(id_doctor));
         res.send(resultado);
     } catch(e) {
         res.status(400).send('Error en los datos');

@@ -168,3 +168,92 @@ export interface Cita {
 
 // Tipo para registrar una nueva cita
 export type CitaNuevo = Omit<Cita, 'id_cita' | 'fecha_registro'>;
+
+// Interfaz principal del horario del doctor
+export interface HorarioDoctor {
+    id_horario: number;
+    id_doctor: number;
+    id_consultorio: number;
+    dia_semana: number;
+    hora_inicio: string;
+    hora_fin: string;
+    activo: number;
+}
+
+export type HorarioDoctorNuevo = Omit<HorarioDoctor, 'id_horario'>;
+
+// Interfaz principal del bloqueo de horario
+export interface BloqueoHorario {
+    id_bloqueo: number;
+    id_doctor: number;
+    fecha: string;
+    hora_inicio: string;
+    hora_fin: string;
+    motivo: string;
+    creado_por: number;
+    fecha_registro?: string;
+}
+
+export type BloqueoHorarioNuevo = Omit<BloqueoHorario, 'id_bloqueo' | 'fecha_registro'>;
+
+// Interfaz principal del pago en la base de datos
+export interface Pago {
+    id_pago: number;
+    id_cita: number;
+    metodo_pago: string;
+    tipo_pago: string;
+    monto: number;
+    fecha_pago?: string;
+    referencia?: string | null;
+    registrado_por: number;
+    estado: string;
+}
+
+// Tipo para registrar un nuevo pago
+export type PagoNuevo = Omit<Pago, 'id_pago' | 'fecha_pago'>;
+
+// Interfaz principal del administrador en la base de datos
+export interface Administrador {
+    id_administrador: number;
+    id_usuario: number;
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno?: string | null;
+    correo: string;
+    telefono?: string | null;
+    cargo: string;
+}
+
+// Tipo para registrar un nuevo administrador
+export type AdministradorNuevo = Omit<Administrador, 'id_administrador'> & {
+    contraseña: string;
+};
+
+// Tipo para editar administrador
+export type AdministradorEditar = Administrador & {
+    contraseña?: string;
+};
+
+// Interfaz principal de la consulta fisica en la base de datos
+export interface ConsultaFisica {
+    id_consulta: number;
+    id_cita: number;
+    id_expediente: number;
+    id_doctor: number;
+    motivo_consulta: string;
+    peso_kg: number;
+    talla_cm: number;
+    tension_arterial: string;
+    temperatura_c: number;
+    frecuencia_cardiaca: number;
+    notas_examen_fisico: string;
+    notas_clinicas: string;
+    tratamiento: string;
+    indicaciones: string;
+    fecha_consulta?: string;
+    firmada: number;
+    fecha_firma?: string | null;
+}
+
+// Tipo para registrar una nueva consulta fisica
+export type ConsultaFisicaNuevo = Omit<ConsultaFisica, 'id_consulta' | 'fecha_consulta' | 'fecha_firma'>;
