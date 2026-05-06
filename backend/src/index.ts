@@ -13,6 +13,7 @@ import bloqueoHorarioRutas from './routes/bloqueoHorarioRutas.js';
 import pagoRutas from './routes/pagoRutas.js';
 import administradorRutas from './routes/administradorRutas.js';
 import consultaFisicaRutas from './routes/consultaFisicaRutas.js';
+import notificacionRutas from './routes/notificacionRutas.js';
 
 
 // Creamos la aplicacion a través del paquete express
@@ -37,6 +38,7 @@ app.use('/api/bloqueo', bloqueoHorarioRutas);
 app.use('/api/pago', pagoRutas);
 app.use('/api/administrador', administradorRutas);
 app.use('/api/consultafisica', consultaFisicaRutas);
+app.use('/api/notificacion', notificacionRutas);
 
 
 // Puerto para escuchar la peticion del frontend

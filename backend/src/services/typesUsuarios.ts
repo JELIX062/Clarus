@@ -257,3 +257,16 @@ export interface ConsultaFisica {
 
 // Tipo para registrar una nueva consulta fisica
 export type ConsultaFisicaNuevo = Omit<ConsultaFisica, 'id_consulta' | 'fecha_consulta' | 'fecha_firma'>;
+
+// Interfaz principal de la notificacion en la base de datos
+export interface Notificacion {
+    id_notificacion: number;
+    id_usuario: number;
+    titulo: string;
+    mensaje: string;
+    leida: number;
+    fecha_creacion?: string;
+}
+
+// Tipo para crear una nueva notificacion
+export type NotificacionNuevo = Omit<Notificacion, 'id_notificacion' | 'fecha_creacion' | 'leida'>;

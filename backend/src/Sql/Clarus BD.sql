@@ -262,3 +262,19 @@ CREATE TABLE ConsultaFisica (
     CONSTRAINT FK_Consulta_Expediente FOREIGN KEY (id_expediente) REFERENCES Expediente (id_expediente),
     CONSTRAINT FK_Consulta_Doctor     FOREIGN KEY (id_doctor)     REFERENCES Doctor     (id_doctor)
 );
+
+
+-- ------------------------------------------------------------
+-- 16. Notificacion
+-- ------------------------------------------------------------
+CREATE TABLE Notificacion (
+    id_notificacion  INT           NOT NULL AUTO_INCREMENT,
+    id_usuario       INT           NOT NULL,
+    titulo           VARCHAR(100)  NOT NULL,
+    mensaje          VARCHAR(500)  NOT NULL,
+    leida            TINYINT(1)    NOT NULL DEFAULT 0,
+    fecha_creacion   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_notificacion),
+    CONSTRAINT FK_Notificacion_Usuario FOREIGN KEY (id_usuario)
+        REFERENCES Usuario (id_usuario)
+);

@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import * as notificacionServices from './notificacionServices.js';
 export const obtieneCitas = async () => {
     try {
         const [results] = await conexion.query(`
@@ -102,7 +103,7 @@ export const obtieneCitasPorDoctor = async (id_doctor) => {
 };
 export const registraCita = async (nuevo) => {
     try {
-        const diaSemana = new Date(nuevo.fecha).getDay();
+        const diaSemana = new Date(nuevo.fecha + "T00:00:00").getDay();
         const [horario] = await conexion.query(`SELECT id_horario FROM horariodoctor 
             WHERE id_doctor = ? AND dia_semana = ? AND activo = 1
             AND hora_inicio <= ? AND hora_fin >= ?`, [nuevo.id_doctor, diaSemana, nuevo.hora_inicio, nuevo.hora_fin]);
@@ -128,6 +129,12 @@ export const registraCita = async (nuevo) => {
         const montoAnticipo = nuevo.costo_total * 0.5;
         // Registra el anticipo
         const [pago] = await conexion.query('INSERT INTO pago(id_cita, metodo_pago, tipo_pago, monto, referencia, registrado_por, estado) values(?,?,?,?,?,?,?)', [id_cita, nuevo.metodo_pago, 'Anticipo', montoAnticipo, nuevo.referencia ?? null, nuevo.registrado_por, 'Completado']);
+        // Notificacion al paciente
+        await notificacionServices.creaNotificacion({
+            id_usuario: (await conexion.query('SELECT id_usuario FROM paciente WHERE id_paciente = ?', [nuevo.id_paciente]))[0][0].id_usuario,
+            titulo: 'Cita confirmada',
+            mensaje: `Tu cita para el ${nuevo.fecha} a las ${nuevo.hora_inicio} ha sido confirmada`
+        });
         return {
             mensaje: 'Cita registrada y anticipo pagado correctamente',
             id_cita,
@@ -176,6 +183,15 @@ export const cancelaCita = async (id_cita, motivo, cancelado_por) => {
         const aplicaReembolso = diferenciaHoras >= 24 ? 1 : 0;
         await conexion.query('UPDATE cita SET estado = ? WHERE id_cita = ?', ['Cancelada', id_cita]);
         await conexion.query('INSERT INTO cancelacion(id_cita, cancelado_por, motivo, aplica_reembolso, porcentaje_reembolso) values(?,?,?,?,?)', [id_cita, cancelado_por, motivo, aplicaReembolso, aplicaReembolso ? 100.00 : 0.00]);
+        // Notificacion al paciente
+        const [pacienteCita] = await conexion.query('SELECT p.id_usuario FROM paciente p INNER JOIN cita c ON p.id_paciente = c.id_paciente WHERE c.id_cita = ?', [id_cita]);
+        await notificacionServices.creaNotificacion({
+            id_usuario: pacienteCita[0].id_usuario,
+            titulo: 'Cita cancelada',
+            mensaje: aplicaReembolso
+                ? `Tu cita ha sido cancelada. Se procesará el reembolso del 100% de tu anticipo`
+                : `Tu cita ha sido cancelada. No aplica reembolso por cancelación con menos de 24 horas`
+        });
         return {
             mensaje: 'Cita cancelada correctamente',
             aplica_reembolso: aplicaReembolso === 1,
