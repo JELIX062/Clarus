@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import { horarioDoctorSchema, editarHorarioDoctorSchema } from '../schemas/usuarioSchema.js';
 export const obtieneHorarios = async () => {
     try {
         const [results] = await conexion.query(`
@@ -35,6 +36,10 @@ export const obtieneHorariosPorDoctor = async (id_doctor) => {
 };
 export const registraHorario = async (nuevo) => {
     try {
+        const validacion = horarioDoctorSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [result] = await conexion.query('INSERT INTO horariodoctor(id_doctor, id_consultorio, dia_semana, hora_inicio, hora_fin, activo) values(?,?,?,?,?,?)', [nuevo.id_doctor, nuevo.id_consultorio, nuevo.dia_semana, nuevo.hora_inicio, nuevo.hora_fin, 1]);
         return { mensaje: 'Horario registrado correctamente', id_horario: result.insertId };
     }
@@ -45,6 +50,10 @@ export const registraHorario = async (nuevo) => {
 };
 export const editaHorario = async (datos) => {
     try {
+        const validacion = editarHorarioDoctorSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_horario FROM horariodoctor WHERE id_horario = ? LIMIT 1', [datos.id_horario]);
         if (existe.length === 0) {
             return { error: 'No se encuentra el horario' };

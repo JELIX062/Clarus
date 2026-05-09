@@ -1,5 +1,6 @@
 import conexion from '../database/conexion.js';
 import bcrypt from 'bcrypt';
+import { pacienteSchema, editarPacienteSchema } from '../schemas/usuarioSchema.js';
 export const obtienePacientes = async () => {
     try {
         const [results] = await conexion.query(`
@@ -29,6 +30,10 @@ export const encuentraPaciente = async (id_paciente) => {
 };
 export const agregaPaciente = async (nuevo) => {
     try {
+        const validacion = pacienteSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const hash = await bcrypt.hash(nuevo.contraseña, 10);
         const [result] = await conexion.query('INSERT INTO usuario(id_rol, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena_hash) values(?,?,?,?,?,?,?)', [4, nuevo.nombre, nuevo.apellido_paterno, nuevo.apellido_materno ?? null, nuevo.correo, nuevo.telefono ?? null, hash]);
         const id_usuario = result.insertId;
@@ -42,6 +47,10 @@ export const agregaPaciente = async (nuevo) => {
 };
 export const editaPaciente = async (datos) => {
     try {
+        const validacion = editarPacienteSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_paciente FROM paciente WHERE id_paciente = ? AND id_usuario = ? LIMIT 1', [datos.id_paciente, datos.id_usuario]);
         if (existe.length === 0) {
             return { error: 'No se encuentra el paciente o los datos no corresponden' };

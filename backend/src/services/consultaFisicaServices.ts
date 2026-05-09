@@ -1,5 +1,6 @@
 import conexion from '../database/conexion.js';
 import type { ConsultaFisica, ConsultaFisicaNuevo } from './typesUsuarios.js';
+import { consultaFisicaSchema,editarConsultaFisicaSchema } from '../schemas/usuarioSchema.js';
 
 export const obtieneConsultasFisicas = async () => {
     try {
@@ -59,6 +60,13 @@ export const obtieneConsultasFisicasPorExpediente = async (id_expediente: number
 
 export const registraConsultaFisica = async (nuevo: ConsultaFisicaNuevo) => {
     try {
+
+
+        const validacion = consultaFisicaSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         // Verifica que la cita exista y este en estado Atendida
         const [cita]: any = await conexion.query(
             'SELECT id_cita, estado FROM cita WHERE id_cita = ? LIMIT 1',
@@ -138,6 +146,11 @@ export const firmaConsultaFisica = async (id_consulta: number, id_doctor: number
 
 export const editaConsultaFisica = async (datos: ConsultaFisica) => {
     try {
+        const validacion = editarConsultaFisicaSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_consulta, firmada FROM consultafisica WHERE id_consulta = ? LIMIT 1',
             [datos.id_consulta]

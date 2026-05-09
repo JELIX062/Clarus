@@ -1,5 +1,6 @@
 import conexion from '../database/conexion.js';
 import bcrypt from 'bcrypt';
+import { recepcionistaSchema, editarRecepcionistaSchema } from '../schemas/usuarioSchema.js';
 export const obtieneRecepcionistas = async () => {
     try {
         const [results] = await conexion.query(`
@@ -29,6 +30,10 @@ export const obtieneRecepcionista = async (id_recepcionista) => {
 };
 export const registraRecepcionista = async (nuevo) => {
     try {
+        const validacion = recepcionistaSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const hash = await bcrypt.hash(nuevo.contraseña, 10);
         const [result] = await conexion.query('INSERT INTO usuario(id_rol, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena_hash) values(?,?,?,?,?,?,?)', [3, nuevo.nombre, nuevo.apellido_paterno, nuevo.apellido_materno ?? null, nuevo.correo, nuevo.telefono ?? null, hash]);
         const id_usuario = result.insertId;

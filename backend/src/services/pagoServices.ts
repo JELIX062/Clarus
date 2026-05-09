@@ -1,5 +1,6 @@
 import conexion from '../database/conexion.js';
 import type { PagoNuevo } from './typesUsuarios.js';
+import { pagoFinalSchema } from '../schemas/usuarioSchema.js';
 
 export const obtienePagos = async () => {
     try {
@@ -58,6 +59,12 @@ export const obtienePagosPorCita = async (id_cita: number) => {
 
 export const registraPagoFinal = async (nuevo: PagoNuevo) => {
     try {
+
+        const validacion = pagoFinalSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [cita]: any = await conexion.query(
             'SELECT costo_total, estado FROM cita WHERE id_cita = ? LIMIT 1',
             [nuevo.id_cita]

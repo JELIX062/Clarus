@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import { bloqueoHorarioSchema } from '../schemas/usuarioSchema.js';
 export const obtieneBloqueos = async () => {
     try {
         const [results] = await conexion.query(`
@@ -29,6 +30,10 @@ export const obtieneBloqueosPorDoctor = async (id_doctor) => {
 };
 export const registraBloqueo = async (nuevo) => {
     try {
+        const validacion = bloqueoHorarioSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [result] = await conexion.query('INSERT INTO bloqueohorario(id_doctor, fecha, hora_inicio, hora_fin, motivo, creado_por) values(?,?,?,?,?,?)', [nuevo.id_doctor, nuevo.fecha, nuevo.hora_inicio, nuevo.hora_fin, nuevo.motivo, nuevo.creado_por]);
         return { mensaje: 'Bloqueo registrado correctamente', id_bloqueo: result.insertId };
     }

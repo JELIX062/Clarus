@@ -1,6 +1,7 @@
 import conexion from '../database/conexion.js';
 import type { PacienteEditar, UsuarioNuevo } from './typesUsuarios.js';
 import bcrypt from 'bcrypt';
+import { pacienteSchema,editarPacienteSchema } from '../schemas/usuarioSchema.js';
 
 
 export const obtienePacientes = async () => {
@@ -32,6 +33,11 @@ export const encuentraPaciente = async (id_paciente: number) => {
 
 export const agregaPaciente = async (nuevo: UsuarioNuevo) => {
     try {
+        const validacion = pacienteSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const hash = await bcrypt.hash(nuevo.contraseña, 10);
 
         const [result]: any = await conexion.query(
@@ -57,6 +63,11 @@ export const agregaPaciente = async (nuevo: UsuarioNuevo) => {
 
 export const editaPaciente = async (datos: PacienteEditar) => {
     try {
+
+        const validacion = editarPacienteSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe]: any = await conexion.query(
             'SELECT id_paciente FROM paciente WHERE id_paciente = ? AND id_usuario = ? LIMIT 1',
             [datos.id_paciente, datos.id_usuario]

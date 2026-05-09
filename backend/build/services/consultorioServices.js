@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import { consultorioSchema, editarConsultorioSchema } from '../schemas/usuarioSchema.js';
 export const obtieneConsultorios = async () => {
     try {
         const [results] = await conexion.query(`
@@ -28,6 +29,10 @@ export const obtieneConsultorio = async (id_consultorio) => {
 };
 export const registraConsultorio = async (nuevo) => {
     try {
+        const validacion = consultorioSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [result] = await conexion.query('INSERT INTO consultorio(id_sucursal, numero, piso, descripcion, activo) values(?,?,?,?,?)', [nuevo.id_sucursal, nuevo.numero, nuevo.piso, nuevo.descripcion, 1]);
         return { mensaje: 'Consultorio registrado correctamente', id_consultorio: result.insertId };
     }
@@ -38,6 +43,10 @@ export const registraConsultorio = async (nuevo) => {
 };
 export const editaConsultorio = async (datos) => {
     try {
+        const validacion = editarConsultorioSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_consultorio FROM consultorio WHERE id_consultorio = ? LIMIT 1', [datos.id_consultorio]);
         if (existe.length === 0) {
             return { error: 'No se encuentra el consultorio' };

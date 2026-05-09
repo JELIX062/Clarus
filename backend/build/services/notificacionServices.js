@@ -1,6 +1,11 @@
 import conexion from '../database/conexion.js';
+import { notificacionSchema } from '../schemas/usuarioSchema.js';
 export const creaNotificacion = async (nuevo) => {
     try {
+        const validacion = notificacionSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [result] = await conexion.query('INSERT INTO notificacion(id_usuario, titulo, mensaje) values(?,?,?)', [nuevo.id_usuario, nuevo.titulo, nuevo.mensaje]);
         return { mensaje: 'Notificacion creada', id_notificacion: result.insertId };
     }

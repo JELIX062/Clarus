@@ -1,6 +1,8 @@
 import conexion from '../database/conexion.js';
 import type { Cita, CitaNuevo } from './typesUsuarios.js';
 import * as notificacionServices from './notificacionServices.js';
+import { citaSchema,editarCitaSchema } from '../schemas/usuarioSchema.js';
+
 
 export const obtieneCitas = async () => {
     try {
@@ -105,6 +107,11 @@ export const obtieneCitasPorDoctor = async (id_doctor: number) => {
 
 export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; referencia?: string | null }) => {
     try {
+
+    const validacion = citaSchema.safeParse(nuevo);
+    if (!validacion.success) {
+        return { error: validacion.error };
+    }
         const diaSemana = new Date(nuevo.fecha + "T00:00:00").getDay();
 
         const [horario]: any = await conexion.query(
@@ -177,6 +184,11 @@ export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; ref
 
 export const editaCita = async (datos: Cita) => {
     try {
+        const validacion = editarCitaSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_cita FROM cita WHERE id_cita = ? LIMIT 1',
             [datos.id_cita]

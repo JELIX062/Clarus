@@ -1,8 +1,15 @@
 import conexion from '../database/conexion.js';
 import type { NotificacionNuevo } from './typesUsuarios.js';
+import { notificacionSchema } from '../schemas/usuarioSchema.js';
+
 
 export const creaNotificacion = async (nuevo: NotificacionNuevo) => {
     try {
+        const validacion = notificacionSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [result]: any = await conexion.query(
             'INSERT INTO notificacion(id_usuario, titulo, mensaje) values(?,?,?)',
             [nuevo.id_usuario, nuevo.titulo, nuevo.mensaje]

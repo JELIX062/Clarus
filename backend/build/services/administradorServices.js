@@ -1,5 +1,6 @@
 import conexion from '../database/conexion.js';
 import bcrypt from 'bcrypt';
+import { administradorSchema, editarAdministradorSchema } from '../schemas/usuarioSchema.js';
 export const obtieneAdministradores = async () => {
     try {
         const [results] = await conexion.query(`
@@ -29,6 +30,10 @@ export const obtieneAdministrador = async (id_administrador) => {
 };
 export const registraAdministrador = async (nuevo) => {
     try {
+        const validacion = administradorSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const hash = await bcrypt.hash(nuevo.contraseña, 10);
         const [result] = await conexion.query('INSERT INTO usuario(id_rol, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena_hash) values(?,?,?,?,?,?,?)', [1, nuevo.nombre, nuevo.apellido_paterno, nuevo.apellido_materno ?? null, nuevo.correo, nuevo.telefono ?? null, hash]);
         const id_usuario = result.insertId;
@@ -42,6 +47,10 @@ export const registraAdministrador = async (nuevo) => {
 };
 export const editaAdministrador = async (datos) => {
     try {
+        const validacion = editarAdministradorSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_administrador FROM administrador WHERE id_administrador = ? AND id_usuario = ? LIMIT 1', [datos.id_administrador, datos.id_usuario]);
         if (existe.length === 0) {
             return { error: 'No se encuentra el administrador o los datos no corresponden' };

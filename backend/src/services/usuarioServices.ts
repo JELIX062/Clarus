@@ -1,5 +1,7 @@
 import conexion from '../database/conexion.js';
 import bcrypt from 'bcrypt';
+import { loginSchema } from '../schemas/usuarioSchema.js';
+
 
 export const obtieneUsuario = async () => {
     try {
@@ -21,6 +23,11 @@ export const encuentraUsuario = async (id_usuario: number) => {
 
 export const login = async (correo: string, contraseña: string) => {
     try {
+
+        const validacion = loginSchema.safeParse({ correo, contraseña });
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [usuarios]: any = await conexion.query(
             `SELECT u.*, r.nombre as nombre_rol
             FROM usuario u

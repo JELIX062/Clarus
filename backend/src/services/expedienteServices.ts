@@ -1,5 +1,7 @@
 import conexion from '../database/conexion.js';
 import type { Expediente, ExpedienteNuevo } from './typesUsuarios.js';
+import { expedienteSchema,editarExpedienteSchema } from '../schemas/usuarioSchema.js';
+
 
 export const obtieneExpedientes = async () => {
     try {
@@ -47,6 +49,11 @@ export const obtieneExpedientePorPaciente = async (id_paciente: number) => {
 
 export const registraExpediente = async (nuevo: ExpedienteNuevo) => {
     try {
+        const validacion = expedienteSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_expediente FROM expediente WHERE id_paciente = ? LIMIT 1',
             [nuevo.id_paciente]
@@ -69,6 +76,11 @@ export const registraExpediente = async (nuevo: ExpedienteNuevo) => {
 
 export const editaExpediente = async (datos: Expediente) => {
     try {
+        const validacion = editarExpedienteSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_expediente FROM expediente WHERE id_expediente = ? LIMIT 1',
             [datos.id_expediente]

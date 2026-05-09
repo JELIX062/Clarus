@@ -1,6 +1,7 @@
 import conexion from '../database/conexion.js';
 import type { AdministradorNuevo, AdministradorEditar } from './typesUsuarios.js';
 import bcrypt from 'bcrypt';
+import { administradorSchema,editarAdministradorSchema } from '../schemas/usuarioSchema.js';
 
 export const obtieneAdministradores = async () => {
     try {
@@ -31,6 +32,11 @@ export const obtieneAdministrador = async (id_administrador: number) => {
 
 export const registraAdministrador = async (nuevo: AdministradorNuevo) => {
     try {
+        const validacion = administradorSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const hash = await bcrypt.hash(nuevo.contraseña, 10);
 
         const [result]: any = await conexion.query(
@@ -55,6 +61,11 @@ export const registraAdministrador = async (nuevo: AdministradorNuevo) => {
 
 export const editaAdministrador = async (datos: AdministradorEditar) => {
     try {
+        const validacion = editarAdministradorSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_administrador FROM administrador WHERE id_administrador = ? AND id_usuario = ? LIMIT 1',
             [datos.id_administrador, datos.id_usuario]

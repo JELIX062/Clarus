@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import { nombreSchema } from '../schemas/usuarioSchema.js';
 export const obtieneSucursales = async () => {
     try {
         const [results] = await conexion.query('SELECT * FROM sucursal');

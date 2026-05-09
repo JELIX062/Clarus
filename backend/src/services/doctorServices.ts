@@ -1,5 +1,7 @@
 import conexion from '../database/conexion.js';
 import type { DoctorNuevo, DoctorEditar } from './typesUsuarios.js';import bcrypt from 'bcrypt';
+import { doctorSchema,editarDoctorSchema } from '../schemas/usuarioSchema.js';
+
 
 export const obtieneDoctores = async () => {
     try {
@@ -30,6 +32,11 @@ export const obtieneDoctor = async (id_doctor: number) => {
 
 export const registraDoctor = async (nuevo: DoctorNuevo) => {
     try {
+        const validacion = doctorSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const hash = await bcrypt.hash(nuevo.contraseña, 10);
 
         // 1. Inserta en usuario con id_rol = 2 (Doctor)
@@ -56,6 +63,11 @@ export const registraDoctor = async (nuevo: DoctorNuevo) => {
 
 export const editaDoctor = async (datos: DoctorEditar) => {
     try {
+        const validacion = editarDoctorSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_doctor FROM doctor WHERE id_doctor = ? AND id_usuario = ? LIMIT 1',
             [datos.id_doctor, datos.id_usuario]

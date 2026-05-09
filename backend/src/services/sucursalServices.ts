@@ -1,5 +1,7 @@
 import conexion from '../database/conexion.js';
 import type { Sucursal, SucursalNuevo } from './typesUsuarios.js';
+import { nombreSchema } from '../schemas/usuarioSchema.js';
+
 
 export const obtieneSucursales = async () => {
     try {
@@ -24,6 +26,7 @@ export const obtieneSucursal = async (id_sucursal: number) => {
 
 export const registraSucursal = async (nuevo: SucursalNuevo) => {
     try {
+
         const [result]: any = await conexion.query(
             'INSERT INTO sucursal(id_administrador, nombre, calle, numero, colonia, ciudad, codigo_postal, telefono, correo, activa) values(?,?,?,?,?,?,?,?,?,?)',
             [nuevo.id_administrador, nuevo.nombre, nuevo.calle, nuevo.numero, nuevo.colonia, nuevo.ciudad, nuevo.codigo_postal, nuevo.telefono, nuevo.correo, 1]

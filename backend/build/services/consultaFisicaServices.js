@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import { consultaFisicaSchema, editarConsultaFisicaSchema } from '../schemas/usuarioSchema.js';
 export const obtieneConsultasFisicas = async () => {
     try {
         const [results] = await conexion.query(`
@@ -57,6 +58,10 @@ export const obtieneConsultasFisicasPorExpediente = async (id_expediente) => {
 };
 export const registraConsultaFisica = async (nuevo) => {
     try {
+        const validacion = consultaFisicaSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         // Verifica que la cita exista y este en estado Atendida
         const [cita] = await conexion.query('SELECT id_cita, estado FROM cita WHERE id_cita = ? LIMIT 1', [nuevo.id_cita]);
         if (cita.length === 0) {
@@ -108,6 +113,10 @@ export const firmaConsultaFisica = async (id_consulta, id_doctor) => {
 };
 export const editaConsultaFisica = async (datos) => {
     try {
+        const validacion = editarConsultaFisicaSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_consulta, firmada FROM consultafisica WHERE id_consulta = ? LIMIT 1', [datos.id_consulta]);
         if (existe.length === 0) {
             return { error: 'No se encuentra la consulta fisica' };

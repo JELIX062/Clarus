@@ -1,5 +1,6 @@
 import conexion from '../database/conexion.js';
 import * as notificacionServices from './notificacionServices.js';
+import { citaSchema, editarCitaSchema } from '../schemas/usuarioSchema.js';
 export const obtieneCitas = async () => {
     try {
         const [results] = await conexion.query(`
@@ -103,6 +104,10 @@ export const obtieneCitasPorDoctor = async (id_doctor) => {
 };
 export const registraCita = async (nuevo) => {
     try {
+        const validacion = citaSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const diaSemana = new Date(nuevo.fecha + "T00:00:00").getDay();
         const [horario] = await conexion.query(`SELECT id_horario FROM horariodoctor 
             WHERE id_doctor = ? AND dia_semana = ? AND activo = 1
@@ -150,6 +155,10 @@ export const registraCita = async (nuevo) => {
 };
 export const editaCita = async (datos) => {
     try {
+        const validacion = editarCitaSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_cita FROM cita WHERE id_cita = ? LIMIT 1', [datos.id_cita]);
         if (existe.length === 0) {
             return { error: 'No se encuentra la cita' };

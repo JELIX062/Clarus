@@ -1,5 +1,7 @@
 import conexion from '../database/conexion.js';
 import type { Consultorio, ConsultorioNuevo } from './typesUsuarios.js';
+import { consultorioSchema, editarConsultorioSchema } from '../schemas/usuarioSchema.js';
+
 
 export const obtieneConsultorios = async () => {
     try {
@@ -30,6 +32,11 @@ export const obtieneConsultorio = async (id_consultorio: number) => {
 
 export const registraConsultorio = async (nuevo: ConsultorioNuevo) => {
     try {
+        const validacion = consultorioSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [result]: any = await conexion.query(
             'INSERT INTO consultorio(id_sucursal, numero, piso, descripcion, activo) values(?,?,?,?,?)',
             [nuevo.id_sucursal, nuevo.numero, nuevo.piso, nuevo.descripcion, 1]
@@ -43,6 +50,11 @@ export const registraConsultorio = async (nuevo: ConsultorioNuevo) => {
 
 export const editaConsultorio = async (datos: Consultorio) => {
     try {
+        const validacion = editarConsultorioSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_consultorio FROM consultorio WHERE id_consultorio = ? LIMIT 1',
             [datos.id_consultorio]

@@ -29,7 +29,6 @@ router.get('/doctor/:id_doctor', async (req: Request, res: Response) => {
 });
 
 // http://localhost:3001/api/cita
-// http://localhost:3001/api/cita
 router.post('/', async (req: Request, res: Response) => {
     try {
         const { id_paciente, id_doctor, id_consultorio, id_recepcionista, fecha, hora_inicio, hora_fin, motivo_consulta, costo_total, registrado_por, metodo_pago, referencia } = req.body;

@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import { expedienteSchema, editarExpedienteSchema } from '../schemas/usuarioSchema.js';
 export const obtieneExpedientes = async () => {
     try {
         const [results] = await conexion.query(`
@@ -45,6 +46,10 @@ export const obtieneExpedientePorPaciente = async (id_paciente) => {
 };
 export const registraExpediente = async (nuevo) => {
     try {
+        const validacion = expedienteSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_expediente FROM expediente WHERE id_paciente = ? LIMIT 1', [nuevo.id_paciente]);
         if (existe.length > 0) {
             return { error: 'El paciente ya tiene un expediente registrado' };
@@ -59,6 +64,10 @@ export const registraExpediente = async (nuevo) => {
 };
 export const editaExpediente = async (datos) => {
     try {
+        const validacion = editarExpedienteSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_expediente FROM expediente WHERE id_expediente = ? LIMIT 1', [datos.id_expediente]);
         if (existe.length === 0) {
             return { error: 'No se encuentra el expediente' };

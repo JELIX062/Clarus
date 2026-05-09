@@ -1,4 +1,5 @@
 import conexion from '../database/conexion.js';
+import { pagoFinalSchema } from '../schemas/usuarioSchema.js';
 export const obtienePagos = async () => {
     try {
         const [results] = await conexion.query(`
@@ -55,6 +56,10 @@ export const obtienePagosPorCita = async (id_cita) => {
 };
 export const registraPagoFinal = async (nuevo) => {
     try {
+        const validacion = pagoFinalSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [cita] = await conexion.query('SELECT costo_total, estado FROM cita WHERE id_cita = ? LIMIT 1', [nuevo.id_cita]);
         if (cita.length === 0) {
             return { error: 'No se encuentra la cita' };
