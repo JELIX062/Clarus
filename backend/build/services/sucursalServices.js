@@ -1,5 +1,5 @@
 import conexion from '../database/conexion.js';
-import { nombreSchema } from '../schemas/usuarioSchema.js';
+import { sucursalSchema, editarSucursalSchema } from '../schemas/usuarioSchema.js';
 export const obtieneSucursales = async () => {
     try {
         const [results] = await conexion.query('SELECT * FROM sucursal');
@@ -20,6 +20,10 @@ export const obtieneSucursal = async (id_sucursal) => {
 };
 export const registraSucursal = async (nuevo) => {
     try {
+        const validacion = sucursalSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [result] = await conexion.query('INSERT INTO sucursal(id_administrador, nombre, calle, numero, colonia, ciudad, codigo_postal, telefono, correo, activa) values(?,?,?,?,?,?,?,?,?,?)', [nuevo.id_administrador, nuevo.nombre, nuevo.calle, nuevo.numero, nuevo.colonia, nuevo.ciudad, nuevo.codigo_postal, nuevo.telefono, nuevo.correo, 1]);
         return { mensaje: 'Sucursal registrada correctamente', id_sucursal: result.insertId };
     }
@@ -30,6 +34,10 @@ export const registraSucursal = async (nuevo) => {
 };
 export const editaSucursal = async (datos) => {
     try {
+        const validacion = editarSucursalSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_sucursal FROM sucursal WHERE id_sucursal = ? LIMIT 1', [datos.id_sucursal]);
         if (existe.length === 0) {
             return { error: 'No se encuentra la sucursal' };

@@ -47,6 +47,10 @@ export const registraRecepcionista = async (nuevo) => {
 };
 export const editaRecepcionista = async (datos) => {
     try {
+        const validacion = editarRecepcionistaSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const [existe] = await conexion.query('SELECT id_recepcionista FROM recepcionista WHERE id_recepcionista = ? AND id_usuario = ? LIMIT 1', [datos.id_recepcionista, datos.id_usuario]);
         if (existe.length === 0) {
             return { error: 'No se encuentra la recepcionista o los datos no corresponden' };

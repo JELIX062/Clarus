@@ -1,6 +1,6 @@
 import conexion from '../database/conexion.js';
 import type { Sucursal, SucursalNuevo } from './typesUsuarios.js';
-import { nombreSchema } from '../schemas/usuarioSchema.js';
+import { sucursalSchema,editarSucursalSchema } from '../schemas/usuarioSchema.js';
 
 
 export const obtieneSucursales = async () => {
@@ -27,6 +27,11 @@ export const obtieneSucursal = async (id_sucursal: number) => {
 export const registraSucursal = async (nuevo: SucursalNuevo) => {
     try {
 
+        const validacion = sucursalSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [result]: any = await conexion.query(
             'INSERT INTO sucursal(id_administrador, nombre, calle, numero, colonia, ciudad, codigo_postal, telefono, correo, activa) values(?,?,?,?,?,?,?,?,?,?)',
             [nuevo.id_administrador, nuevo.nombre, nuevo.calle, nuevo.numero, nuevo.colonia, nuevo.ciudad, nuevo.codigo_postal, nuevo.telefono, nuevo.correo, 1]
@@ -40,6 +45,11 @@ export const registraSucursal = async (nuevo: SucursalNuevo) => {
 
 export const editaSucursal = async (datos: Sucursal) => {
     try {
+        const validacion = editarSucursalSchema.safeParse(datos);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
+
         const [existe]: any = await conexion.query(
             'SELECT id_sucursal FROM sucursal WHERE id_sucursal = ? LIMIT 1',
             [datos.id_sucursal]
