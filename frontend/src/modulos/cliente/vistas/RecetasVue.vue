@@ -1,357 +1,211 @@
 <template>
-    <section class="recetas-view">
-        <header class="header">
-        <div>
-            <h2>{{ tituloVista }}</h2>
-        </div>
-        <button v-if="!esDoctor" class="button" type="button" @click="showDialog = true">Solicitar renovación</button>
-        </header>
+	<section class="recetas-view">
 
-        <div class="filters">
-        <input
-            v-model.trim="searchTerm"
-            class="input"
-            type="search"
-            placeholder="Buscar por doctor"
-        />
-        <select v-model="selectedStatus" class="input select">
-            <option value="Todas">Todos los estados</option>
-            <option v-for="status in statusOptions" :key="status" :value="status">
-            {{ status }}
-            </option>
-        </select>
-        </div>
+		<div class="page-header">
+			<div>
+				<h2>Mis recetas médicas</h2>
+				<p class="subtitle">Tratamientos e indicaciones registrados en tus consultas.</p>
+			</div>
+		</div>
 
-        <div class="recipes-grid">
-        <article v-for="prescription in filteredPrescriptions" :key="prescription.id" class="recipe-card">
-            <div class="card-top">
-            <h3>{{ prescription.medicine }}</h3>
-            <span class="tag" :class="statusClass[prescription.status]">{{ prescription.status }}</span>
-            </div>
-            <p class="meta">👨‍⚕️ {{ prescription.doctor }} · 📅 Emitida: {{ prescription.issueDate }}</p>
-            <p class="line"><strong>Dosis:</strong> {{ prescription.dose }}</p>
-            <p class="line"><strong>Frecuencia:</strong> {{ prescription.frequency }}</p>
-            <p class="line"><strong>Duración:</strong> {{ prescription.durationDays }} días</p>
-            <p class="line"><strong>Vence:</strong> {{ prescription.expirationDate }}</p>
-            <p class="line"><strong>Refills disponibles:</strong> {{ prescription.refillsLeft }}</p>
-            <p class="description"><strong>Indicaciones:</strong> {{ prescription.instructions }}</p>
-        </article>
+		<div v-if="cargando" class="empty-state">Cargando...</div>
 
-        <div v-if="filteredPrescriptions.length === 0" class="empty-state">
-            No se encontraron recetas con los filtros seleccionados.
-        </div>
-        </div>
+		<div v-else-if="error" class="empty-state">{{ error }}</div>
 
-        <div v-if="showDialog" class="dialog-backdrop" @click.self="closeDialog">
-        <div class="dialog">
-            <h3>Solicitar renovación de receta</h3>
-            <form class="form" @submit.prevent="saveRenewalRequest">
-            <label for="medicine">Medicamento</label>
-            <input
-                id="medicine"
-                v-model.trim="renewalForm.medicine"
-                class="input"
-                type="text"
-                maxlength="80"
-                placeholder="Ej: Losartán"
-            />
+		<template v-else>
 
-            <label for="reason">Motivo</label>
-            <select id="reason" v-model="renewalForm.reason" class="input select">
-                <option disabled value="">Selecciona un motivo</option>
-                <option v-for="reason in reasonOptions" :key="reason" :value="reason">{{ reason }}</option>
-            </select>
+			<!-- Info general del expediente -->
+			<div v-if="expediente" class="info-row">
+				<span class="tag">Expediente #{{ expediente.codigo }}</span>
+				<span v-if="expediente.alergias" class="tag tag-warning">
+					Alergias: {{ expediente.alergias }}
+				</span>
+				<span v-if="expediente.medicamentos_actuales" class="tag tag-info">
+					Medicamentos actuales: {{ expediente.medicamentos_actuales }}
+				</span>
+			</div>
 
-            <label for="notes">Notas para el médico</label>
-            <textarea
-                id="notes"
-                v-model.trim="renewalForm.notes"
-                class="input textarea"
+			<!-- Consultas con tratamiento -->
+			<div v-if="consultas.length === 0" class="empty-state">
+				No hay tratamientos registrados en tus consultas.
+			</div>
 
-                rows="3"
-                placeholder="Ej: Me quedan 3 tabletas"
-            ></textarea>
+			<div v-for="consulta in consultas" :key="consulta.id_consulta" class="recipe-card">
+				<div class="card-top">
+					<div>
+						<h3>{{ consulta.tratamiento || 'Sin tratamiento registrado' }}</h3>
+						<p class="meta">
+							Dr. {{ consulta.nombre_doctor }} {{ consulta.apellido_doctor }}
+							&nbsp;·&nbsp;
+							{{ formatFecha(consulta.fecha_consulta) }}
+						</p>
+					</div>
+					<span class="tag" :class="consulta.firmada ? 'tag-active' : 'tag-warning'">
+						{{ consulta.firmada ? 'Firmada' : 'Sin firmar' }}
+					</span>
+				</div>
 
-            <div class="actions">
-                <button class="button button-white" type="button" @click="closeDialog">Cancelar</button>
-                <button class="button" type="submit">Enviar solicitud</button>
-            </div>
-            </form>
-        </div>
-        </div>
+				<div v-if="consulta.indicaciones" class="detail-row">
+					<strong>Indicaciones:</strong> {{ consulta.indicaciones }}
+				</div>
 
-        <div v-if="renewalRequests.length > 0" class="requests-panel">
-        <h3>Solicitudes enviadas</h3>
-        <ul class="request-list">
-            <li v-for="request in renewalRequests" :key="request.id" class="request-item">
-            <strong>{{ request.medicine }}</strong> · {{ request.reason }} · {{ request.date }}
-            </li>
-        </ul>
-        </div>
-    </section>
+				<div v-if="consulta.motivo_consulta" class="detail-row">
+					<strong>Motivo:</strong> {{ consulta.motivo_consulta }}
+				</div>
+
+				<div v-if="consulta.notas_clinicas" class="detail-row">
+					<strong>Notas clínicas:</strong> {{ consulta.notas_clinicas }}
+				</div>
+			</div>
+
+		</template>
+	</section>
 </template>
 
 <script setup lang="ts">
-    import { computed, reactive, ref } from 'vue'
-    import { useSesion } from '@/modulos/principal/controladores/useSesion'
+import { onMounted, ref } from 'vue'
+import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
-    type PrescriptionStatus = 'Vigente' | 'Por vencer' | 'Vencida'
+const { usuarioActual } = useSesion()
 
-    type Prescription = {
-    id: string
-    medicine: string
-    doctor: string
-    dose: string
-    frequency: string
-    durationDays: number
-    issueDate: string
-    expirationDate: string
-    refillsLeft: number
-    instructions: string
-    status: PrescriptionStatus
-    }
+type Expediente = {
+	id_expediente:         number
+	codigo:                string
+	ant_patologicos:       string
+	medicamentos_actuales: string
+	alergias:              string
+}
 
-    type RenewalReason = 'Sin dosis disponibles' | 'Receta vencida' | 'Pérdida de receta'
+type ConsultaFisica = {
+	id_consulta:     number
+	fecha_consulta:  string
+	tratamiento:     string
+	indicaciones:    string
+	motivo_consulta: string
+	notas_clinicas:  string
+	firmada:         number
+	nombre_doctor:   string
+	apellido_doctor: string
+}
 
-    type RenewalRequest = {
-    id: string
-    medicine: string
-    reason: RenewalReason
-    notes: string
-    date: string
-    }
+const expediente = ref<Expediente | null>(null)
+const consultas  = ref<ConsultaFisica[]>([])
+const cargando   = ref(true)
+const error      = ref('')
 
-    const statusOptions: PrescriptionStatus[] = ['Vigente', 'Por vencer', 'Vencida']
-    const reasonOptions: RenewalReason[] = ['Sin dosis disponibles', 'Receta vencida', 'Pérdida de receta']
+const formatFecha = (fecha: string): string => {
+	if (!fecha) return ''
+	return new Intl.DateTimeFormat('es-MX', { dateStyle: 'long' }).format(new Date(fecha))
+}
 
-    const statusClass: Record<PrescriptionStatus, string> = {
-    Vigente: 'status-active',
-    'Por vencer': 'status-warning',
-    Vencida: 'status-stopped'
-    }
+onMounted(async () => {
+	const idPaciente = usuarioActual.value?.id_paciente
+	if (!idPaciente) {
+		error.value    = 'No se encontró el paciente en sesión.'
+		cargando.value = false
+		return
+	}
 
-    const prescriptions = ref<Prescription[]>([])
-    const { rolUsuario } = useSesion()
+	try {
+		// 1. Obtener expediente
+		const respExp  = await fetch(`http://localhost:3001/api/expediente/paciente/${idPaciente}`)
+		const datosExp = await respExp.json()
 
-    const renewalRequests = ref<RenewalRequest[]>([])
-    const searchTerm = ref('')
-    const selectedStatus = ref<'Todas' | PrescriptionStatus>('Todas')
-    const showDialog = ref(false)
+		// El endpoint devuelve un array, tomamos el primero
+		const exp = Array.isArray(datosExp) ? datosExp[0] : datosExp
 
-    const renewalForm = reactive<{
-    medicine: string
-    reason: '' | RenewalReason
-    notes: string
-    }>({
-    medicine: '',
-    reason: '',
-    notes: ''
-    })
+		if (!exp?.id_expediente) {
+			error.value = 'No tienes un expediente registrado aún.'
+			return
+		}
 
-    const filteredPrescriptions = computed(() => {
-    const term = searchTerm.value.toLowerCase()
+		expediente.value = exp
 
-    return prescriptions.value.filter((prescription) => {
-        const matchesStatus = selectedStatus.value === 'Todas' || prescription.status === selectedStatus.value
-        const matchesSearch = prescription.medicine.toLowerCase().includes(term)
+		// 2. Obtener consultas físicas del expediente
+		const respCon  = await fetch(`http://localhost:3001/api/consultafisica/expediente/${exp.id_expediente}`)
+		const datosCon = await respCon.json()
 
-        return matchesStatus && matchesSearch
-    })
-    })
+		if (Array.isArray(datosCon)) {
+			consultas.value = datosCon
+		}
 
-    const esDoctor = computed(() => rolUsuario.value === 'doctor')
-    const tituloVista = computed(() => (esDoctor.value ? 'Expedientes médicos' : 'Mis recetas médicas'))
-
-    function closeDialog() {
-    showDialog.value = false
-    renewalForm.medicine = ''
-    renewalForm.reason = ''
-    renewalForm.notes = ''
-    }
-
-    function saveRenewalRequest() {
-    if (!renewalForm.medicine || !renewalForm.reason) {
-        return
-    }
-
-    renewalRequests.value.unshift({
-        id: crypto.randomUUID(),
-        medicine: renewalForm.medicine,
-        reason: renewalForm.reason,
-        notes: renewalForm.notes,
-        date: new Date().toISOString().slice(0, 10)
-    })
-
-    closeDialog()
-    }
+	} catch {
+		error.value = 'No se pudo conectar con el servidor.'
+	} finally {
+		cargando.value = false
+	}
+})
 </script>
 
 <style scoped>
-    .recetas-view {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 3rem;
-    display: grid;
-    gap: 1.5rem;
-    }
+	.recetas-view {
+		max-width: 900px;
+		margin: 0 auto;
+		padding: 2rem 1.5rem 3rem;
+		display: grid;
+		gap: 1.2rem;
+	}
 
-    h2,
-    h3,
-    p {
-    margin: 0;
-    }
+	h2, h3, p { margin: 0; }
 
-    .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    }
+	.subtitle {
+		color: var(--clarus-oxford);
+		margin-top: 0.25rem;
+	}
 
-    .subtitle {
-    margin-top: 0.35rem;
-    color: var(--clarus-oxford);
-    }
+	.info-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
 
-    .button {
-    border: 1px solid var(--clarus-midnight);
-    background: var(--clarus-midnight);
-    color: var(--clarus-ivory);
-    border-radius: 999px;
-    padding: 0.85rem 1.4rem;
-    font-weight: 700;
-    cursor: pointer;
-    }
+	.tag {
+		border-radius: 999px;
+		padding: 0.3rem 0.8rem;
+		font-size: 0.82rem;
+		font-weight: 700;
+		background: var(--clarus-gold-soft);
+		color: var(--clarus-midnight);
+	}
 
-    .button-white {
-    background: var(--clarus-ivory);
-    color: var(--clarus-midnight);
-    }
+	.tag-active  { background: #dcfce7; color: #166534; }
+	.tag-warning { background: #fef3c7; color: #92400e; }
+	.tag-info    { background: #dbeafe; color: #1e40af; }
 
-    .filters {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 0.85rem;
-    }
+	.recipe-card {
+		background: var(--clarus-ivory);
+		border-radius: 18px;
+		padding: 1.25rem 1.5rem;
+		box-shadow: 0 18px 45px var(--clarus-shadow);
+		display: grid;
+		gap: 0.6rem;
+	}
 
-    .recipes-grid {
-    display: grid;
-    gap: 1rem;
-    }
+	.card-top {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 1rem;
+	}
 
-    .recipe-card,
-    .empty-state,
-    .requests-panel,
-    .dialog {
-    background: var(--clarus-ivory);
-    border-radius: 20px;
-    padding: 1.25rem;
-    box-shadow: 0 18px 45px var(--clarus-shadow);
-    }
+	.meta {
+		color: var(--clarus-oxford);
+		font-size: 0.9rem;
+		margin-top: 0.2rem;
+	}
 
-    .request-list {
-    margin: 0.75rem 0 0;
-    padding-left: 1.1rem;
-    color: var(--clarus-oxford);
-    }
+	.detail-row {
+		font-size: 0.95rem;
+		color: var(--clarus-midnight);
+		border-top: 1px solid var(--clarus-gold-soft);
+		padding-top: 0.5rem;
+	}
 
-    .request-item {
-    margin-bottom: 0.4rem;
-    }
-
-    .card-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    }
-
-    .tag {
-    background: var(--clarus-gold-soft);
-    color: var(--clarus-midnight);
-    border-radius: 999px;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    }
-
-    .status-active {
-    background: #dcfce7;
-    color: #15803d;
-    }
-
-    .status-warning {
-    background: #fef3c7;
-    color: #a16207;
-    }
-
-    .status-stopped {
-    background: #fee2e2;
-    color: #b91c1c;
-    }
-
-    .meta,
-    .line,
-    .description {
-    margin-top: 0.5rem;
-    color: var(--clarus-oxford);
-    }
-
-    .input {
-    border: 1px solid var(--clarus-gold-soft);
-    border-radius: 12px;
-    padding: 0.7rem 0.85rem;
-    font: inherit;
-    color: var(--clarus-midnight);
-    min-height: 46px;
-    }
-
-    .input:focus {
-    outline: 2px solid var(--clarus-gold);
-    outline-offset: 1px;
-    }
-
-    .select,
-    .textarea {
-    width: 100%;
-    }
-
-    .dialog-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(26, 43, 60, 0.55);
-    display: grid;
-    place-items: center;
-    padding: 1rem;
-    z-index: 20;
-    }
-
-    .dialog {
-    width: min(520px, 100%);
-    }
-
-    .form {
-    display: grid;
-    gap: 0.65rem;
-    margin-top: 0.75rem;
-    }
-
-    .actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.6rem;
-    margin-top: 0.35rem;
-    }
-
-    @media (max-width: 760px) {
-    .filters {
-        grid-template-columns: 1fr;
-    }
-
-    .header,
-    .actions {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    }
+	.empty-state {
+		background: var(--clarus-ivory);
+		border-radius: 18px;
+		padding: 1.5rem;
+		color: var(--clarus-oxford);
+		box-shadow: 0 18px 45px var(--clarus-shadow);
+	}
 </style>
