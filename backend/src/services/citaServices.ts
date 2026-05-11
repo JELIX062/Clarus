@@ -108,10 +108,10 @@ export const obtieneCitasPorDoctor = async (id_doctor: number) => {
 export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; referencia?: string | null }) => {
     try {
 
-    const validacion = citaSchema.safeParse(nuevo);
-    if (!validacion.success) {
-        return { error: validacion.error };
-    }
+        const validacion = citaSchema.safeParse(nuevo);
+        if (!validacion.success) {
+            return { error: validacion.error };
+        }
         const diaSemana = new Date(nuevo.fecha + "T00:00:00").getDay();
 
         const [horario]: any = await conexion.query(
@@ -184,6 +184,8 @@ export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; ref
 
 export const editaCita = async (datos: Cita) => {
     try {
+
+        
         const validacion = editarCitaSchema.safeParse(datos);
         if (!validacion.success) {
             return { error: validacion.error };

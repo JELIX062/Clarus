@@ -5,122 +5,220 @@
             <h2>Perfil</h2>
             <p class="subtitle">{{ subtituloPerfil }}</p>
         </div>
-        <button class="button" type="submit" form="perfil-form">Guardar cambios</button>
+        
+        <button class="button" type="submit" form="perfil-form" :disabled="cargando">
+            {{ cargando ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+
         </header>
 
-        <div v-if="esRecepcionista" class="target-selector">
-        <label for="perfil-objetivo">Editar datos de</label>
-        <select id="perfil-objetivo" v-model="objetivoPerfil" class="input select">
-            <option value="recepcionista">Recepcionista</option>
-            <option value="cliente">Cliente</option>
-        </select>
-        </div>
 
         <form id="perfil-form" class="profile-card" @submit.prevent="saveProfile">
-        <div class="form-grid">
-            <div class="form-field">
-            <label for="nombres">Nombres</label>
-            <input id="nombres" v-model.trim="profileActual.nombres" class="input" type="text" />
-            </div>
+            <div class="form-grid">
 
-            <div class="form-field">
-            <label for="apellidos">Apellidos</label>
-            <input id="apellidos" v-model.trim="profileActual.apellidos" class="input" type="text" />
-            </div>
+                <div class="form-field full-row">
+                    <label for="nombre">Nombre</label>
+                    <input id="nombre" v-model.trim="perfil.nombre" class="input" type="text" />
+                </div>
 
-            <div class="form-field full-row">
-            <label for="curp">CURP</label>
-            <input id="curp" v-model.trim="profileActual.curp" class="input" type="text" maxlength="18" />
-            </div>
+                <div class="form-field">
+                    <label for="apellido_paterno">Apellido paterno</label>
+                    <input id="apellido_paterno" v-model.trim="perfil.apellido_paterno" class="input" type="text" />
+                </div>
 
-            <div class="form-field full-row">
-            <label for="correo">Correo</label>
-            <input id="correo" v-model.trim="profileActual.correo" class="input" type="email" />
-            </div>
+                <div class="form-field">
+                    <label for="apellido_materno">Apellido materno</label>
+                    <input id="apellido_materno" v-model.trim="perfil.apellido_materno" class="input" type="text" />
+                </div>
 
-            <div class="form-field full-row">
-            <label for="telefono">Número de teléfono</label>
-            <input id="telefono" v-model.trim="profileActual.telefono" class="input" type="tel" />
-            </div>
+                <div class="form-field full-row">
+                    <label for="correo">Correo</label>
+                    <input id="correo" v-model.trim="perfil.correo" class="input" type="email" />
+                </div>
 
-            <div class="form-field">
-            <label for="fecha">Fecha de nacimiento</label>
-            <input id="fecha" v-model="profileActual.fechaNacimiento" class="input" type="date" />
-            </div>
+                <div class="form-field full-row">
+                    <label for="telefono">Teléfono</label>
+                    <input id="telefono" v-model.trim="perfil.telefono" class="input" type="tel" />
+                </div>
 
-            <div class="form-field">
-            <label for="genero">Género</label>
-            <select id="genero" v-model="profileActual.genero" class="input select">
-                <option disabled value="">Selecciona una opción</option>
-                <option>Masculino</option>
-                <option>Femenino</option>
-                <option>Otro</option>
-            </select>
+                <template v-if="esPaciente">
+                    <div class="form-field full-row">
+                        <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                        <input id="fecha_nacimiento" v-model="perfil.fecha_nacimiento" class="input" type="date" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="sexo">Sexo</label>
+                        <select id="sexo" v-model="perfil.sexo" class="input select">
+                            <option disabled value="">Selecciona una opción</option>
+                            <option>Masculino</option>
+                            <option>Femenino</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="tipo_sangre">Tipo de sangre</label>
+                        <select id="tipo_sangre" v-model="perfil.tipo_sangre" class="input select">
+                            <option disabled value="">Selecciona una opción</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                </template>
+
+                <template v-if="esDoctor">
+                    <div class="form-field full-row">
+                        <label for="especialidad">Especialidad</label>
+                        <input id="especialidad" v-model.trim="perfil.especialidad" class="input" type="text" disabled />
+                    </div>
+                </template>
+
+                <template v-if="esRecepcionista">
+                    <div class="form-field">
+                        <label for="turno">Turno</label>
+                        <input id="turno" v-model.trim="perfil.turno" class="input" type="text" disabled />
+                    </div>
+                </template>
+
+                <div v-if="mensaje" class="alert alert-success full-row" role="alert">
+                    {{ mensaje }}
+                </div>
+
+                <div v-if="error" class="alert alert-danger full-row" role="alert">
+                    {{ error }}
+                </div>
             </div>
-        </div>
         </form>
     </section>
 </template>
 
 <script setup lang="ts">
-    import { computed, reactive, ref } from 'vue'
-    import { useSesion } from '@/modulos/principal/controladores/useSesion'
+import { computed, reactive, ref } from 'vue'
+import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
-    type PerfilObjetivo = 'recepcionista' | 'cliente'
+const { rolUsuario, usuarioActual } = useSesion()
 
-    const { rolUsuario } = useSesion()
+const u = usuarioActual.value
 
-    const perfilRecepcionista = reactive({
-    nombres: '',
-    apellidos: '',
-    curp: '',
-    correo: '',
-    codigoPais: '',
-    telefono: '',
-    fechaNacimiento: '',
-    genero: ''
-    })
+const normalizarSexo = (sexo: string): string => {
+	if (sexo === 'M' || sexo === 'Masculino') return 'Masculino'
+	if (sexo === 'F' || sexo === 'Femenino')  return 'Femenino'
+	return ''
+}
 
-    const perfilCliente = reactive({
-    nombres: '',
-    apellidos: '',
-    curp: '',
-    correo: '',
-    codigoPais: '',
-    telefono: '',
-    fechaNacimiento: '',
-    genero: ''
-    })
+const normalizarFecha = (fecha: string): string => {
+	if (!fecha) return ''
+	return fecha.split('T')[0] ?? ''
+}
 
-    const objetivoPerfil = ref<PerfilObjetivo>('recepcionista')
-    const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
+const perfil = reactive({
+	nombre:           u?.nombre                                  ?? '',
+	apellido_paterno: u?.apellido_paterno                        ?? '',
+	apellido_materno: (u?.apellido_materno  as string)           ?? '',
+	correo:           u?.correo                                  ?? '',
+	telefono:         (u?.telefono          as string)           ?? '',
+	fecha_nacimiento: normalizarFecha((u?.fecha_nacimiento as string) ?? ''),
+	sexo:             normalizarSexo((u?.sexo              as string) ?? ''),
+	tipo_sangre:      (u?.tipo_sangre       as string)           ?? '',
+	especialidad:     (u?.especialidad      as string)           ?? '',
+	turno:            (u?.turno             as string)           ?? '',
+})
 
-    const profileActual = computed(() => {
-    if (esRecepcionista.value && objetivoPerfil.value === 'cliente') {
-        return perfilCliente
-    }
+const cargando = ref(false)
+const mensaje  = ref('')
+const error    = ref('')
 
-    return perfilRecepcionista
-    })
+const esPaciente      = computed(() => rolUsuario.value === 'paciente')
+const esDoctor        = computed(() => rolUsuario.value === 'doctor')
+const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
 
-    const subtituloPerfil = computed(() => {
-    if (!esRecepcionista.value) {
-        return 'Actualiza tu información personal.'
-    }
+const subtituloPerfil = computed(() => {
+	if (esDoctor.value)        return 'Consulta tu información médica registrada.'
+	if (esRecepcionista.value) return 'Consulta tu información registrada.'
+	return 'Actualiza tu información personal.'
+})
 
-    return objetivoPerfil.value === 'cliente'
-        ? 'Actualiza los datos del cliente seleccionado.'
-        : 'Actualiza los datos de la recepcionista.'
-    })
+const validar = (): string => {
+	if (!perfil.nombre.trim())
+		return 'El nombre es requerido.'
+	if (!perfil.apellido_paterno.trim())
+		return 'El apellido paterno es requerido.'
+	if (!perfil.correo.trim())
+		return 'El correo es requerido.'
+	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(perfil.correo))
+		return 'El correo no tiene un formato válido (ej: nombre@dominio.com).'
+	if (!perfil.telefono.trim())
+		return 'El teléfono es requerido.'
+	if (!/^\d+$/.test(perfil.telefono))
+		return 'El teléfono solo puede contener números.'
+	if (perfil.telefono.length < 10)
+		return 'El teléfono debe tener al menos 10 dígitos.'
+	if (esPaciente.value) {
+		if (!perfil.fecha_nacimiento)
+			return 'La fecha de nacimiento es requerida.'
+		if (!perfil.sexo)
+			return 'El sexo es requerido.'
+		if (!perfil.tipo_sangre)
+			return 'El tipo de sangre es requerido.'
+	}
+	return ''
+}
 
-    function saveProfile() {
-    console.log('Perfil guardado', {
-        objetivo: esRecepcionista.value ? objetivoPerfil.value : 'usuario',
-        datos: { ...profileActual.value }
-    })
-    }
+const saveProfile = async () => {
+	mensaje.value = ''
+	error.value   = ''
+
+	const errorValidacion = validar()
+	if (errorValidacion) {
+		error.value = errorValidacion
+		return
+	}
+
+	cargando.value = true
+
+	try {
+		const respuesta = await fetch('http://localhost:3001/api/paciente', {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				id_paciente:      u?.id_paciente,
+				id_usuario:       u?.id_usuario,
+				nombre:           perfil.nombre,
+				apellido_paterno: perfil.apellido_paterno,
+				apellido_materno: perfil.apellido_materno,
+				correo:           perfil.correo,
+				telefono:         perfil.telefono,
+				fecha_nacimiento: perfil.fecha_nacimiento,
+				sexo:             perfil.sexo === 'Masculino' ? 'M' : 'F',
+				tipo_sangre:      perfil.tipo_sangre,
+				saldo_pendiente:  Number(u?.saldo_pendiente ?? 0),
+			}),
+		})
+
+		const datos = await respuesta.json()
+
+		if (datos.error) {
+			error.value = typeof datos.error === 'string'
+				? datos.error
+				: 'Error al guardar los cambios.'
+			return
+		}
+
+		mensaje.value = 'Cambios guardados correctamente.'
+
+	} catch {
+		error.value = 'No se pudo conectar con el servidor.'
+	} finally {
+		cargando.value = false
+	}
+}
 </script>
-
 <style scoped>
     .perfil-view {
     max-width: 1200px;

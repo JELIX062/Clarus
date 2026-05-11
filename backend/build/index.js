@@ -14,10 +14,16 @@ import pagoRutas from './routes/pagoRutas.js';
 import administradorRutas from './routes/administradorRutas.js';
 import consultaFisicaRutas from './routes/consultaFisicaRutas.js';
 import notificacionRutas from './routes/notificacionRutas.js';
+import cors from 'cors';
 // Creamos la aplicacion a través del paquete express
 // Y la llamamos a su constructor
 const app = express();
 // configurar rutas para el acceso a usuarios
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 // activar rutas base
 app.use('/api/usuario', usuarioRutas);

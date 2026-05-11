@@ -170,11 +170,14 @@ export const editarPacienteSchema = z.object({
     apellido_paterno: z.string().min(2).max(100),
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
-    telefono: z.string().min(10).max(15).nullable().optional(),
+    telefono: z.string()
+	.regex(/^\d+$/, 'El teléfono solo puede contener números')
+	.min(10, 'El teléfono debe tener al menos 10 dígitos'),
     contraseña: z.string().min(6).max(256).optional(),
     fecha_nacimiento: z.string().optional(),
     sexo: z.enum(['M', 'F']).optional(),
-    tipo_sangre: z.string().max(5).optional(),
+    tipo_sangre: z.string()
+	.regex(/^(A|B|AB|O)[+-]$/i, 'Tipo de sangre no válido'),
     saldo_pendiente: z.number().optional()
 });
 

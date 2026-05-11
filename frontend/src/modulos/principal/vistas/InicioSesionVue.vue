@@ -8,7 +8,7 @@
         <form class="login-form" @submit.prevent="iniciarSesion">
             <label>
             Correo electrónico
-            <input v-model="correo" type="email" placeholder="Correo" required />
+            <input v-model="correo" type="email" placeholder="correo@ejemplo.com" required />
             </label>
 
             <label>
@@ -16,45 +16,61 @@
             <input v-model="contrasena" type="password" placeholder="••••••••" required minlength="6" />
             </label>
 
-            <label>
-            Rol
-            <select v-model="rol" required>
-                <option value="paciente">Paciente</option>
-                <option value="doctor">Doctor</option>
-                <option value="recepcionista">Recepcionista</option>
-            </select>
-            </label>
+            <p v-if="error" class="error-msg">{{ error }}</p>
 
-            <button type="submit">Entrar</button>
+            <button type="submit" :disabled="cargando">
+            {{ cargando ? 'Entrando…' : 'Entrar' }}
+            </button>
         </form>
 
-        <p class="help">¿Aún no tienes cuenta? <RouterLink :to="{ name: 'crear-cuenta' }">Crear cuenta</RouterLink></p>
+        <p class="help">
+            ¿Aún no tienes cuenta?
+            <RouterLink :to="{ name: 'crear-cuenta' }">Crear cuenta</RouterLink>
+        </p>
         </section>
     </main>
 </template>
 
 <script setup lang="ts">
-    import { ref } from 'vue'
-    import { RouterLink, useRouter } from 'vue-router'
-    import { useSesion } from '../controladores/useSesion'
+import { ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useSesion } from '../controladores/useSesion'
 
-    const router = useRouter()
-    const { setRolUsuario } = useSesion()
+const router = useRouter()
+const { setUsuario } = useSesion()
 
-    const correo = ref('')
-    const contrasena = ref('')
-    const rol = ref<'paciente' | 'doctor' | 'recepcionista'>('paciente')
+const correo = ref('')
+const contrasena = ref('')
+const error = ref('')
+const cargando = ref(false)
 
-    const iniciarSesion = () => {
-    setRolUsuario(rol.value)
+const iniciarSesion = async () => {
+    cargando.value = true
+    error.value = ''
 
-    if (rol.value === 'doctor') {
-        void router.push({ name: 'doctor-citas' })
+    try {
+        const respuesta = await fetch('http://localhost:3001/api/usuario/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo: correo.value, contraseña: contrasena.value }),
+        })
+
+        const datos = await respuesta.json()
+
+        if (datos.error) {
+        error.value = datos.error
         return
-    }
+        }
 
-    void router.push({ name: 'citas' })
+        setUsuario(datos.usuario)
+        void router.push({ name: 'citas' })
+
+    } catch {
+        error.value = 'No se pudo conectar con el servidor. Intenta de nuevo.'
+    } finally {
+        cargando.value = false
     }
+}
 </script>
 
 <style scoped>
@@ -148,4 +164,20 @@
     .help a:hover {
     text-decoration: underline;
     }
+    .error-msg {
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 0.9rem;
+    border: 1px solid #fecaca;
+    }
+
+    button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    }
+
+    
 </style>

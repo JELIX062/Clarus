@@ -3,10 +3,9 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">CLARUS</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+                <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-            <div class="navbar-nav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav_item margin">
                         <router-link class="nav-link item" :to="rutaCitas">Citas</router-link>
@@ -18,31 +17,37 @@
                         <router-link class="nav-link item" to="/perfil">Perfil</router-link>
                     </li>
                 </ul>
-            </div>
+                <button class="btn btn-danger btn-sm" @click="cerrarSesionYRedirigir">Cerrar sesión</button>
             </div>
         </div>
-</nav>
+    </nav>
 </template>
 
 <script setup lang="ts">
     import { computed } from 'vue'
+    import { useRouter } from 'vue-router'
     import { useSesion } from '../controladores/useSesion'
 
-    const { rolUsuario } = useSesion()
+    const router = useRouter()
+    const { rolUsuario, cerrarSesion } = useSesion()
+
+    const cerrarSesionYRedirigir = () => {
+        cerrarSesion()
+        void router.push({ name: 'inicio-sesion' })
+    }
 
     const etiquetaSecundaria = computed(() => {
-      if (rolUsuario.value === 'doctor') return 'Expedientes'
-      if (rolUsuario.value === 'recepcionista') return 'Nueva cuenta'
-      return 'Recetas'
+        if (rolUsuario.value === 'doctor') return 'Expedientes'
+        if (rolUsuario.value === 'recepcionista') return 'Nueva cuenta'
+        return 'Recetas'
     })
 
-    const rutaCitas = computed(() => (rolUsuario.value === 'doctor' ? '/doctor/citas' : '/citas'))
+    const rutaCitas = computed(() => '/citas')
     const rutaSecundaria = computed(() => {
-      if (rolUsuario.value === 'doctor') return '/doctor/expedientes'
-      if (rolUsuario.value === 'recepcionista') return '/crear-cuenta'
-      return '/recetas'
+        if (rolUsuario.value === 'doctor') return '/expedientes'
+        if (rolUsuario.value === 'recepcionista') return '/crear-cuenta'
+        return '/recetas'
     })
-
 </script>
 
 <style scoped>
@@ -69,4 +74,12 @@
     .item:hover {
         color: var(--clarus-gold) !important;
     }
+
+    .btn-cerrar {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	font-size: inherit;
+}
 </style>
