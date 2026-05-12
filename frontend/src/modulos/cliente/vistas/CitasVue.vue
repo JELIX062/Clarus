@@ -537,13 +537,22 @@
     }
     }
     @media (max-width: 768px) {
-    .calendar-toolbar,
+    
     .section-heading,
     .appointment-card__header,
     .details-actions {
         flex-direction: column;
         align-items: flex-start;
     }
+
+    .calendar-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: nowrap;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
 
     .weekdays-grid,
     .dates-grid {

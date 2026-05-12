@@ -1,313 +1,362 @@
 <template>
-    <section class="page-shell">
-        <h1 class="page-title">Nueva cita</h1>
+	<section class="agregar-cita-view">
+		<h2>Nueva cita</h2>
 
-        <form class="form-card" @submit.prevent="submitAppointment">
-        <div class="form-grid">
-            <label>
-            <span>Selección de edificio</span>
-            <select v-model="form.building" required>
-                <option disabled value="">Selecciona un edificio</option>
-                <option v-for="building in buildings" :key="building" :value="building">{{ building }}</option>
-            </select>
-            </label>
+		<form class="form-card" @submit.prevent="guardarCita">
 
-            <label>
-            <span>Selección de médico</span>
-            <select v-model="form.doctor" required>
-                <option disabled value="">Selecciona un médico</option>
-                <option v-for="doctor in availableDoctors" :key="doctor.name" :value="doctor.name">
-                {{ doctor.name }} · {{ doctor.specialty }}
-                </option>
-            </select>
-            </label>
+			<div class="field-row">
+				<label>
+					<span>Selección de edificio</span>
+					<select v-model="form.id_sucursal" required>
+						<option disabled value="">Selecciona un edificio</option>
+						<option v-for="s in sucursales" :key="s.id_sucursal" :value="s.id_sucursal">
+							{{ s.nombre }}
+						</option>
+					</select>
+				</label>
 
-            <label>
-            <span>Especialidad</span>
-            <input :value="selectedDoctor?.specialty ?? ''" type="text" readonly placeholder="Se llena al elegir médico" />
-            </label>
+				<label>
+					<span>Selección de médico</span>
+					<select v-model="form.id_doctor" :disabled="!form.id_sucursal" required>
+						<option disabled value="">{{ form.id_sucursal ? 'Selecciona un médico' : 'Elige edificio primero' }}</option>
+						<option v-for="d in doctoresFiltrados" :key="d.id_doctor" :value="d.id_doctor">
+							Dr. {{ d.nombre }} {{ d.apellido_paterno }}
+						</option>
+					</select>
+				</label>
 
-            <label>
-            <span>Qué día</span>
-            <input v-model="form.date" :min="minDate" type="date" required />
-            </label>
+				<label>
+					<span>Especialidad</span>
+					<input :value="especialidad" type="text" disabled placeholder="Se llena al elegir médico" />
+				</label>
+				
+			</div>
 
-            <label>
-            <span>A qué hora</span>
-            <input v-model="form.time" type="time" min="07:00" max="19:00" step="1800" required />
-            </label>
+			<div v-if="horarios.length > 0" class="horario-info">
+				<p class="horario-titulo">Horario de atención</p>
+				<div class="horario-tags">
+					<span v-for="h in horarios" :key="h.id_horario" class="horario-tag">
+						{{ diasSemana[h.dia_semana] }}
+						{{ formatHora(h.hora_inicio) }} – {{ formatHora(h.hora_fin) }}
+						· Consultorio {{ h.numero_consultorio }}
+					</span>
+				</div>
+			</div>
 
-            <label>
-            <span>Nombre del paciente</span>
-            <input v-model.trim="form.patientName" type="text" placeholder="Nombre completo" required />
-            </label>
+			<div class="field-row">
+				<label>
+					<span>Consultorio</span>
+					<select v-model="form.id_consultorio" required>
+						<option disabled value="">Selecciona un consultorio</option>
+						<option v-for="c in consultoriosFiltrados" :key="c.id_consultorio" :value="c.id_consultorio">
+                            Consultorio {{ c.numero }} — Piso {{ c.piso }}
+                        </option>
+					</select>
+				</label>
 
+				<label>
+					<span>Qué día</span>
+					<input v-model="form.fecha" type="date" required />
+				</label>
 
-            <label>
-            <span>Método de pago</span>
-            <select v-model="form.paymentMethod" required>
-                <option disabled value="">Selecciona una opción</option>
-                <option v-for="method in paymentMethods" :key="method" :value="method">{{ method }}</option>
-            </select>
-            </label>
+				<label>
+					<span>A qué hora</span>
+					<input v-model="form.hora_inicio" type="time" required />
+				</label>
+			</div>
 
-            <div v-if="form.paymentMethod === 'Tarjeta'" class="payment-card full-width">
-            <div class="payment-card__header">
-                <h2>Información de pago</h2>
-                <p>Completa los datos de la tarjeta para registrar la cita.</p>
-            </div>
+			<div class="field-row">
+				<label>
+					<span>Motivo de consulta</span>
+					<input v-model.trim="form.motivo_consulta" type="text" placeholder="Describe brevemente el motivo" required maxlength="500" />
+				</label>
 
-            <div class="payment-grid">
-                <label>
-                <span>Tipo de tarjeta</span>
-                <select v-model="form.cardType" required>
-                    <option disabled value="">Selecciona una opción</option>
-                    <option value="Crédito">Crédito</option>
-                    <option value="Débito">Débito</option>
-                </select>
-                </label>
+				<label>
+					<span>Costo de consulta</span>
+					<input :value="costoTotal ? `$${costoTotal}` : ''" type="text" disabled placeholder="Se llena al elegir médico" />
+				</label>
 
-                <label class="full-width">
-                <span>Número de tarjeta</span>
-                <input
-                    v-model.trim="form.cardNumber"
-                    type="text"
-                    inputmode="numeric"
-                    maxlength="19"
-                    placeholder="1234 5678 9012 3456"
-                    required
-                />
-                </label>
+				<label>
+					<span>Nombre del paciente</span>
+					<input :value="nombrePaciente" type="text" disabled />
+				</label>
+			</div>
 
-                <label class="full-width">
-                <span>Nombre en la tarjeta</span>
-                <input
-                    v-model.trim="form.cardHolder"
-                    type="text"
-                    maxlength="60"
-                    placeholder="Nombre del titular"
-                    required
-                />
-                </label>
+			<div class="field-row">
+				<label>
+					<span>Método de pago</span>
+					<select v-model="form.metodo_pago" required>
+						<option disabled value="">Selecciona una opción</option>
+						<option v-for="m in metodosPago" :key="m" :value="m">{{ m }}</option>
+					</select>
+				</label>
+			</div>
 
-                <label>
-                <span>Mes de vencimiento</span>
-                <select v-model="form.expMonth" required>
-                    <option disabled value="">Mes</option>
-                    <option v-for="month in expirationMonths" :key="month" :value="month">{{ month }}</option>
-                </select>
-                </label>
+			<div v-if="form.metodo_pago === 'Tarjeta'" class="payment-section">
+				<h3>Información de pago</h3>
+				<p>Completa los datos de la tarjeta para registrar la cita.</p>
 
-                <label>
-                <span>Año de vencimiento</span>
-                <select v-model="form.expYear" required>
-                    <option disabled value="">Año</option>
-                    <option v-for="year in expirationYears" :key="year" :value="year">{{ year }}</option>
-                </select>
-                </label>
+				<div class="field-row">
+					<label>
+						<span>Tipo de tarjeta</span>
+						<select v-model="tarjeta.tipo">
+							<option disabled value="">Selecciona una opción</option>
+							<option>Crédito</option>
+							<option>Débito</option>
+						</select>
+					</label>
 
-                <label>
-                <span>Código de seguridad</span>
-                <input
-                    v-model.trim="form.securityCode"
-                    type="password"
-                    inputmode="numeric"
-                    maxlength="4"
-                    placeholder="CVV"
-                    required
-                />
-                </label>
-            </div>
-            </div>
+					<label>
+						<span>Número de tarjeta</span>
+						<input v-model="tarjeta.numero" type="text" placeholder="1234 5678 9012 3456" maxlength="19" />
+					</label>
 
-            <div v-else-if="form.paymentMethod === 'Transferencia'" class="payment-card full-width">
-            <div class="payment-card__header">
-                <h2>Información de pago</h2>
-                <p>Captura los datos principales de la transferencia.</p>
-            </div>
+					<label>
+						<span>Nombre en la tarjeta</span>
+						<input v-model="tarjeta.titular" type="text" placeholder="Nombre del titular" />
+					</label>
+				</div>
 
-            <div class="payment-grid">
-                <label>
-                <span>Banco</span>
-                <input v-model.trim="form.transferBank" type="text" maxlength="50" placeholder="Banco emisor" required />
-                </label>
+				<div class="field-row">
+					<label>
+						<span>Mes de vencimiento</span>
+						<select v-model="tarjeta.mes">
+							<option disabled value="">Mes</option>
+							<option v-for="m in 12" :key="m" :value="String(m).padStart(2,'0')">{{ String(m).padStart(2,'0') }}</option>
+						</select>
+					</label>
 
-                <label>
-                <span>Referencia</span>
-                <input
-                    v-model.trim="form.transferReference"
-                    type="text"
-                    maxlength="40"
-                    placeholder="Número de referencia"
-                    required
-                />
-                </label>
+					<label>
+						<span>Año de vencimiento</span>
+						<select v-model="tarjeta.anio">
+							<option disabled value="">Año</option>
+							<option v-for="y in 10" :key="y" :value="2026 + y - 1">{{ 2026 + y - 1 }}</option>
+						</select>
+					</label>
 
-                <label class="full-width">
-                <span>Titular de la cuenta</span>
-                <input
-                    v-model.trim="form.transferHolder"
-                    type="text"
-                    maxlength="60"
-                    placeholder="Nombre del titular"
-                    required
-                />
-                </label>
+					<label>
+						<span>Código de seguridad</span>
+						<input v-model="tarjeta.cvv" type="text" placeholder="CVV" maxlength="4" />
+					</label>
+				</div>
+			</div>
 
-                <label>
-                <span>Cuenta destino</span>
-                <input
-                    v-model.trim="form.transferAccount"
-                    type="text"
-                    inputmode="numeric"
-                    maxlength="20"
-                    placeholder="Últimos dígitos o cuenta"
-                    required
-                />
-                </label>
-            </div>
-            </div>
-        </div>
+			<div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
+			<div v-if="exito" class="alert alert-success" role="alert">{{ exito }}</div>
 
-        <p v-if="errorMessage" class="feedback error">{{ errorMessage }}</p>
-        <p v-if="successMessage" class="feedback success">{{ successMessage }}</p>
+			<div class="actions">
+				<RouterLink class="button button-white" :to="{ name: 'citas' }">Cancelar</RouterLink>
+				<button class="button" type="submit" :disabled="cargando">
+					{{ cargando ? 'Guardando...' : 'Guardar cita' }}
+				</button>
+			</div>
 
-        <div class="actions">
-            <RouterLink class="button button-white" :to="{ name: 'citas' }">Cancelar</RouterLink>
-            <button class="button" type="submit">Guardar cita</button>
-        </div>
-        </form>
-    </section>
+		</form>
+	</section>
 </template>
 
 <script setup lang="ts">
-    import { computed, reactive, ref } from 'vue'
-    import { RouterLink, useRouter } from 'vue-router'
-    import { useCitas } from '../controladores/useCita'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
-    const router = useRouter()
-    const { addAppointment } = useCitas()
+const router   = useRouter()
+const { usuarioActual } = useSesion()
 
-    const buildings = ['Edificio Central', 'Torre Norte', 'Torre Sur', 'Centro Médico Satélite']
-    const doctors = [
-    { name: 'Dra. Ana Martínez', specialty: 'Cardiología' },
-    { name: 'Dr. Luis Herrera', specialty: 'Medicina general' },
-    { name: 'Dra. Sofía Núñez', specialty: 'Dermatología' },
-    { name: 'Dr. Ricardo Pérez', specialty: 'Traumatología' }
-    ]
-    const paymentMethods = ['Tarjeta', 'Transferencia']
+// ── Datos del paciente (readonly) ──────────────────────────────
+const nombrePaciente = computed(() => {
+	const u = usuarioActual.value
+	if (!u) return ''
+	return `${u.nombre} ${u.apellido_paterno} ${u.apellido_materno ?? ''}`.trim()
+})
 
-    const form = reactive({
-    building: '',
-    doctor: '',
-    date: '',
-    time: '',
-    patientName: '',
-    paymentMethod: '',
-    cardType: '',
-    cardNumber: '',
-    cardHolder: '',
-    expMonth: '',
-    expYear: '',
-    securityCode: '',
-    transferBank: '',
-    transferReference: '',
-    transferHolder: '',
-    transferAccount: '',
-    notes: ''
-    })
+// ── Catálogos ──────────────────────────────────────────────────
+type Doctor = {
+	id_doctor:       number
+	nombre:          string      
+	apellido_paterno: string       
+	especialidad:    string
+	tarifa_consulta: number
+    id_sucursal:      number 
+}
 
-    const errorMessage = ref('')
-    const successMessage = ref('')
-    const minDateObject = new Date()
-    minDateObject.setDate(minDateObject.getDate() + 1)
-    const minDate = minDateObject.toISOString().split('T')[0]
+type Consultorio = {
+	id_consultorio: number
+	numero:         string
+	piso:           string
+	descripcion:    string
+    id_sucursal:    number
+}
 
-    const expirationMonths = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0'))
-    const currentYear = new Date().getFullYear()
-    const expirationYears = Array.from({ length: 12 }, (_, index) => String(currentYear + index))
+type Sucursal = {
+	id_sucursal: number
+	nombre:      string
+}
 
-    const availableDoctors = computed(() => doctors)
-    const selectedDoctor = computed(() => doctors.find((doctor) => doctor.name === form.doctor))
+type HorarioDoctor = {
+	id_horario:   number
+	dia_semana:   number
+	hora_inicio:  string
+	hora_fin:     string
+	numero_consultorio: string
+}
 
-    const buildPaymentReference = () => {
-    if (form.paymentMethod === 'Tarjeta') {
-        const normalizedCardNumber = form.cardNumber.replace(/\s+/g, '')
-        const lastDigits = normalizedCardNumber.slice(-4)
+const horarios = ref<HorarioDoctor[]>([])
 
-        return `${form.paymentMethod} ${form.cardType} · **** ${lastDigits} · ${form.cardHolder} · ${form.expMonth}/${form.expYear}`
-    }
+const diasSemana: Record<number, string> = {
+	1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
+	4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo'
+}
 
-    return `${form.paymentMethod} · ${form.transferBank} · Ref ${form.transferReference} · ${form.transferHolder} · ${form.transferAccount}`
-    }
+const formatHora = (hora: string) => hora.slice(0, 5)
 
-    const validatePaymentInformation = () => {
-    if (form.paymentMethod === 'Tarjeta') {
-        const normalizedCardNumber = form.cardNumber.replace(/\s+/g, '')
+const tarjeta = reactive({
+	tipo:    '',
+	numero:  '',
+	titular: '',
+	mes:     '',
+	anio:    '',
+	cvv:     '',
+})
+const sucursales = ref<Sucursal[]>([])
+const doctores     = ref<Doctor[]>([])
+const consultorios = ref<Consultorio[]>([])
 
-        if (!form.cardType) {
-        return 'Selecciona si la tarjeta es de crédito o débito.'
-        }
+const consultoriosFiltrados = computed(() =>
+	form.id_sucursal
+		? consultorios.value.filter(c => c.id_sucursal === Number(form.id_sucursal))
+		: []
+)
 
-        if (normalizedCardNumber.length < 13) {
-        return 'Ingresa un número de tarjeta válido.'
-        }
+onMounted(async () => {
+	try {
+		const [resDoctores, resConsultorios, resSucursales] = await Promise.all([
+            fetch('http://localhost:3001/api/doctor'),
+            fetch('http://localhost:3001/api/consultorio'),
+            fetch('http://localhost:3001/api/sucursal'),
+        ])
+        doctores.value     = await resDoctores.json()
+        consultorios.value = await resConsultorios.json()
+        sucursales.value   = await resSucursales.json()
+	} catch {
+		error.value = 'No se pudo cargar la información del servidor.'
+	}
+})
 
-        if (!form.cardHolder || !form.expMonth || !form.expYear || form.securityCode.length < 3) {
-        return 'Completa todos los datos de la tarjeta para continuar.'
-        }
-    }
+// ── Formulario ─────────────────────────────────────────────────
+const form = reactive({
+    id_sucursal:     '',
+	id_doctor:       '',
+	id_consultorio:  '',
+	fecha:           '',
+	hora_inicio:     '',
+	motivo_consulta: '',
+	metodo_pago:     '',
+})
 
-    if (form.paymentMethod === 'Transferencia') {
-        if (!form.transferBank || !form.transferReference || !form.transferHolder || !form.transferAccount) {
-        return 'Completa todos los datos de la transferencia para continuar.'
-        }
-    }
+const error   = ref('')
+const exito   = ref('')
+const cargando = ref(false)
 
-    return ''
-    }
+const doctoresFiltrados = computed(() =>
+	form.id_sucursal
+		? doctores.value.filter(d => d.id_sucursal === Number(form.id_sucursal))
+		: []
+)
 
-    const submitAppointment = () => {
-    errorMessage.value = ''
-    successMessage.value = ''
+watch(() => form.id_sucursal, () => {
+	form.id_doctor      = ''
+	form.id_consultorio = ''
+})
 
-    if (!selectedDoctor.value) {
-        errorMessage.value = 'Selecciona un médico válido para continuar.'
-        return
-    }
+watch(() => form.id_doctor, async (nuevoId) => {
+	horarios.value = []
+	if (!nuevoId) return
 
-    const selectedDateTime = new Date(`${form.date}T${form.time}:00`)
+	try {
+		const res  = await fetch(`http://localhost:3001/api/horario/doctor/${nuevoId}`)
+		const data = await res.json()
+		if (Array.isArray(data)) horarios.value = data
+	} catch { /* silencioso */ }
+})
 
-    if (Number.isNaN(selectedDateTime.getTime()) || selectedDateTime <= new Date()) {
-        errorMessage.value = 'Solo puedes seleccionar una fecha y hora futuras para la cita.'
-        return
-    }
+// Doctor seleccionado → autocompleta especialidad y costo
+const doctorSeleccionado = computed(() =>
+	doctores.value.find(d => d.id_doctor === Number(form.id_doctor)) ?? null
+)
 
-    const paymentError = validatePaymentInformation()
+const especialidad = computed(() => doctorSeleccionado.value?.especialidad ?? '')
+const costoTotal   = computed(() => doctorSeleccionado.value?.tarifa_consulta ?? 0)
 
-    if (paymentError) {
-        errorMessage.value = paymentError
-        return
-    }
+// Hora fin = hora inicio + 30 minutos
+const horaFin = computed(() => {
+	if (!form.hora_inicio) return ''
+	const partes = form.hora_inicio.split(':')
+	const h = Number(partes[0] ?? 0)
+	const m = Number(partes[1] ?? 0)
+	const fin = new Date(0, 0, 0, h, m + 30)
+	return `${String(fin.getHours()).padStart(2, '0')}:${String(fin.getMinutes()).padStart(2, '0')}:00`
+})
 
-     addAppointment({
-        building: form.building,
-        doctor: form.doctor,
-        specialty: selectedDoctor.value.specialty,
-        date: form.date,
-        time: form.time,
-        patientName: form.patientName,
-        paymentMethod: form.paymentMethod,
-        paymentReference: buildPaymentReference(),
-        notes: form.notes
-    })
+const metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia']
 
-    successMessage.value = 'La cita se guardó correctamente. Serás redirigido a la vista principal.'
+// ── Submit ─────────────────────────────────────────────────────
+const guardarCita = async () => {
+	error.value = ''
+	exito.value = ''
 
-    setTimeout(() => {
-        router.push({ name: 'citas' })
-    }, 900)
-    }
+	if (!form.id_doctor || !form.id_consultorio || !form.fecha || !form.hora_inicio || !form.motivo_consulta || !form.metodo_pago) {
+		error.value = 'Completa todos los campos obligatorios.'
+		return
+	}
+
+	const fechaSeleccionada = new Date(`${form.fecha}T${form.hora_inicio}`)
+	if (fechaSeleccionada <= new Date()) {
+		error.value = 'La fecha y hora deben ser futuras.'
+		return
+	}
+
+	cargando.value = true
+
+	try {
+		const respuesta = await fetch('http://localhost:3001/api/cita', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				id_paciente:     usuarioActual.value?.id_paciente,
+				id_doctor:       Number(form.id_doctor),
+				id_consultorio:  Number(form.id_consultorio),
+				id_recepcionista: null,
+				fecha:           form.fecha,
+				hora_inicio:     `${form.hora_inicio}:00`,
+				hora_fin:        horaFin.value,
+				motivo_consulta: form.motivo_consulta,
+				costo_total: Number(costoTotal.value),
+				registrado_por:  usuarioActual.value?.id_usuario,
+				metodo_pago:     form.metodo_pago,
+				referencia:      null,
+			}),
+		})
+
+		const datos = await respuesta.json()
+		console.log('Respuesta backend:', datos) 
+
+		if (datos.error) {
+			error.value = typeof datos.error === 'string'
+				? datos.error
+				: JSON.stringify(datos.error)  // ← cambia esto temporalmente
+			return
+		}
+
+		exito.value = 'Cita registrada correctamente. Redirigiendo...'
+		setTimeout(() => void router.push({ name: 'citas' }), 1500)
+
+	} catch {
+		error.value = 'No se pudo conectar con el servidor.'
+	} finally {
+		cargando.value = false
+	}
+}
 </script>
 
 <style scoped>
@@ -409,4 +458,106 @@
         align-items: stretch;
     }
     }
+
+    .agregar-cita-view {
+	max-width: 1000px;
+	margin: 2rem auto;
+	padding: 0 1.5rem;
+}
+
+h2 {
+	margin-bottom: 1.5rem;
+}
+
+.form-card {
+	background: var(--clarus-ivory);
+	border-radius: 18px;
+	padding: 2rem;
+	box-shadow: 0 18px 45px var(--clarus-shadow);
+	display: grid;
+	gap: 1.2rem;
+}
+
+.field-row {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1rem;
+}
+
+label {
+	display: grid;
+	gap: 0.35rem;
+	font-size: 0.94rem;
+	color: var(--clarus-midnight);
+}
+
+label span {
+	font-weight: 500;
+}
+
+input,
+select {
+	padding: 0.72rem;
+	border-radius: 10px;
+	border: 1px solid var(--clarus-border);
+	font-size: 1rem;
+	min-height: 44px;
+	width: 100%;
+}
+
+input:disabled,
+select:disabled {
+	background: #f5f5f5;
+	color: #888;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+	margin-top: 0.5rem;
+}
+
+.feedback {
+	margin: 0;
+	padding: 0.6rem 0.8rem;
+	border-radius: 8px;
+	font-size: 0.9rem;
+}
+
+.horario-info {
+	background: #f0fdf4;
+	border: 1px solid #bbf7d0;
+	border-radius: 10px;
+	padding: 0.8rem 1rem;
+}
+
+.horario-titulo {
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: #166534;
+	margin: 0 0 0.5rem;
+}
+
+.horario-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.horario-tag {
+	background: #dcfce7;
+	color: #166534;
+	border-radius: 999px;
+	padding: 0.25rem 0.75rem;
+	font-size: 0.85rem;
+	font-weight: 500;
+}
+
+
+@media (max-width: 768px) {
+	.field-row {
+		grid-template-columns: 1fr;
+	}
+}
 </style>
