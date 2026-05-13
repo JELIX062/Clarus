@@ -1,317 +1,307 @@
 <template>
     <section class="citas-view">
         <div class="calendar-layout">
+
         <article class="calendar-card">
             <div class="calendar-toolbar">
-            <button class="nav-button" type="button" @click="prevMonth">‹</button>
-            <div class="month-selector">
-                <button class="month-label month-label-button" type="button" @click="toggleMonthMenu">
-                <h2>{{ fullMonths[visibleMonth] }}</h2>
-                <span>{{ visibleYear }}</span>
-                </button>
-
-                <div v-if="showMonthMenu" class="month-menu">
-                <button
-                    v-for="(month, index) in fullMonths"
-                    :key="month"
-                    type="button"
-                    class="month-menu-item"
-                    :class="{ active: index === visibleMonth }"
-                    @click="selectMonthFromMenu(index)"
-                >
-                    {{ month }}
-                </button>
+                <button class="nav-button" type="button" @click="prevMonth">‹</button>
+                <div class="month-selector">
+                    <button class="month-label month-label-button" type="button" @click="toggleMonthMenu">
+                        <h2>{{ fullMonths[visibleMonth] }}</h2>
+                        <span>{{ visibleYear }}</span>
+                    </button>
+                    <div v-if="showMonthMenu" class="month-menu">
+                        <button
+                            v-for="(month, index) in fullMonths"
+                            :key="month"
+                            type="button"
+                            class="month-menu-item"
+                            :class="{ active: index === visibleMonth }"
+                            @click="selectMonthFromMenu(index)"
+                        >
+                            {{ month }}
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <button class="nav-button" type="button" @click="nextMonth">›</button>
+                <button class="nav-button" type="button" @click="nextMonth">›</button>
             </div>
 
             <div class="weekdays-grid">
-            <span v-for="day in weekDays" :key="day">{{ day }}</span>
+                <span v-for="day in weekDays" :key="day">{{ day }}</span>
             </div>
 
             <div class="dates-grid">
-            <button
-                v-for="dateCell in calendarCells"
-                :key="dateCell.key"
-                type="button"
-                class="date-cell"
-                :class="{
-                empty: !dateCell.day,
-                active: dateCell.day === selectedDay,
-                'has-appointments': dateCell.day && hasAppointments(dateCell.day),
-                today: dateCell.day === todayDay && isCurrentVisibleMonth
-                }"
-                :disabled="!dateCell.day"
-                @click="dateCell.day && selectDay(dateCell.day)"
-            >
-                <span>{{ dateCell.day ?? '' }}</span>
-                <small v-if="dateCell.day && appointmentCountByDay[dateCell.day]">
-                {{ appointmentCountByDay[dateCell.day] }}
-                </small>
-            </button>
+                <button
+                    v-for="dateCell in calendarCells"
+                    :key="dateCell.key"
+                    type="button"
+                    class="date-cell"
+                    :class="{
+                        empty: !dateCell.day,
+                        active: dateCell.day === selectedDay,
+                        'has-appointments': dateCell.day && hasAppointments(dateCell.day),
+                        today: dateCell.day === todayDay && isCurrentVisibleMonth
+                    }"
+                    :disabled="!dateCell.day"
+                    @click="dateCell.day && selectDay(dateCell.day)"
+                >
+                    <span>{{ dateCell.day ?? '' }}</span>
+                    <small v-if="dateCell.day && appointmentCountByDay[dateCell.day]">
+                        {{ appointmentCountByDay[dateCell.day] }}
+                    </small>
+                </button>
             </div>
         </article>
 
         <article class="details-card details-card-layout">
             <div class="section-heading">
-            <div>
-                <h2>{{ selectedDateLabel }}</h2>
-                <p>Citas registradas para el día seleccionado.</p>
-            </div>
-            <span class="counter">{{ selectedDayAppointments.length }}</span>
+                <div>
+                    <h2>{{ selectedDateLabel }}</h2>
+                    <p>Citas registradas para el día seleccionado.</p>
+                </div>
+                <span class="counter">{{ selectedDayAppointments.length }}</span>
             </div>
 
             <div v-if="selectedDayAppointments.length === 0" class="empty-state">
-            {{
-                esDoctor
-                    ? "No tienes citas programadas para este día."
-                    : "No hay citas para este día. Puedes usar Agregar cita para registrar una nueva."
-            }}
+                {{
+                    esDoctor
+                        ? 'No tienes citas programadas para este día.'
+                        : 'No hay citas para este día. Puedes usar Agregar cita para registrar una nueva.'
+                }}
             </div>
 
             <div v-else class="appointment-list">
-            <article
-                v-for="appointment in selectedDayAppointments"
-                :key="appointment.id"
-                class="appointment-card"
-            >
-                <div class="appointment-card__header">
-                <div>
-                    <h3>{{ appointment.doctor }}</h3>
-                    <p>{{ appointment.specialty }}</p>
-                    <p v-if="esDoctor || esRecepcionista" class="patient-name">
-                    Paciente: {{ appointment.patientName }}
-                    </p>
-                </div>
-                <span class="tag">{{ appointment.building }}</span>
-                </div>
-
-                <dl>
-                <div>
-                    <dt>Hora</dt>
-                    <dd>{{ formatTime(appointment.time) }}</dd>
-                </div>
-                <div>
-                    <dt>Pago</dt>
-                    <dd>{{ appointment.paymentMethod }} · {{ appointment.paymentReference }}</dd>
-                    <small :class="appointment.paid ? 'payment-status paid' : 'payment-status pending'">
-                    {{ appointment.paid ? 'Pagado' : 'Pendiente de pago' }}
-                    </small>
-                </div>
-                </dl>
-
-                <p v-if="appointment.notes" class="notes">{{ appointment.notes }}</p>
-
-                <button
-                v-if="esDoctor || esRecepcionista"
-                class="button button-danger"
-                type="button"
-                @click="cancelarCita(appointment.id)"
+                <article
+                    v-for="appointment in selectedDayAppointments"
+                    :key="appointment.id"
+                    class="appointment-card"
                 >
-                Cancelar cita
-                </button>
-                <button
-                v-if="esRecepcionista && !appointment.paid"
-                class="button button-success"
-                type="button"
-                @click="recibirPago(appointment.id)"
-                >
-                Recibir pago
-                </button>
-            </article>
+                    <div class="card-row">
+                        <h3>{{ appointment.doctor }}</h3>
+                        <span class="tag">{{ appointment.estado }}</span>
+                    </div>
+                    <div class="card-row muted">
+                        <span>{{ appointment.time }} – {{ appointment.horaFin }}</span>
+                        <span>{{ appointment.sucursal }}</span>
+                        <span>{{ appointment.consultorio }}</span>
+                    </div>
+                    <div class="card-row muted">
+                        <span>Motivo: {{ appointment.motivo }}</span>
+                        <span>{{ appointment.specialty }}</span>
+                    </div>
+                    
+                    <button
+                        v-if="appointment.estado !== 'Cancelada'"
+                        class="button button-danger"
+                        type="button"
+                        @click="handleCancelar(appointment.id)"
+                    >
+                        Cancelar cita
+                    </button>
+                </article>
             </div>
 
             <div class="details-actions details-actions-bottom">
-            <RouterLink v-if="!esDoctor" class="button" :to="{ name: 'agregar-cita' }">
-                {{ esRecepcionista ? "Agendar cita para paciente" : "Agregar cita" }}
-            </RouterLink>
-            <RouterLink
-            v-if="!esRecepcionista"
-            class="button button-white"
-            :to="{ name: 'historial-citas' }"
-            >
-                {{ esDoctor ? "Ver historial general" : "Ver historial" }}
-            </RouterLink>
+                <RouterLink v-if="!esDoctor" class="button" :to="{ name: 'agregar-cita' }">
+                    {{ esRecepcionista ? 'Agendar cita para paciente' : 'Agregar cita' }}
+                </RouterLink>
+                <RouterLink v-if="!esRecepcionista" class="button button-white" :to="{ name: 'historial-citas' }">
+                    {{ esDoctor ? 'Ver historial general' : 'Ver historial' }}
+                </RouterLink>
+            </div>
+
+            <!-- Modal cancelar cita -->
+            <div class="modal fade" id="modalCancelar" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Cancelar cita</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <label class="form-label">Motivo de cancelación</label>
+                            <input
+                                v-model="motivoCancelacion"
+                                type="text"
+                                class="form-control mb-3"
+                                placeholder="Escribe el motivo..."
+                            />
+
+                            <div :class="aplicaReembolso ? 'alert alert-success' : 'alert alert-warning'" class="mb-0">
+                                <strong>{{ aplicaReembolso ? '✓ Aplica reembolso' : '✗ No aplica reembolso' }}</strong><br>
+                                {{ mensajeReembolso }}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-danger" @click="confirmarCancelacion">
+                                Confirmar cancelación
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </article>
-        </div>
 
+        </div>
     </section>
 </template>
 
 <script setup lang="ts">
-    import { computed, ref, watch } from 'vue'
-    import { RouterLink } from 'vue-router'
-    import { useCitas } from '../controladores/useCita'
-    import { useSesion } from '@/modulos/principal/controladores/useSesion'
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
+import { useCitas } from '../controladores/useCita'
+import { useSesion } from '@/modulos/principal/controladores/useSesion'
+import { Modal } from 'bootstrap'
 
-    const { appointments, removeAppointment, registerPayment } = useCitas()
-    const { rolUsuario } = useSesion()
+const motivoCancelacion = ref('')
+const citaACancelar = ref<number | null>(null)
 
-    const fullMonths = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre'
-    ]
-    const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const { appointments, fetchCitasPaciente, cancelarCita } = useCitas()
+const { rolUsuario, usuarioActual } = useSesion()
 
-    const now = new Date()
-    const visibleYear = ref(now.getFullYear())
-    const visibleMonth = ref(now.getMonth())
-    const selectedDay = ref(now.getDate())
-    const todayDay = now.getDate()
-    const showMonthMenu = ref(false)
-    const isCurrentVisibleMonth = computed(
+const aplicaReembolso  = ref(false)
+const mensajeReembolso = ref('')
+
+const handleCancelar = (id: number) => {
+    citaACancelar.value     = id
+    motivoCancelacion.value = ''
+
+    // Busca la cita para saber su fecha
+    const cita = appointments.value.find(a => a.id === id)
+    if (cita) {
+        const fechaCita   = new Date(`${cita.date}T${cita.time}:00`)
+        const ahora       = new Date()
+        const horasRestantes = (fechaCita.getTime() - ahora.getTime()) / (1000 * 60 * 60)
+
+        if (horasRestantes >= 24) {
+            aplicaReembolso.value  = true
+            mensajeReembolso.value = `Se realizará el reembolso porque la cita se cancela con más de 24 horas de anticipación.`
+        } else {
+            aplicaReembolso.value  = false
+            mensajeReembolso.value = `No se realizará el reembolso porque faltan menos de 24 horas para la cita.`
+        }
+    }
+
+    const modal = new Modal(document.getElementById('modalCancelar')!)
+    modal.show()
+}
+
+const confirmarCancelacion = async () => {
+    if (!motivoCancelacion.value.trim()) return
+    if (!citaACancelar.value) return
+
+    await cancelarCita(citaACancelar.value, motivoCancelacion.value, usuarioActual.value?.id_usuario as number ?? 0)
+
+    const modal = Modal.getInstance(document.getElementById('modalCancelar')!)
+    modal?.hide()
+    citaACancelar.value = null
+}
+
+
+onMounted(async () => {
+    if (usuarioActual.value?.id_paciente) {
+        await fetchCitasPaciente(usuarioActual.value.id_paciente as number)
+    }
+})
+
+const esDoctor        = computed(() => rolUsuario.value === 'doctor')
+const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
+
+const fullMonths = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+const weekDays   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+
+const now          = new Date()
+const visibleYear  = ref(now.getFullYear())
+const visibleMonth = ref(now.getMonth())
+const selectedDay  = ref(now.getDate())
+const todayDay     = now.getDate()
+const showMonthMenu = ref(false)
+
+const isCurrentVisibleMonth = computed(
     () => visibleYear.value === now.getFullYear() && visibleMonth.value === now.getMonth()
-    )
+)
 
-    const daysInMonth = computed(() => new Date(visibleYear.value, visibleMonth.value + 1, 0).getDate())
-    const firstDayOfMonth = computed(() => new Date(visibleYear.value, visibleMonth.value, 1).getDay())
+const daysInMonth     = computed(() => new Date(visibleYear.value, visibleMonth.value + 1, 0).getDate())
+const firstDayOfMonth = computed(() => new Date(visibleYear.value, visibleMonth.value, 1).getDay())
 
-    watch([visibleMonth, visibleYear], () => {
-    if (selectedDay.value > daysInMonth.value) {
-        selectedDay.value = daysInMonth.value
+watch([visibleMonth, visibleYear], () => {
+    if (selectedDay.value > daysInMonth.value) selectedDay.value = daysInMonth.value
+})
+
+const calendarCells = computed(() => {
+    const cells: { day: number | null; key: string }[] = []
+    for (let i = 0; i < firstDayOfMonth.value; i++) {
+        cells.push({ day: null, key: `empty-${i}` })
     }
-    })
-
-    const appointmentsInVisibleMonth = computed(() =>
-    appointments.value.filter((appointment) => {
-        const appointmentDate = new Date(`${appointment.date}T${appointment.time}:00`)
-
-        return (
-        appointmentDate.getFullYear() === visibleYear.value && appointmentDate.getMonth() === visibleMonth.value
-        )
-    })
-    )
-
-    const appointmentCountByDay = computed<Record<number, number>>(() => {
-    return appointmentsInVisibleMonth.value.reduce<Record<number, number>>((accumulator, appointment) => {
-        const day = new Date(`${appointment.date}T${appointment.time}:00`).getDate()
-        accumulator[day] = (accumulator[day] ?? 0) + 1
-        return accumulator
-    }, {})
-    })
-
-    const calendarCells = computed(() => {
-    const cells: Array<{ key: string; day: number | null }> = []
-
-    for (let index = 0; index < firstDayOfMonth.value; index += 1) {
-        cells.push({ key: `blank-${index}`, day: null })
+    for (let d = 1; d <= daysInMonth.value; d++) {
+        cells.push({ day: d, key: `day-${d}` })
     }
-
-    for (let day = 1; day <= daysInMonth.value; day += 1) {
-        cells.push({ key: `day-${visibleYear.value}-${visibleMonth.value}-${day}`, day })
-    }
-
-    while (cells.length % 7 !== 0) {
-        cells.push({ key: `tail-${cells.length}`, day: null })
-    }
-
     return cells
+})
+
+const appointmentsInVisibleMonth = computed(() =>
+    appointments.value.filter(a => {
+        const [y, m] = a.date.split('-').map(Number)
+        return y === visibleYear.value && m === visibleMonth.value + 1
     })
+)
 
-    const selectedDayAppointments = computed(() =>
-    appointmentsInVisibleMonth.value
-        .filter((appointment) => new Date(`${appointment.date}T${appointment.time}:00`).getDate() === selectedDay.value)
-        .sort((firstAppointment, secondAppointment) => firstAppointment.time.localeCompare(secondAppointment.time))
-    )
+const appointmentCountByDay = computed<Record<number, number>>(() =>
+    appointmentsInVisibleMonth.value.reduce<Record<number, number>>((acc, a) => {
+        const day = Number(a.date.split('-')[2])
+        acc[day] = (acc[day] ?? 0) + 1
+        return acc
+    }, {})
+)
 
-    const selectedDateLabel = computed(() => {
-    return `${selectedDay.value} de ${fullMonths[visibleMonth.value]} de ${visibleYear.value}`
-    })
+const hasAppointments = (day: number) => !!appointmentCountByDay.value[day]
 
-    const esDoctor = computed(() => rolUsuario.value === 'doctor')
-    const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
+const selectedDayAppointments = computed(() => {
+    const yyyy = visibleYear.value
+    const mm   = String(visibleMonth.value + 1).padStart(2, '0')
+    const dd   = String(selectedDay.value).padStart(2, '0')
+    return appointments.value.filter(a => a.date === `${yyyy}-${mm}-${dd}`)
+})
 
-    const hasAppointments = (day: number) => Boolean(appointmentCountByDay.value[day])
+const selectedDateLabel = computed(() =>
+    new Date(visibleYear.value, visibleMonth.value, selectedDay.value)
+        .toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+)
 
-    const selectDay = (day: number) => {
-    selectedDay.value = day
-    }
+const selectDay           = (day: number) => { selectedDay.value = day }
+const toggleMonthMenu     = ()            => { showMonthMenu.value = !showMonthMenu.value }
+const selectMonthFromMenu = (i: number)   => { visibleMonth.value = i; showMonthMenu.value = false }
 
-    const setMonth = (month: number) => {
-    visibleMonth.value = month
-    }
-
-    const toggleMonthMenu = () => {
-    showMonthMenu.value = !showMonthMenu.value
-    }
-
-    const selectMonthFromMenu = (month: number) => {
-    setMonth(month)
+const prevMonth = () => {
+    if (visibleMonth.value === 0) { visibleYear.value--; visibleMonth.value = 11 }
+    else visibleMonth.value--
     showMonthMenu.value = false
-    }
-
-    const prevMonth = () => {
-    if (visibleMonth.value === 0) {
-        visibleMonth.value = 11
-        visibleYear.value -= 1
-        showMonthMenu.value = false
-        return
-    }
-
-    visibleMonth.value -= 1
+}
+const nextMonth = () => {
+    if (visibleMonth.value === 11) { visibleYear.value++; visibleMonth.value = 0 }
+    else visibleMonth.value++
     showMonthMenu.value = false
-    }
+}
 
-    const nextMonth = () => {
-    if (visibleMonth.value === 11) {
-        visibleMonth.value = 0
-        visibleYear.value += 1
-        showMonthMenu.value = false
-        return
-    }
 
-    visibleMonth.value += 1
-    showMonthMenu.value = false
-    }
-
-    const cancelarCita = (appointmentId: string) => {
-    removeAppointment(appointmentId)
-    }
-
-    const recibirPago = (appointmentId: string) => {
-    registerPayment(appointmentId)
-    }
-
-    const formatTime = (time: string) =>
-    new Intl.DateTimeFormat('es-MX', {
-        timeStyle: 'short'
-    }).format(new Date(`2026-01-01T${time}:00`))
 </script>
 
 <style scoped>
-    .citas-view {
+.citas-view {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1.5rem 3rem;
     display: grid;
     gap: 1.5rem;
-    }
-    .calendar-card,
-    .details-card,
-    .appointment-card {
+}
+.calendar-card, .details-card, .appointment-card {
     background: var(--clarus-ivory);
     border-radius: 20px;
     box-shadow: 0 18px 45px var(--clarus-shadow);
-    }
-    h1,
-    h2,
-    h3,
-    p {
-    margin: 0;
-    }
-    .button {
+}
+h1, h2, h3, p { margin: 0; }
+.button {
     background: var(--clarus-midnight);
     color: var(--clarus-ivory);
     border: 1px solid var(--clarus-midnight);
@@ -319,56 +309,27 @@
     padding: 0.85rem 1.4rem;
     text-decoration: none;
     font-weight: 700;
-    }
-    .button-white {
-    background: var(--clarus-ivory);
-    color: var(--clarus-midnight);
-    }
-    .button-danger {
-    margin-top: 1rem;
-    background: #b42318;
-    border-color: #b42318;
-    }
-    .button-success {
-    margin-top: 0.6rem;
-    background: #047857;
-    border-color: #047857;
-    }
-    .calendar-layout {
+    cursor: pointer;
+}
+.button-white  { background: var(--clarus-ivory); color: var(--clarus-midnight); }
+.button-danger { background: #b42318; border-color: #b42318; }
+.calendar-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
     gap: 1.5rem;
-    }
-    .calendar-card,
-    .details-card {
-    padding: 1.5rem;
-    }
-    .details-card-layout {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-    }
-    .calendar-toolbar,
-    .section-heading,
-    .appointment-card__header {
+}
+.calendar-card, .details-card { padding: 1.5rem; }
+.details-card-layout { display: flex; flex-direction: column; min-height: 100%; }
+.calendar-toolbar, .section-heading {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
     align-items: center;
-    }
-    .month-selector {
-    position: relative;
-    }
-    .month-label {
-    text-align: center;
-    }
-    .month-label-button {
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    padding: 0.35rem 0.75rem;
-    }
-    .month-menu {
+}
+.month-selector { position: relative; }
+.month-label { text-align: center; }
+.month-label-button { border: 0; background: transparent; cursor: pointer; padding: 0.35rem 0.75rem; }
+.month-menu {
     position: absolute;
     top: calc(100% + 0.75rem);
     left: 50%;
@@ -382,8 +343,8 @@
     display: grid;
     gap: 0.45rem;
     z-index: 10;
-    }
-    .month-menu-item {
+}
+.month-menu-item {
     border: 1px solid var(--clarus-gold-soft);
     background: var(--clarus-ivory);
     border-radius: 12px;
@@ -391,176 +352,82 @@
     text-align: left;
     color: var(--clarus-midnight);
     font-weight: 700;
-    }
-    .month-menu-item.active {
-    background: var(--clarus-midnight);
-    color: var(--clarus-ivory);
-    border-color: var(--clarus-midnight);
-    }
-    .month-label span,
-    .section-heading p,
-    .empty-state,
-    .notes,
-    .appointment-card p,
-    dt,
-    small {
+    cursor: pointer;
+}
+.month-menu-item.active { background: var(--clarus-midnight); color: var(--clarus-ivory); border-color: var(--clarus-midnight); }
+.month-label span, .section-heading p, .empty-state {
     color: var(--clarus-oxford);
-    }
-    .nav-button {
-    border: 0;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 999px;
-    background: var(--clarus-gold-soft);
-    color: var(--clarus-midnight);
-    font-size: 1.35rem;
-    font-weight: 700;
-    }
-    .weekdays-grid,
-    .dates-grid {
+}
+.nav-button {
+    border: 0; width: 2.75rem; height: 2.75rem; border-radius: 999px;
+    background: var(--clarus-gold-soft); color: var(--clarus-midnight);
+    font-size: 1.35rem; font-weight: 700; cursor: pointer;
+}
+.weekdays-grid, .dates-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 0.5rem;
-    }
-    .date-cell {
+}
+.weekdays-grid { margin-bottom: 0.5rem; }
+.weekdays-grid span { text-align: center; font-size: 0.88rem; font-weight: 700; color: var(--clarus-oxford); }
+.dates-grid { grid-auto-rows: minmax(76px, auto); }
+.date-cell {
     border: 1px solid var(--clarus-gold-soft);
     background: var(--clarus-ivory);
     border-radius: 14px;
-    }
-    .weekdays-grid {
-    margin-bottom: 0.5rem;
-    }
-    .weekdays-grid span {
-    text-align: center;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--clarus-oxford);
-    }
-    .dates-grid {
-    grid-auto-rows: minmax(76px, auto);
-    }
-    .date-cell {
     padding: 0.65rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: flex-start;
     font-weight: 700;
-    }
-    .date-cell.has-appointments {
-    background: var(--clarus-gold-soft);
-    border-color: var(--clarus-gold);
-    }
-    .date-cell.active {
-    background: var(--clarus-midnight);
-    color: var(--clarus-ivory);
-    border-color: var(--clarus-midnight);
-    }
-    .date-cell.active small,
-    .date-cell.active span {
-    color: inherit;
-    }
-    .date-cell.today {
-    outline: 2px solid var(--clarus-gold);
-    }
-    .date-cell.empty {
-    border-style: dashed;
-    opacity: 0.45;
-    }
-    .date-cell:disabled {
-    cursor: default;
-    }
-    .counter,
-    .tag {
-    background: var(--clarus-gold-soft);
-    color: var(--clarus-midnight);
-    border-radius: 999px;
-    padding: 0.4rem 0.75rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    }
-    .appointment-list {
-    display: grid;
-    gap: 1rem;
-    margin-top: 1rem;
-    }
-    .details-actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    }
-    .details-actions-bottom {
-    margin-top: auto;
-    padding-top: 2rem;
-    }
-    .appointment-card {
-    padding: 1.25rem;
-    border: 1px solid var(--clarus-border);
-    }
-    dl {
-    display: grid;
-    gap: 0.8rem;
-    margin: 0;
-    }
-    dt {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    }
-    dd {
-    margin: 0.25rem 0 0;
-    font-weight: 600;
-    }
-    .payment-status {
-    display: inline-block;
-    margin-top: 0.3rem;
-    font-weight: 700;
-    font-size: 0.82rem;
-    }
-    .payment-status.pending {
-    color: #b45309;
-    }
-    .payment-status.paid {
-    color: #047857;
-    }
-    .patient-name {
-    margin-top: 0.4rem;
-    font-weight: 700;
-    }
-    .notes,
-    .empty-state {
-    margin-top: 1rem;
-    }
-    @media (max-width: 960px) {
-    .calendar-layout {
-        grid-template-columns: 1fr;
-    }
-    }
-    @media (max-width: 768px) {
-    
-    .section-heading,
-    .appointment-card__header,
-    .details-actions {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .calendar-toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	flex-wrap: nowrap;
-	gap: 0.5rem;
-	margin-bottom: 1rem;
+    cursor: pointer;
 }
-
-    .weekdays-grid,
-    .dates-grid {
-        gap: 0.35rem;
+.date-cell.has-appointments { background: var(--clarus-gold-soft); border-color: var(--clarus-gold); }
+.date-cell.active            { background: var(--clarus-midnight); color: var(--clarus-ivory); border-color: var(--clarus-midnight); }
+.date-cell.active small,
+.date-cell.active span       { color: inherit; }
+.date-cell.today             { outline: 2px solid var(--clarus-gold); }
+.date-cell.empty             { border-style: dashed; opacity: 0.45; }
+.date-cell:disabled          { cursor: default; }
+.counter, .tag {
+    background: var(--clarus-gold-soft); color: var(--clarus-midnight);
+    border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 700;
+}
+.appointment-list     { display: grid; gap: 1rem; margin-top: 1rem; }
+.details-actions      { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.details-actions-bottom { margin-top: auto; padding-top: 2rem; }
+.appointment-card {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--clarus-border);
+    border-radius: 16px;
+    display: grid;
+    gap: 0.35rem;
+}
+.card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+.appointment-card h3 { margin: 0; font-size: 1.4rem; }
+.appointment-card p  { margin: 0; }
+.muted { font-size: 0.85rem; color: var(--clarus-oxford); }
+.empty-state { margin-top: 1rem; }
+.appointment-card .button-danger {
+    justify-self: start;
+    margin-top: 0.4rem;
+    padding: 0.55rem 1.2rem;
+    font-size: 0.88rem;
+}
+@media (max-width: 960px) {
+    .calendar-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .calendar-toolbar, .section-heading, .details-actions {
+        flex-direction: column; align-items: flex-start;
     }
-
-    .date-cell {
-        min-height: 68px;
-    }
-    }
+    .weekdays-grid, .dates-grid { gap: 0.35rem; }
+    .date-cell { min-height: 68px; }
+}
 </style>

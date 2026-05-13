@@ -82,62 +82,103 @@
 				</label>
 			</div>
 
-			<div class="field-row">
-				<label>
-					<span>Método de pago</span>
-					<select v-model="form.metodo_pago" required>
-						<option disabled value="">Selecciona una opción</option>
-						<option v-for="m in metodosPago" :key="m" :value="m">{{ m }}</option>
-					</select>
-				</label>
-			</div>
-
-			<div v-if="form.metodo_pago === 'Tarjeta'" class="payment-section">
-				<h3>Información de pago</h3>
-				<p>Completa los datos de la tarjeta para registrar la cita.</p>
-
+			<!-- PACIENTE -->
+			<div v-if="!esRecepcionista && costoTotal > 0" class="payment-section">
+				<h3>Pago de anticipo requerido</h3>
+				<p>Para confirmar tu cita debes pagar el 50% de anticipo con tarjeta.
+				<strong>Total a pagar ahora: ${{ (costoTotal * 0.5).toFixed(2) }}</strong>
+				</p>
 				<div class="field-row">
 					<label>
 						<span>Tipo de tarjeta</span>
-						<select v-model="tarjeta.tipo">
-							<option disabled value="">Selecciona una opción</option>
+						<select v-model="tarjeta.tipo" required>
+							<option disabled value="">Selecciona</option>
 							<option>Crédito</option>
 							<option>Débito</option>
 						</select>
 					</label>
-
 					<label>
 						<span>Número de tarjeta</span>
-						<input v-model="tarjeta.numero" type="text" placeholder="1234 5678 9012 3456" maxlength="19" />
+						<input v-model="tarjeta.numero" type="text" placeholder="1234 5678 9012 3456" maxlength="19" required />
 					</label>
-
 					<label>
 						<span>Nombre en la tarjeta</span>
-						<input v-model="tarjeta.titular" type="text" placeholder="Nombre del titular" />
+						<input v-model="tarjeta.titular" type="text" placeholder="Nombre del titular" required />
 					</label>
 				</div>
-
 				<div class="field-row">
 					<label>
 						<span>Mes de vencimiento</span>
-						<select v-model="tarjeta.mes">
+						<select v-model="tarjeta.mes" required>
 							<option disabled value="">Mes</option>
 							<option v-for="m in 12" :key="m" :value="String(m).padStart(2,'0')">{{ String(m).padStart(2,'0') }}</option>
 						</select>
 					</label>
-
 					<label>
 						<span>Año de vencimiento</span>
-						<select v-model="tarjeta.anio">
+						<select v-model="tarjeta.anio" required>
 							<option disabled value="">Año</option>
 							<option v-for="y in 10" :key="y" :value="2026 + y - 1">{{ 2026 + y - 1 }}</option>
 						</select>
 					</label>
-
 					<label>
 						<span>Código de seguridad</span>
-						<input v-model="tarjeta.cvv" type="text" placeholder="CVV" maxlength="4" />
+						<input v-model="tarjeta.cvv" type="text" placeholder="CVV" maxlength="4" required />
 					</label>
+				</div>
+			</div>
+
+			<!-- RECEPCIONISTA -->
+			<div v-if="esRecepcionista && costoTotal > 0">
+				<div class="field-row">
+					<label>
+						<span>Método de pago (anticipo 50%: ${{ (costoTotal * 0.5).toFixed(2) }})</span>
+						<select v-model="form.metodo_pago">
+							<option disabled value="">Selecciona una opción</option>
+							<option v-for="m in metodosPago" :key="m" :value="m">{{ m }}</option>
+						</select>
+					</label>
+				</div>
+				<div v-if="form.metodo_pago === 'Tarjeta'" class="payment-section">
+					<h3>Información de tarjeta</h3>
+					<div class="field-row">
+						<label>
+							<span>Tipo de tarjeta</span>
+							<select v-model="tarjeta.tipo">
+								<option disabled value="">Selecciona</option>
+								<option>Crédito</option>
+								<option>Débito</option>
+							</select>
+						</label>
+						<label>
+							<span>Número de tarjeta</span>
+							<input v-model="tarjeta.numero" type="text" placeholder="1234 5678 9012 3456" maxlength="19" />
+						</label>
+						<label>
+							<span>Nombre en la tarjeta</span>
+							<input v-model="tarjeta.titular" type="text" placeholder="Nombre del titular" />
+						</label>
+					</div>
+					<div class="field-row">
+						<label>
+							<span>Mes vencimiento</span>
+							<select v-model="tarjeta.mes">
+								<option disabled value="">Mes</option>
+								<option v-for="m in 12" :key="m" :value="String(m).padStart(2,'0')">{{ String(m).padStart(2,'0') }}</option>
+							</select>
+						</label>
+						<label>
+							<span>Año vencimiento</span>
+							<select v-model="tarjeta.anio">
+								<option disabled value="">Año</option>
+								<option v-for="y in 10" :key="y" :value="2026 + y - 1">{{ 2026 + y - 1 }}</option>
+							</select>
+						</label>
+						<label>
+							<span>CVV</span>
+							<input v-model="tarjeta.cvv" type="text" placeholder="CVV" maxlength="4" />
+						</label>
+					</div>
 				</div>
 			</div>
 
@@ -161,7 +202,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
 const router   = useRouter()
-const { usuarioActual } = useSesion()
+const { usuarioActual, rolUsuario  } = useSesion()
 
 // ── Datos del paciente (readonly) ──────────────────────────────
 const nombrePaciente = computed(() => {
@@ -169,6 +210,9 @@ const nombrePaciente = computed(() => {
 	if (!u) return ''
 	return `${u.nombre} ${u.apellido_paterno} ${u.apellido_materno ?? ''}`.trim()
 })
+
+const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
+
 
 // ── Catálogos ──────────────────────────────────────────────────
 type Doctor = {
@@ -298,64 +342,77 @@ const horaFin = computed(() => {
 	return `${String(fin.getHours()).padStart(2, '0')}:${String(fin.getMinutes()).padStart(2, '0')}:00`
 })
 
-const metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia']
+const metodosPago = ['Efectivo', 'Tarjeta']
 
 // ── Submit ─────────────────────────────────────────────────────
 const guardarCita = async () => {
-	error.value = ''
-	exito.value = ''
+    error.value = ''
+    exito.value = ''
 
-	if (!form.id_doctor || !form.id_consultorio || !form.fecha || !form.hora_inicio || !form.motivo_consulta || !form.metodo_pago) {
-		error.value = 'Completa todos los campos obligatorios.'
-		return
-	}
+    if (!form.id_doctor || !form.id_consultorio || !form.fecha || !form.hora_inicio || !form.motivo_consulta) {
+        error.value = 'Completa todos los campos obligatorios.'
+        return
+    }
 
-	const fechaSeleccionada = new Date(`${form.fecha}T${form.hora_inicio}`)
-	if (fechaSeleccionada <= new Date()) {
-		error.value = 'La fecha y hora deben ser futuras.'
-		return
-	}
+    // Paciente debe llenar datos de tarjeta
+    if (!esRecepcionista.value) {
+        if (!tarjeta.tipo || !tarjeta.numero || !tarjeta.titular || !tarjeta.mes || !tarjeta.anio || !tarjeta.cvv) {
+            error.value = 'Completa los datos de la tarjeta para pagar el anticipo.'
+            return
+        }
+    }
 
-	cargando.value = true
+    // Recepcionista debe elegir método
+    if (esRecepcionista.value && !form.metodo_pago) {
+        error.value = 'Selecciona un método de pago.'
+        return
+    }
 
-	try {
-		const respuesta = await fetch('http://localhost:3001/api/cita', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				id_paciente:     usuarioActual.value?.id_paciente,
-				id_doctor:       Number(form.id_doctor),
-				id_consultorio:  Number(form.id_consultorio),
-				id_recepcionista: null,
-				fecha:           form.fecha,
-				hora_inicio:     `${form.hora_inicio}:00`,
-				hora_fin:        horaFin.value,
-				motivo_consulta: form.motivo_consulta,
-				costo_total: Number(costoTotal.value),
-				registrado_por:  usuarioActual.value?.id_usuario,
-				metodo_pago:     form.metodo_pago,
-				referencia:      null,
-			}),
-		})
+    const fechaSeleccionada = new Date(`${form.fecha}T${form.hora_inicio}`)
+    if (fechaSeleccionada <= new Date()) {
+        error.value = 'La fecha y hora deben ser futuras.'
+        return
+    }
 
-		const datos = await respuesta.json()
-		console.log('Respuesta backend:', datos) 
+    cargando.value = true
 
-		if (datos.error) {
-			error.value = typeof datos.error === 'string'
-				? datos.error
-				: JSON.stringify(datos.error)  // ← cambia esto temporalmente
-			return
-		}
+    try {
+        const respuesta = await fetch('http://localhost:3001/api/cita', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_paciente:      usuarioActual.value?.id_paciente,
+                id_doctor:        Number(form.id_doctor),
+                id_consultorio:   Number(form.id_consultorio),
+                id_recepcionista: null,
+                fecha:            form.fecha,
+                hora_inicio:      `${form.hora_inicio}:00`,
+                hora_fin:         horaFin.value,
+                motivo_consulta:  form.motivo_consulta,
+                costo_total:      Number(costoTotal.value),
+                registrado_por:   usuarioActual.value?.id_usuario,
+                metodo_pago:      esRecepcionista.value ? form.metodo_pago : 'Tarjeta',
+                referencia:       null,
+            }),
+        })
 
-		exito.value = 'Cita registrada correctamente. Redirigiendo...'
-		setTimeout(() => void router.push({ name: 'citas' }), 1500)
+        const datos = await respuesta.json()
 
-	} catch {
-		error.value = 'No se pudo conectar con el servidor.'
-	} finally {
-		cargando.value = false
-	}
+        if (datos.error) {
+            error.value = typeof datos.error === 'string'
+                ? datos.error
+                : 'Error al guardar la cita.'
+            return
+        }
+
+        exito.value = 'Cita registrada correctamente. Redirigiendo...'
+        setTimeout(() => void router.push({ name: 'citas' }), 1500)
+
+    } catch {
+        error.value = 'No se pudo conectar con el servidor.'
+    } finally {
+        cargando.value = false
+    }
 }
 </script>
 

@@ -48,6 +48,8 @@ const iniciarSesion = async () => {
     cargando.value = true
     error.value = ''
 
+
+
     try {
         const respuesta = await fetch('http://localhost:3001/api/usuario/login', {
         method: 'POST',
@@ -58,7 +60,20 @@ const iniciarSesion = async () => {
         const datos = await respuesta.json()
 
         if (datos.error) {
-        error.value = datos.error
+        if (datos.error) {
+            const err = datos.error
+            if (err?.name === 'ZodError' || err?.issues) {
+                const tieneErrorCorreo = err.issues?.some(
+                    (i: any) => i.path?.includes('correo') || i.validation === 'email'
+                )
+                error.value = tieneErrorCorreo
+                    ? 'Correo inválido: falta el dominio (ej: usuario@dominio.com)'
+                    : 'Datos inválidos, revisa el formulario.'
+            } else {
+                error.value = typeof err === 'string' ? err : 'Error al iniciar sesión.'
+            }
+            return
+        }
         return
         }
 

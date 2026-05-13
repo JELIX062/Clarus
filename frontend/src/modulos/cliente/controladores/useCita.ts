@@ -1,121 +1,86 @@
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
+
+const API = 'http://localhost:3001/api'
 
 export type Appointment = {
-    id: string
-    building: string
+    id: number
     doctor: string
     specialty: string
     date: string
     time: string
-    patientName: string
-    paymentMethod: string
-    paymentReference: string
-    paid: boolean
-    notes: string
+    horaFin: string
+    sucursal: string
+    consultorio: string
+    motivo: string
+    estado: string
+    costo: number
+    patientName?: string
 }
 
-export type AppointmentInput = Omit<Appointment, 'id' | 'paid'>
+const appointments = ref<Appointment[]>([])
 
-const STORAGE_KEY = 'clarus-citas'
-
-const defaultAppointments: Appointment[] = []
-
-const parseStoredAppointments = (): Appointment[] => {
-    if (typeof window === 'undefined') {
-        return [...defaultAppointments]
-    }
-
-    const storedAppointments = window.localStorage.getItem(STORAGE_KEY)
-
-    if (!storedAppointments) {
-        return [...defaultAppointments]
-    }
-
-    try {
-        const parsedAppointments = JSON.parse(storedAppointments) as Appointment[]
-
-        if (!Array.isArray(parsedAppointments)) {
-            return [...defaultAppointments]
-        }
-
-        return parsedAppointments.map((appointment) => ({
-            ...appointment,
-            patientName: appointment.patientName ?? 'Paciente no especificado',
-            paid: appointment.paid ?? false
-        }))
-    } catch {
-        return [...defaultAppointments]
-    }
-}
-
-const appointments = ref<Appointment[]>(parseStoredAppointments())
-
-if (typeof window !== 'undefined') {
-    watch(
-        appointments,
-        (currentAppointments) => {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(currentAppointments))
-        },
-        { deep: true }
-    )
-}
-
-const normalizeDateTime = (appointment: Appointment) =>
-    new Date(`${appointment.date}T${appointment.time}:00`).getTime()
+const mapCita = (c: any): Appointment => ({
+    id: c.id_cita,
+    doctor: `Dr. ${c.nombre_doctor} ${c.apellido_doctor}`,
+    specialty: c.especialidad ?? '',
+    date: (c.fecha ?? '').toString().split('T')[0],
+    time: (c.hora_inicio ?? '').toString().substring(0, 5),
+    horaFin: (c.hora_fin ?? '').toString().substring(0, 5),
+    sucursal: c.nombre_sucursal,
+    consultorio: `Consultorio ${c.numero_consultorio}`,
+    motivo: c.motivo_consulta,
+    estado: c.estado,
+    costo: c.costo_total,
+    patientName: c.nombre_paciente ? `${c.nombre_paciente} ${c.apellido_paciente}` : undefined
+})
 
 export const useCitas = () => {
-    const sortedAppointments = computed(() =>
-        [...appointments.value].sort((firstAppointment, secondAppointment) => {
-        return normalizeDateTime(firstAppointment) - normalizeDateTime(secondAppointment)
-        })
-    )
-
-    const now = new Date()
-    now.setSeconds(0, 0)
-
-    const upcomingAppointments = computed(() =>
-        sortedAppointments.value.filter((appointment) => normalizeDateTime(appointment) >= now.getTime())
-    )
-
-    const pastAppointments = computed(() =>
-        [...sortedAppointments.value]
-        .filter((appointment) => normalizeDateTime(appointment) < now.getTime())
-        .reverse()
-    )
-
-    const addAppointment = (appointment: AppointmentInput) => {
-        appointments.value = [
-        ...appointments.value,
-        {
-            id: crypto.randomUUID(),
-            paid: false,
-            ...appointment
+    const fetchCitasPaciente = async (id_paciente: number) => {
+        try {
+            const res = await fetch(`${API}/cita/paciente/${id_paciente}`)
+            const data = await res.json()
+            if (Array.isArray(data)) {
+                appointments.value = data.map(mapCita)
+            }
+        } catch (e) {
+            console.error('Error al cargar citas:', e)
         }
-        ]
     }
 
-    const registerPayment = (appointmentId: string) => {
-        appointments.value = appointments.value.map((appointment) =>
-            appointment.id === appointmentId
-                ? {
-                    ...appointment,
-                    paid: true
-                }
-                : appointment
-        )
+    const fetchCitasDoctor = async (id_doctor: number) => {
+        try {
+            const res = await fetch(`${API}/cita/doctor/${id_doctor}`)
+            const data = await res.json()
+            if (Array.isArray(data)) {
+                appointments.value = data.map(mapCita)
+            }
+        } catch (e) {
+            console.error('Error al cargar citas del doctor:', e)
+        }
     }
 
-    const removeAppointment = (appointmentId: string) => {
-        appointments.value = appointments.value.filter((appointment) => appointment.id !== appointmentId)
+    const cancelarCita = async (id_cita: number, motivo: string, cancelado_por: number) => {
+        try {
+            const res = await fetch(`${API}/cita/cancelar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_cita, motivo, cancelado_por })
+            })
+            const data = await res.json()
+            if (!data.error) {
+                appointments.value = appointments.value.map(a =>
+                    a.id === id_cita ? { ...a, estado: 'Cancelada' } : a
+                )
+            }
+            return data
+        } catch {
+            return { error: 'Error de conexión' }
+        }
     }
 
-    return {
-        appointments,
-        sortedAppointments,
-        upcomingAppointments,
-        pastAppointments,
-        addAppointment,
-        registerPayment,
-        removeAppointment
-    }
+    const limpiarCitas = () => {
+    appointments.value = []
+}
+
+    return { appointments, fetchCitasPaciente, fetchCitasDoctor, cancelarCita,limpiarCitas     }
 }

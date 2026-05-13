@@ -18,8 +18,9 @@ const STORAGE_KEY = 'clarus-sesion'
 
 // Normaliza el nombre_rol que viene del backend al tipo del frontend
 const normalizarRol = (nombreRol: string): RolUsuario => {
-    if (nombreRol === 'doctor') return 'doctor'
-    if (nombreRol === 'recepcionista') return 'recepcionista'
+    const rol = nombreRol.toLowerCase().trim()
+    if (rol === 'doctor') return 'doctor'
+    if (rol === 'recepcionista') return 'recepcionista'
     return 'paciente'
 }
 
@@ -62,6 +63,10 @@ const cerrarSesion = () => {
     if (typeof window !== 'undefined') {
         window.localStorage.removeItem(STORAGE_KEY)
     }
+    // Limpiar citas del usuario anterior
+    import('@/modulos/cliente/controladores/useCita').then(({ useCitas }) => {
+        useCitas().limpiarCitas()
+    })
 }
 
 const estaAutenticado = computed(() => usuarioActual.value !== null)
