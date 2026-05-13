@@ -63,7 +63,27 @@
 					<span>A qué hora</span>
 					<input v-model="form.hora_inicio" type="time" required />
 				</label>
+
+				<label class="full-width">
+					<span>Duración de la cita</span>
+					<input
+						type="range"
+						v-model="form.duracion"
+						min="30"
+						max="120"
+						step="30"
+						class="form-range mt-1"
+					/>
+					<div class="d-flex justify-content-between">
+						<small>30 min</small>
+						<small>1 hora</small>
+						<small>1h 30min</small>
+						<small>2 horas</small>
+					</div>
+					<p class="text-center fw-bold mb-0">{{ form.duracion }} minutos</p>
+				</label>
 			</div>
+
 
 			<div class="field-row">
 				<label>
@@ -290,12 +310,13 @@ onMounted(async () => {
 // ── Formulario ─────────────────────────────────────────────────
 const form = reactive({
     id_sucursal:     '',
-	id_doctor:       '',
-	id_consultorio:  '',
-	fecha:           '',
-	hora_inicio:     '',
-	motivo_consulta: '',
-	metodo_pago:     '',
+    id_doctor:       '',
+    id_consultorio:  '',
+    fecha:           '',
+    hora_inicio:     '',
+    motivo_consulta: '',
+    metodo_pago:     '',
+    duracion:        30,   
 })
 
 const error   = ref('')
@@ -334,12 +355,12 @@ const costoTotal   = computed(() => doctorSeleccionado.value?.tarifa_consulta ??
 
 // Hora fin = hora inicio + 30 minutos
 const horaFin = computed(() => {
-	if (!form.hora_inicio) return ''
-	const partes = form.hora_inicio.split(':')
-	const h = Number(partes[0] ?? 0)
-	const m = Number(partes[1] ?? 0)
-	const fin = new Date(0, 0, 0, h, m + 30)
-	return `${String(fin.getHours()).padStart(2, '0')}:${String(fin.getMinutes()).padStart(2, '0')}:00`
+    if (!form.hora_inicio) return ''
+    const partes = form.hora_inicio.split(':')
+    const h = Number(partes[0] ?? 0)
+    const m = Number(partes[1] ?? 0)
+    const fin = new Date(0, 0, 0, h, m + Number(form.duracion))
+    return `${String(fin.getHours()).padStart(2, '0')}:${String(fin.getMinutes()).padStart(2, '0')}:00`
 })
 
 const metodosPago = ['Efectivo', 'Tarjeta']
@@ -373,6 +394,11 @@ const guardarCita = async () => {
         error.value = 'La fecha y hora deben ser futuras.'
         return
     }
+
+	if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(form.motivo_consulta)) {
+		error.value = 'El motivo de consulta debe contener texto descriptivo, no solo números.'
+		return
+	}
 
     cargando.value = true
 
@@ -568,6 +594,13 @@ select:disabled {
 	color: #888;
 }
 
+.form-range::-webkit-slider-thumb {
+    background-color: var(--clarus-midnight);
+}
+.form-range::-moz-range-thumb {
+    background-color: var(--clarus-midnight);
+}
+
 .actions {
 	display: flex;
 	justify-content: flex-end;
@@ -580,6 +613,13 @@ select:disabled {
 	padding: 0.6rem 0.8rem;
 	border-radius: 8px;
 	font-size: 0.9rem;
+}
+
+.form-range {
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
 }
 
 .horario-info {

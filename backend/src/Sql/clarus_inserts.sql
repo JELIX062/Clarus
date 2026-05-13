@@ -76,10 +76,9 @@ INSERT INTO HorarioDoctor (id_doctor, id_consultorio, dia_semana, hora_inicio, h
 -- ------------------------------------------------------------
 -- 10. BloqueoHorario
 -- ------------------------------------------------------------
-INSERT INTO BloqueoHorario (id_doctor, fecha, hora_inicio, hora_fin, motivo, creado_por) VALUES
-(1, '2026-04-14', '09:00:00', '11:00:00', 'Congreso médico', 1),
-(2, '2026-04-15', '10:00:00', '15:00:00', 'Vacaciones',      1);
-
+INSERT INTO BloqueoHorario (id_doctor, fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo, creado_por) VALUES
+(1, '2026-04-14', '2026-04-14', '09:00:00', '11:00:00', 'Congreso médico', 1),
+(2, '2026-04-15', '2026-04-17', '10:00:00', '15:00:00', 'Vacaciones',      1);
 -- ------------------------------------------------------------
 -- 11. Cita
 -- ------------------------------------------------------------

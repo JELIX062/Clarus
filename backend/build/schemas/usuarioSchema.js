@@ -82,7 +82,7 @@ export const citaSchema = z.object({
     fecha: z.string(),
     hora_inicio: z.string(),
     hora_fin: z.string(),
-    motivo_consulta: z.string().min(2).max(500),
+    motivo_consulta: z.string().min(5).max(500).refine(val => /[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(val), { message: 'El motivo debe contener al menos una letra, no solo números.' }),
     costo_total: z.number().positive(),
     registrado_por: z.number().int().positive(),
     metodo_pago: z.string().min(2).max(20),
@@ -123,7 +123,8 @@ export const horarioDoctorSchema = z.object({
 // Bloqueo Horario
 export const bloqueoHorarioSchema = z.object({
     id_doctor: z.number().int().positive(),
-    fecha: z.string(),
+    fecha_inicio: z.string(),
+    fecha_fin: z.string(),
     hora_inicio: z.string(),
     hora_fin: z.string(),
     motivo: z.string().max(200).optional(),

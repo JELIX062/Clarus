@@ -184,17 +184,18 @@ export type HorarioDoctorNuevo = Omit<HorarioDoctor, 'id_horario'>;
 
 // Interfaz principal del bloqueo de horario
 export interface BloqueoHorario {
-    id_bloqueo: number;
-    id_doctor: number;
-    fecha: string;
-    hora_inicio: string;
-    hora_fin: string;
-    motivo: string;
-    creado_por: number;
-    fecha_registro?: string;
+    id_bloqueo:   number
+    id_doctor:    number
+    fecha_inicio: string
+    fecha_fin:    string
+    hora_inicio:  string
+    hora_fin:     string
+    motivo:       string
+    creado_por:   number
+    fecha_registro?: string
 }
 
-export type BloqueoHorarioNuevo = Omit<BloqueoHorario, 'id_bloqueo' | 'fecha_registro'>;
+export type BloqueoHorarioNuevo = Omit<BloqueoHorario, 'id_bloqueo' | 'fecha_registro'>
 
 // Interfaz principal del pago en la base de datos
 export interface Pago {

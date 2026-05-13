@@ -149,7 +149,8 @@ CREATE TABLE HorarioDoctor (
 CREATE TABLE BloqueoHorario (
     id_bloqueo      INT           NOT NULL AUTO_INCREMENT,
     id_doctor       INT           NOT NULL,
-    fecha           DATE          NOT NULL,
+    fecha_inicio    DATE          NOT NULL,
+    fecha_fin       DATE          NOT NULL,
     hora_inicio     TIME          NOT NULL,
     hora_fin        TIME          NOT NULL,
     motivo          VARCHAR(200)  NULL,

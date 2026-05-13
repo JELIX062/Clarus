@@ -95,12 +95,25 @@
                 </div>
             </div>
         </form>
+
+        <!-- Botón bloqueos — solo doctor -->
+        <div v-if="esDoctor" class="profile-card" style="display:flex; justify-content:space-between; align-items:center">
+            <div>
+                <h2 style="margin:0">Bloqueos de horario</h2>
+                <p class="subtitle">Gestiona los días en que no estarás disponible.</p>
+            </div>
+            <RouterLink class="button" :to="{ name: 'doctor-bloqueos' }">
+                Gestionar bloqueos
+            </RouterLink>
+        </div>
+
     </section>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
+import { RouterLink } from 'vue-router'
 
 const { rolUsuario, usuarioActual } = useSesion()
 
@@ -227,6 +240,8 @@ const saveProfile = async () => {
     display: grid;
     gap: 1.5rem;
     }
+
+    .button { text-decoration: none; }
 
     h2,
     p {

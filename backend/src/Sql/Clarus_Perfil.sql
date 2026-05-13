@@ -1,0 +1,3 @@
+CREATE USER IF NOT EXISTS 'Equipo14'@'localhost' IDENTIFIED BY 'Equipo14';
+GRANT SELECT, INSERT, UPDATE, DELETE ON clarus.* TO 'Equipo14'@'localhost';
+FLUSH PRIVILEGES;

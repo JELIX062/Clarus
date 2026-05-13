@@ -34,7 +34,7 @@ export const registraBloqueo = async (nuevo) => {
         if (!validacion.success) {
             return { error: validacion.error };
         }
-        const [result] = await conexion.query('INSERT INTO bloqueohorario(id_doctor, fecha, hora_inicio, hora_fin, motivo, creado_por) values(?,?,?,?,?,?)', [nuevo.id_doctor, nuevo.fecha, nuevo.hora_inicio, nuevo.hora_fin, nuevo.motivo, nuevo.creado_por]);
+        const [result] = await conexion.query('INSERT INTO bloqueohorario(id_doctor, fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo, creado_por) values(?,?,?,?,?,?,?)', [nuevo.id_doctor, nuevo.fecha_inicio, nuevo.fecha_fin, nuevo.hora_inicio, nuevo.hora_fin, nuevo.motivo, nuevo.creado_por]);
         return { mensaje: 'Bloqueo registrado correctamente', id_bloqueo: result.insertId };
     }
     catch (err) {

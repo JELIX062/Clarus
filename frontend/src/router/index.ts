@@ -65,7 +65,12 @@ const router = createRouter({
       path: '/expedientes',           // ← antes era /doctor/expedientes
       name: 'expedientes',
       component: ExpedientesDoctorVue
-    }
+    },
+    {
+    path: '/doctor/bloqueos',
+    name: 'doctor-bloqueos',
+    component: () => import('@/modulos/doctor/vistas/BloqueoHorarioVue.vue')
+}
     // Las rutas /doctor/citas y /doctor/expedientes ya no existen
   ]
 })

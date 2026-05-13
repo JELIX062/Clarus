@@ -19,13 +19,15 @@ router.get('/doctor/:id_doctor', async (req: Request, res: Response) => {
 // http://localhost:3001/api/bloqueo
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { id_doctor, fecha, hora_inicio, hora_fin, motivo, creado_por } = req.body;
+        const { id_doctor, fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo, creado_por } = req.body
+
         const resultado = await bloqueoHorarioServices.registraBloqueo({
-            id_doctor,
-            fecha,
-            hora_inicio,
-            hora_fin,
-            motivo,
+            id_doctor, 
+            fecha_inicio, 
+            fecha_fin, 
+            hora_inicio, 
+            hora_fin, 
+            motivo, 
             creado_por
         });
         res.send(resultado);
