@@ -44,17 +44,40 @@ export const obtieneExpedientePorPaciente = async (id_paciente) => {
         return { error: "No se encuentra el expediente del paciente" };
     }
 };
+export const obtieneExpedientesPorDoctor = async (id_doctor) => {
+    try {
+        const [results] = await conexion.query(`
+            SELECT e.*,
+                u.nombre as nombre_paciente,
+                u.apellido_paterno,
+                u.apellido_materno,
+                p.tipo_sangre,
+                p.sexo,
+                p.fecha_nacimiento
+            FROM expediente e
+            INNER JOIN paciente p ON e.id_paciente = p.id_paciente
+            INNER JOIN usuario u ON p.id_usuario = u.id_usuario
+            WHERE e.id_doctor = ?
+            ORDER BY e.fecha_apertura DESC
+        `, [id_doctor]);
+        return results;
+    }
+    catch (err) {
+        return { error: 'No se pueden obtener los expedientes' };
+    }
+};
 export const registraExpediente = async (nuevo) => {
     try {
         const validacion = expedienteSchema.safeParse(nuevo);
         if (!validacion.success) {
             return { error: validacion.error };
         }
-        const [existe] = await conexion.query('SELECT id_expediente FROM expediente WHERE id_paciente = ? LIMIT 1', [nuevo.id_paciente]);
+        const [existe] = await conexion.query('SELECT id_expediente FROM expediente WHERE id_paciente = ? AND id_doctor = ? LIMIT 1', // ← línea nueva
+        [nuevo.id_paciente, nuevo.id_doctor]);
         if (existe.length > 0) {
             return { error: 'El paciente ya tiene un expediente registrado' };
         }
-        const [result] = await conexion.query('INSERT INTO expediente(id_paciente, codigo, ant_patologicos, medicamentos_actuales, alergias) values(?,?,?,?,?)', [nuevo.id_paciente, nuevo.codigo, nuevo.ant_patologicos, nuevo.medicamentos_actuales, nuevo.alergias]);
+        const [result] = await await conexion.query('INSERT INTO expediente(id_paciente, id_doctor, ant_patologicos, medicamentos_actuales, alergias) values(?,?,?,?,?)', [nuevo.id_paciente, nuevo.id_doctor, nuevo.ant_patologicos ?? null, nuevo.medicamentos_actuales ?? null, nuevo.alergias ?? null]);
         return { mensaje: 'Expediente registrado correctamente', id_expediente: result.insertId };
     }
     catch (err) {
@@ -72,11 +95,7 @@ export const editaExpediente = async (datos) => {
         if (existe.length === 0) {
             return { error: 'No se encuentra el expediente' };
         }
-        await conexion.query(`UPDATE expediente SET
-                ant_patologicos = ?,
-                medicamentos_actuales = ?,
-                alergias = ?
-            WHERE id_expediente = ?`, [datos.ant_patologicos, datos.medicamentos_actuales, datos.alergias, datos.id_expediente]);
+        await conexion.query('UPDATE expediente SET ant_patologicos=?, medicamentos_actuales=?, alergias=? WHERE id_expediente=?', [datos.ant_patologicos ?? null, datos.medicamentos_actuales ?? null, datos.alergias ?? null, datos.id_expediente]);
         return { mensaje: 'Expediente actualizado correctamente' };
     }
     catch (err) {

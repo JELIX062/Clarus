@@ -139,15 +139,18 @@ export type ConsultorioNuevo = Omit<Consultorio, 'id_consultorio'>;
 export interface Expediente {
     id_expediente: number;
     id_paciente: number;
-    codigo: string;
-    ant_patologicos: string;
-    medicamentos_actuales: string;
-    alergias: string;
+    id_doctor: number;
+    ant_patologicos?: string;
+    medicamentos_actuales?: string;
+    alergias?: string;
     fecha_apertura?: string;
 }
 
 // Tipo para registrar un nuevo expediente
 export type ExpedienteNuevo = Omit<Expediente, 'id_expediente' | 'fecha_apertura'>;
+
+// Tipo para editar un expediente
+export type ExpedienteEditar = Omit<Expediente, 'id_doctor' | 'fecha_apertura'>
 
 // Interfaz principal de la cita en la base de datos
 export interface Cita {

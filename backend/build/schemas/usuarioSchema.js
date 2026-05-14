@@ -91,7 +91,6 @@ export const citaSchema = z.object({
 // Expediente
 export const expedienteSchema = z.object({
     id_paciente: z.number().int().positive(),
-    codigo: z.string().min(2).max(20),
     ant_patologicos: z.string().max(1000).optional(),
     medicamentos_actuales: z.string().max(500).optional(),
     alergias: z.string().max(500).optional()
@@ -246,6 +245,7 @@ export const editarCitaSchema = z.object({
 // Editar Expediente
 export const editarExpedienteSchema = z.object({
     id_expediente: z.number().int().positive(),
+    id_doctor: z.number().int().positive(),
     id_paciente: z.number().int().positive(),
     codigo: z.string().min(2).max(20),
     ant_patologicos: z.string().max(1000).optional(),

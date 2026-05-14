@@ -104,7 +104,6 @@ export const citaSchema = z.object({
 // Expediente
 export const expedienteSchema = z.object({
     id_paciente: z.number().int().positive(),
-    codigo: z.string().min(2).max(20),
     ant_patologicos: z.string().max(1000).optional(),
     medicamentos_actuales: z.string().max(500).optional(),
     alergias: z.string().max(500).optional()
@@ -175,13 +174,13 @@ export const editarPacienteSchema = z.object({
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
     telefono: z.string()
-	.regex(/^\d+$/, 'El teléfono solo puede contener números')
-	.min(10, 'El teléfono debe tener al menos 10 dígitos'),
+        .regex(/^\d+$/, 'El teléfono solo puede contener números')
+        .min(10, 'El teléfono debe tener al menos 10 dígitos'),
     contraseña: z.string().min(6).max(256).optional(),
     fecha_nacimiento: z.string().optional(),
     sexo: z.enum(['M', 'F']).optional(),
     tipo_sangre: z.string()
-	.regex(/^(A|B|AB|O)[+-]$/i, 'Tipo de sangre no válido'),
+        .regex(/^(A|B|AB|O)[+-]$/i, 'Tipo de sangre no válido'),
     saldo_pendiente: z.number().optional()
 });
 
@@ -273,6 +272,7 @@ export const editarCitaSchema = z.object({
 // Editar Expediente
 export const editarExpedienteSchema = z.object({
     id_expediente: z.number().int().positive(),
+    id_doctor:z.number().int().positive(), 
     id_paciente: z.number().int().positive(),
     codigo: z.string().min(2).max(20),
     ant_patologicos: z.string().max(1000).optional(),

@@ -22,15 +22,21 @@ router.get('/paciente/:id_paciente', async (req: Request, res: Response) => {
     res.send(expediente);
 });
 
+// http://localhost:3001/api/expediente/doctor/1
+router.get('/doctor/:id_doctor', async (req: Request, res: Response) => {
+    const expedientes = await expedienteServices.obtieneExpedientesPorDoctor(Number(req.params.id_doctor))
+    res.send(expedientes)
+})
+
 // http://localhost:3001/api/expediente
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { id_paciente, codigo, ant_patologicos, medicamentos_actuales, alergias } = req.body;
+        const { id_paciente, id_doctor, ant_patologicos, medicamentos_actuales, alergias } = req.body
         const resultado = await expedienteServices.registraExpediente({
-            id_paciente,
-            codigo,
-            ant_patologicos,
-            medicamentos_actuales,
+            id_paciente, 
+            id_doctor, 
+            ant_patologicos, 
+            medicamentos_actuales, 
             alergias
         });
         res.send(resultado);
@@ -42,11 +48,10 @@ router.post('/', async (req: Request, res: Response) => {
 // http://localhost:3001/api/expediente
 router.put('/', async (req: Request, res: Response) => {
     try {
-        const { id_expediente, id_paciente, codigo, ant_patologicos, medicamentos_actuales, alergias } = req.body;
+        const { id_expediente, id_paciente, ant_patologicos, medicamentos_actuales, alergias } = req.body;
         const modificado = await expedienteServices.editaExpediente({
             id_expediente,
             id_paciente,
-            codigo,
             ant_patologicos,
             medicamentos_actuales,
             alergias

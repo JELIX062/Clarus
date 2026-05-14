@@ -1,5 +1,5 @@
 import conexion from '../database/conexion.js';
-import type { Expediente, ExpedienteNuevo } from './typesUsuarios.js';
+import type { ExpedienteEditar, ExpedienteNuevo } from './typesUsuarios.js';
 import { expedienteSchema,editarExpedienteSchema } from '../schemas/usuarioSchema.js';
 
 
@@ -47,6 +47,28 @@ export const obtieneExpedientePorPaciente = async (id_paciente: number) => {
     }
 }
 
+export const obtieneExpedientesPorDoctor = async (id_doctor: number) => {
+    try {
+        const [results] = await conexion.query(`
+            SELECT e.*,
+                u.nombre as nombre_paciente,
+                u.apellido_paterno,
+                u.apellido_materno,
+                p.tipo_sangre,
+                p.sexo,
+                p.fecha_nacimiento
+            FROM expediente e
+            INNER JOIN paciente p ON e.id_paciente = p.id_paciente
+            INNER JOIN usuario u ON p.id_usuario = u.id_usuario
+            WHERE e.id_doctor = ?
+            ORDER BY e.fecha_apertura DESC
+        `, [id_doctor])
+        return results
+    } catch(err) {
+        return { error: 'No se pueden obtener los expedientes' }
+    }
+}
+
 export const registraExpediente = async (nuevo: ExpedienteNuevo) => {
     try {
         const validacion = expedienteSchema.safeParse(nuevo);
@@ -55,18 +77,18 @@ export const registraExpediente = async (nuevo: ExpedienteNuevo) => {
         }
 
         const [existe]: any = await conexion.query(
-            'SELECT id_expediente FROM expediente WHERE id_paciente = ? LIMIT 1',
-            [nuevo.id_paciente]
+            'SELECT id_expediente FROM expediente WHERE id_paciente = ? AND id_doctor = ? LIMIT 1',  // ← línea nueva
+            [nuevo.id_paciente, nuevo.id_doctor]
         );
 
         if (existe.length > 0) {
             return { error: 'El paciente ya tiene un expediente registrado' };
         }
 
-        const [result]: any = await conexion.query(
-            'INSERT INTO expediente(id_paciente, codigo, ant_patologicos, medicamentos_actuales, alergias) values(?,?,?,?,?)',
-            [nuevo.id_paciente, nuevo.codigo, nuevo.ant_patologicos, nuevo.medicamentos_actuales, nuevo.alergias]
-        );
+        const [result]: any = await await conexion.query(
+            'INSERT INTO expediente(id_paciente, id_doctor, ant_patologicos, medicamentos_actuales, alergias) values(?,?,?,?,?)',
+            [nuevo.id_paciente, nuevo.id_doctor, nuevo.ant_patologicos ?? null, nuevo.medicamentos_actuales ?? null, nuevo.alergias ?? null]
+            );
         return { mensaje: 'Expediente registrado correctamente', id_expediente: result.insertId };
     } catch(err) {
         console.log("ERROR EN BD:", err);
@@ -74,8 +96,7 @@ export const registraExpediente = async (nuevo: ExpedienteNuevo) => {
     }
 }
 
-export const editaExpediente = async (datos: Expediente) => {
-    try {
+export const editaExpediente = async (datos: ExpedienteEditar) => {    try {
         const validacion = editarExpedienteSchema.safeParse(datos);
         if (!validacion.success) {
             return { error: validacion.error };
@@ -91,12 +112,8 @@ export const editaExpediente = async (datos: Expediente) => {
         }
 
         await conexion.query(
-            `UPDATE expediente SET
-                ant_patologicos = ?,
-                medicamentos_actuales = ?,
-                alergias = ?
-            WHERE id_expediente = ?`,
-            [datos.ant_patologicos, datos.medicamentos_actuales, datos.alergias, datos.id_expediente]
+            'UPDATE expediente SET ant_patologicos=?, medicamentos_actuales=?, alergias=? WHERE id_expediente=?',
+            [datos.ant_patologicos ?? null, datos.medicamentos_actuales ?? null, datos.alergias ?? null, datos.id_expediente]
         );
 
         return { mensaje: 'Expediente actualizado correctamente' };
