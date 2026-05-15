@@ -87,8 +87,9 @@ export const registraConsultaFisica = async (nuevo) => {
         if (cita.length === 0) {
             return { error: 'No se encuentra la cita' };
         }
-        if (cita[0].estado !== 'Atendida') {
-            return { error: 'La cita debe estar en estado Atendida para registrar la consulta' };
+        // Verifica que la cita exista y este en estado En curso
+        if (cita[0].estado !== 'En curso') {
+            return { error: 'La cita debe estar En curso para registrar la consulta' };
         }
         // Verifica que no tenga ya una consulta registrada
         const [consultaExiste] = await conexion.query('SELECT id_consulta FROM consultafisica WHERE id_cita = ? LIMIT 1', [nuevo.id_cita]);

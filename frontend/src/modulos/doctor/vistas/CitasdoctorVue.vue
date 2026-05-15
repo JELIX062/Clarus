@@ -164,6 +164,8 @@ import { RouterLink } from 'vue-router'
 import { Modal } from 'bootstrap'
 import { useCitas } from '@/modulos/cliente/controladores/useCita'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 const { appointments, fetchCitasDoctor, cancelarCita } = useCitas()
 const { usuarioActual } = useSesion()
@@ -264,20 +266,14 @@ const citaHaEmpezado = (appointment: any): boolean => {
 }
 
 const marcarEnCurso = async (id_cita: number) => {
-    const res = await fetch(`${API}/cita/estado`, {
+    const res  = await fetch(`${API}/cita/estado`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            id_cita,
-            estado:    'En curso',
-            id_doctor: Number(usuarioActual.value?.id_doctor)
-        })
+        body: JSON.stringify({ id_cita, estado: 'En curso' })
     })
     const data = await res.json()
     if (!data.error) {
-        appointments.value = appointments.value.map(a =>
-            a.id === id_cita ? { ...a, estado: 'En curso' } : a
-        )
+        await router.push({ name: 'doctor-consulta', params: { id_cita } })
     }
 }
 

@@ -7,6 +7,7 @@ import InicioSesionVue from '@/modulos/principal/vistas/InicioSesionVue.vue'
 import CrearCuentaVue from '@/modulos/principal/vistas/CrearCuentaVue.vue'
 import CitasDoctorVue from '@/modulos/doctor/vistas/CitasdoctorVue.vue'
 import ExpedientesDoctorVue from '@/modulos/doctor/vistas/ExpedienteDoctorVue.vue'
+import ConsultaFisicaVue from '@/modulos/doctor/vistas/ConsultaFisicaVue.vue'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 import { createRouter, createWebHistory } from 'vue-router'
 import { defineComponent, h } from 'vue'
@@ -39,7 +40,7 @@ const router = createRouter({
     {
       path: '/citas',
       name: 'citas',
-      component: CitasRouter          // ← rinde el componente correcto según rol
+      component: CitasRouter         
     },
     {
       path: '/citas/agregar',
@@ -62,16 +63,20 @@ const router = createRouter({
       component: PerfilVue
     },
     {
-      path: '/expedientes',           // ← antes era /doctor/expedientes
+      path: '/expedientes',          
       name: 'expedientes',
       component: ExpedientesDoctorVue
     },
     {
-    path: '/doctor/bloqueos',
-    name: 'doctor-bloqueos',
-    component: () => import('@/modulos/doctor/vistas/BloqueoHorarioVue.vue')
-}
-    // Las rutas /doctor/citas y /doctor/expedientes ya no existen
+      path: '/doctor/bloqueos',
+      name: 'doctor-bloqueos',
+      component: () => import('@/modulos/doctor/vistas/BloqueoHorarioVue.vue')
+    },
+    {
+      path: '/doctor/consulta/:id_cita',
+      name: 'doctor-consulta',
+      component: ConsultaFisicaVue
+    }
   ]
 })
 

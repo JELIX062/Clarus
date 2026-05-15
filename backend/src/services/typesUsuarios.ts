@@ -242,7 +242,7 @@ export type AdministradorEditar = Administrador & {
 export interface ConsultaFisica {
     id_consulta: number;
     id_cita: number;
-    id_expediente: number;
+    id_expediente?: number;
     id_doctor: number;
     motivo_consulta: string;
     peso_kg: number;

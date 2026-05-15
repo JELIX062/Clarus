@@ -202,6 +202,7 @@ const guardar = async () => {
             ? {
                 id_expediente:         form.id_expediente,
                 id_paciente:           form.id_paciente,
+                id_doctor:             Number(usuarioActual.value?.id_doctor),
                 ant_patologicos:       form.ant_patologicos,
                 medicamentos_actuales: form.medicamentos_actuales,
                 alergias:              form.alergias
