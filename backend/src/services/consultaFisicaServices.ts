@@ -41,6 +41,26 @@ export const obtieneConsultaFisica = async (id_consulta: number) => {
     }
 }
 
+export const obtieneConsultasPorPaciente = async (id_paciente: number) => {
+    try {
+        const [results] = await conexion.query(`
+            SELECT cf.id_consulta, cf.motivo_consulta, cf.tratamiento,
+                    cf.indicaciones, cf.fecha_consulta,
+                    ud.nombre as nombre_doctor, ud.apellido_paterno as apellido_doctor,
+                    d.especialidad
+            FROM consultafisica cf
+            INNER JOIN doctor d ON cf.id_doctor = d.id_doctor
+            INNER JOIN usuario ud ON d.id_usuario = ud.id_usuario
+            INNER JOIN cita c ON cf.id_cita = c.id_cita
+            WHERE c.id_paciente = ?
+            ORDER BY cf.fecha_consulta DESC
+        `, [id_paciente])
+        return results
+    } catch(err) {
+        return { error: 'No se pueden obtener las consultas' }
+    }
+}
+
 export const obtieneConsultasFisicasPorExpediente = async (id_expediente: number) => {
     try {
         const [results] = await conexion.query(`

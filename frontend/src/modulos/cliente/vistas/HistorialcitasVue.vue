@@ -21,7 +21,7 @@
                 <ul v-else class="history-list">
                     <li v-for="a in citasProximas" :key="a.id">
                         <div class="cita-header">
-                            <strong>{{ a.doctor }}</strong>
+                            <strong>{{ esDoctor ? (a.patientName ?? 'Paciente') : a.doctor }}</strong>
                             <span class="tag-estado">{{ a.estado }}</span>
                         </div>
                         <span class="muted">{{ a.specialty }}</span>
@@ -43,7 +43,7 @@
                 <ul v-else class="history-list">
                     <li v-for="a in citasPasadas" :key="a.id">
                         <div class="cita-header">
-                            <strong>{{ a.doctor }}</strong>
+                            <strong>{{ esDoctor ? (a.patientName ?? 'Paciente') : a.doctor }}</strong>
                             <span class="tag-cancelada" v-if="a.estado === 'Cancelada'">Cancelada</span>
                             <span class="tag-estado" v-else>{{ a.estado }}</span>
                         </div>
@@ -66,7 +66,8 @@ import { useCitas } from '../controladores/useCita'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
 const { appointments, fetchCitasPaciente } = useCitas()
-const { usuarioActual } = useSesion()
+const { usuarioActual, rolUsuario } = useSesion()
+const esDoctor = computed(() => rolUsuario.value === 'doctor')
 
 onMounted(async () => {
     if (appointments.value.length === 0 && usuarioActual.value?.id_paciente) {

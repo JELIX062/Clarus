@@ -16,6 +16,14 @@ router.get('/:id_consulta', async (req: Request, res: Response) => {
     res.send(consulta);
 });
 
+// GET /api/consultafisica/paciente/:id_paciente
+router.get('/paciente/:id_paciente', async (req: Request, res: Response) => {
+    const resultado = await consultaFisicaServices.obtieneConsultasPorPaciente(
+        Number(req.params.id_paciente)
+    )
+    res.send(resultado)
+})
+
 // http://localhost:3001/api/consultafisica/expediente/1
 router.get('/expediente/:id_expediente', async (req: Request, res: Response) => {
     const consultas = await consultaFisicaServices.obtieneConsultasFisicasPorExpediente(Number(req.params.id_expediente));

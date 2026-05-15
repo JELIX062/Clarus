@@ -91,7 +91,7 @@
                     </div>
                     
                     <button
-                        v-if="appointment.estado !== 'Cancelada'"
+                        v-if="(esDoctor || esRecepcionista || esPaciente) && appointment.estado === 'Programada'"
                         class="button button-danger"
                         type="button"
                         @click="handleCancelar(appointment.id)"
@@ -207,6 +207,7 @@ onMounted(async () => {
 
 const esDoctor        = computed(() => rolUsuario.value === 'doctor')
 const esRecepcionista = computed(() => rolUsuario.value === 'recepcionista')
+const esPaciente = computed(() => rolUsuario.value === 'paciente')
 
 const fullMonths = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const weekDays   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']

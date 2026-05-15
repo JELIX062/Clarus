@@ -1,7 +1,7 @@
 import conexion from '../database/conexion.js';
 import type { Cita, CitaNuevo } from './typesUsuarios.js';
 import * as notificacionServices from './notificacionServices.js';
-import { citaSchema,editarCitaSchema } from '../schemas/usuarioSchema.js';
+import { citaSchema,editarCitaSchema,actualizarEstadoCitaSchema  } from '../schemas/usuarioSchema.js';
 
 
 export const obtieneCitas = async () => {
@@ -59,6 +59,14 @@ export const obtieneCita = async (id_cita: number) => {
 
 export const obtieneCitasPorPaciente = async (id_paciente: number) => {
     try {
+        // Marca como No atendida las citas programadas cuya hora ya pasó
+        await conexion.query(`
+            UPDATE cita 
+            SET estado = 'No atendida'
+            WHERE estado = 'Programada'
+            AND CONCAT(fecha, ' ', hora_fin) < NOW()
+        `)
+
         const [results] = await conexion.query(`
             SELECT c.*,
                 ud.nombre as nombre_doctor, ud.apellido_paterno as apellido_doctor,
@@ -83,6 +91,14 @@ export const obtieneCitasPorPaciente = async (id_paciente: number) => {
 
 export const obtieneCitasPorDoctor = async (id_doctor: number) => {
     try {
+
+        // Marca como No atendida las citas programadas cuya hora ya pasó
+        await conexion.query(`
+            UPDATE cita 
+            SET estado = 'No atendida'
+            WHERE estado = 'Programada'
+            AND CONCAT(fecha, ' ', hora_fin) < NOW()
+        `)
         const [results] = await conexion.query(`
             SELECT c.*,
                 up.nombre as nombre_paciente, up.apellido_paterno as apellido_paciente,
@@ -127,10 +143,11 @@ export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; ref
 
         const [bloqueo]: any = await conexion.query(
             `SELECT id_bloqueo FROM bloqueohorario
-            WHERE id_doctor = ? AND fecha = ?
-            AND hora_inicio < ? AND hora_fin > ?`,
-            [nuevo.id_doctor, nuevo.fecha, nuevo.hora_fin, nuevo.hora_inicio]
-        );
+            WHERE id_doctor = ?
+            AND CONCAT(fecha_inicio, ' ', hora_inicio) < CONCAT(?, ' ', ?)
+            AND CONCAT(fecha_fin,    ' ', hora_fin)    > CONCAT(?, ' ', ?)`,
+            [nuevo.id_doctor, nuevo.fecha, nuevo.hora_fin, nuevo.fecha, nuevo.hora_inicio]
+        )
 
         if (bloqueo.length > 0) {
             return { error: 'El doctor tiene un bloqueo en ese horario' };
@@ -347,5 +364,28 @@ export const marcaCitaAtendida = async (id_cita: number, id_doctor: number) => {
     } catch(err) {
         console.log("ERROR EN BD:", err);
         return { error: "No se puede marcar la cita como atendida" }
+    }
+}
+
+export const actualizaEstadoCita = async (id_cita: number, estado: string, id_doctor: number) => {
+    try {
+        const validacion = actualizarEstadoCitaSchema.safeParse({ id_cita, estado })
+                if (!validacion.success) {
+                    return { error: 'Estado no válido' }
+        }
+
+        const [existe]: any = await conexion.query(
+            'SELECT id_cita, estado, id_doctor FROM cita WHERE id_cita = ? LIMIT 1',
+            [id_cita]
+        )
+        if (existe.length === 0) return { error: 'No se encuentra la cita' }
+        if (existe[0].id_doctor !== id_doctor) return { error: 'No tienes permisos para modificar esta cita' }
+        if (existe[0].estado === 'Cancelada') return { error: 'No se puede modificar una cita cancelada' }
+
+        await conexion.query('UPDATE cita SET estado = ? WHERE id_cita = ?', [estado, id_cita])
+        return { mensaje: 'Estado actualizado correctamente' }
+    } catch(err) {
+        console.log('ERROR EN BD:', err)
+        return { error: 'No se pudo actualizar el estado' }
     }
 }

@@ -263,7 +263,7 @@ export const editarCitaSchema = z.object({
     fecha: z.string(),
     hora_inicio: z.string(),
     hora_fin: z.string(),
-    estado: z.string().max(25),
+    estado: z.enum(['Programada', 'Cancelada', 'En curso', 'No atendida', 'Finalizada']),
     motivo_consulta: z.string().min(2).max(500),
     costo_total: z.number().positive(),
     registrado_por: z.number().int().positive()
@@ -322,3 +322,8 @@ export const cambiarContrasenaSchema = z.object({
     id_usuario: z.number().int().positive(),
     contraseña: z.string().min(6).max(256)
 });
+
+export const actualizarEstadoCitaSchema = z.object({
+    id_cita: z.number().int().positive(),
+    estado: z.enum(['Programada', 'Cancelada', 'En curso', 'No atendida', 'Finalizada'])
+})

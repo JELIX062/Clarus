@@ -88,6 +88,26 @@ router.put('/cancelar', async (req: Request, res: Response) => {
     }
 });
 
+// PUT /api/cita/cancelar-doctor
+router.put('/cancelar-doctor', async (req: Request, res: Response) => {
+    try {
+        const { id_cita, motivo, cancelado_por } = req.body
+        const resultado = await citaServices.cancelaCitaDoctor(
+            Number(id_cita), motivo, Number(cancelado_por)
+        )
+        res.send(resultado)
+    } catch(e) {
+        res.status(400).send({ error: 'No se puede cancelar la cita' })
+    }
+})
+
+// PUT /api/cita/estado
+router.put('/estado', async (req: Request, res: Response) => {
+    const { id_cita, estado, id_doctor } = req.body
+    const resultado = await citaServices.actualizaEstadoCita(Number(id_cita), estado, Number(id_doctor))
+    res.send(resultado)
+})
+
 // http://localhost:3001/api/cita/atendida
 router.put('/atendida', async (req: Request, res: Response) => {
     try {

@@ -46,11 +46,15 @@
 			<div class="field-row">
 				<label>
 					<span>Consultorio</span>
-					<select v-model="form.id_consultorio" required>
-						<option disabled value="">Selecciona un consultorio</option>
-						<option v-for="c in consultoriosFiltrados" :key="c.id_consultorio" :value="c.id_consultorio">
-                            Consultorio {{ c.numero }} — Piso {{ c.piso }}
-                        </option>
+					<select v-model="form.id_consultorio">
+						<option value="">Selecciona un consultorio</option>
+						<option
+							v-for="c in consultoriosFiltrados"
+							:key="c.id_consultorio"
+							:value="c.id_consultorio"
+						>
+							Consultorio {{ c.numero }}
+						</option>
 					</select>
 				</label>
 
@@ -263,6 +267,7 @@ type HorarioDoctor = {
 	hora_inicio:  string
 	hora_fin:     string
 	numero_consultorio: string
+	id_consultorio:     number
 }
 
 const horarios = ref<HorarioDoctor[]>([])
@@ -286,11 +291,22 @@ const sucursales = ref<Sucursal[]>([])
 const doctores     = ref<Doctor[]>([])
 const consultorios = ref<Consultorio[]>([])
 
-const consultoriosFiltrados = computed(() =>
-	form.id_sucursal
-		? consultorios.value.filter(c => c.id_sucursal === Number(form.id_sucursal))
-		: []
-)
+const consultoriosFiltrados = computed(() => {
+    if (!horarios.value.length) return []
+    
+    const vistos = new Set<number>()
+    return horarios.value
+        .filter(h => {
+            if (vistos.has(h.id_consultorio)) return false
+            vistos.add(h.id_consultorio)
+            return true
+        })
+        .map(h => ({
+            id_consultorio: h.id_consultorio,
+            id_sucursal:    Number(form.id_sucursal),
+            numero:         h.numero_consultorio
+        }))
+})
 
 onMounted(async () => {
 	try {

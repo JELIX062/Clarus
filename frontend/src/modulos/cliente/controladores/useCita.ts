@@ -31,7 +31,9 @@ const mapCita = (c: any): Appointment => ({
     motivo: c.motivo_consulta,
     estado: c.estado,
     costo: c.costo_total,
-    patientName: c.nombre_paciente ? `${c.nombre_paciente} ${c.apellido_paciente}` : undefined
+    patientName: c.nombre_paciente
+        ? `${c.nombre_paciente} ${c.apellido_paciente ?? ''}`.trim()
+        : undefined
 })
 
 export const useCitas = () => {
@@ -59,24 +61,24 @@ export const useCitas = () => {
         }
     }
 
-    const cancelarCita = async (id_cita: number, motivo: string, cancelado_por: number) => {
-        try {
-            const res = await fetch(`${API}/cita/cancelar`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_cita, motivo, cancelado_por })
-            })
-            const data = await res.json()
-            if (!data.error) {
-                appointments.value = appointments.value.map(a =>
-                    a.id === id_cita ? { ...a, estado: 'Cancelada' } : a
-                )
-            }
-            return data
-        } catch {
-            return { error: 'Error de conexión' }
+    const cancelarCita = async (id_cita: number, motivo: string, cancelado_por: number, aplica_reembolso: boolean = false) => {
+    try {
+        const res = await fetch(`${API}/cita/cancelar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_cita, motivo, cancelado_por, aplica_reembolso })
+        })
+        const data = await res.json()
+        if (!data.error) {
+            appointments.value = appointments.value.map(a =>
+                a.id === id_cita ? { ...a, estado: 'Cancelada' } : a
+            )
         }
+        return data
+    } catch {
+        return { error: 'Error de conexión' }
     }
+}
 
     const limpiarCitas = () => {
     appointments.value = []
