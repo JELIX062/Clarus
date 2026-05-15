@@ -85,10 +85,24 @@ export const registraExpediente = async (nuevo: ExpedienteNuevo) => {
             return { error: 'El paciente ya tiene un expediente registrado' };
         }
 
+        
         const [result]: any = await await conexion.query(
             'INSERT INTO expediente(id_paciente, id_doctor, ant_patologicos, medicamentos_actuales, alergias) values(?,?,?,?,?)',
             [nuevo.id_paciente, nuevo.id_doctor, nuevo.ant_patologicos ?? null, nuevo.medicamentos_actuales ?? null, nuevo.alergias ?? null]
-            );
+        );
+
+        const id_expediente = result.insertId
+
+        // Actualiza consultas físicas del paciente que no tienen expediente
+        await conexion.query(
+            `UPDATE consultafisica cf
+            INNER JOIN cita c ON cf.id_cita = c.id_cita
+            SET cf.id_expediente = ?
+            WHERE c.id_paciente = ? AND cf.id_expediente IS NULL`,
+            [id_expediente, nuevo.id_paciente]
+        )
+
+
         return { mensaje: 'Expediente registrado correctamente', id_expediente: result.insertId };
     } catch(err) {
         console.log("ERROR EN BD:", err);

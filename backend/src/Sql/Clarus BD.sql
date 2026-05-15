@@ -1,5 +1,5 @@
 -- ============================================================
---  Ingieniería de Software - Proyecto Final
+--  Ingeniería de Software - Proyecto Final
 --  Base de Datos para Clínica Médica
 --  Equipo: 14 clarus
 -- ============================================================
@@ -198,8 +198,8 @@ CREATE TABLE Cancelacion (
     aplica_reembolso     TINYINT(1)      NOT NULL DEFAULT 0,
     porcentaje_reembolso DECIMAL(5,2)    NULL,
     PRIMARY KEY (id_cancelacion),
-    CONSTRAINT FK_Cancelacion_Cita         FOREIGN KEY (id_cita)        REFERENCES Cita    (id_cita),
-    CONSTRAINT FK_Cancelacion_CanceladoPor FOREIGN KEY (cancelado_por)  REFERENCES Usuario (id_usuario)
+    CONSTRAINT FK_Cancelacion_Cita         FOREIGN KEY (id_cita)       REFERENCES Cita    (id_cita),
+    CONSTRAINT FK_Cancelacion_CanceladoPor FOREIGN KEY (cancelado_por) REFERENCES Usuario (id_usuario)
 );
 
 -- ------------------------------------------------------------
@@ -222,28 +222,29 @@ CREATE TABLE Pago (
 
 -- ------------------------------------------------------------
 -- 14. Expediente
+-- CAMBIOS: eliminado campo 'codigo', agregado 'id_doctor'
 -- ------------------------------------------------------------
 CREATE TABLE Expediente (
     id_expediente         INT           NOT NULL AUTO_INCREMENT,
     id_paciente           INT           NOT NULL,
-    codigo                VARCHAR(20)   NOT NULL,
+    id_doctor             INT           NOT NULL,
     ant_patologicos       VARCHAR(1000) NULL,
     medicamentos_actuales VARCHAR(500)  NULL,
     alergias              VARCHAR(500)  NULL,
     fecha_apertura        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id_expediente),
-    UNIQUE KEY UQ_Expediente_codigo (codigo),
-    CONSTRAINT FK_Expediente_Paciente FOREIGN KEY (id_paciente)
-        REFERENCES Paciente (id_paciente)
+    CONSTRAINT FK_Expediente_Paciente FOREIGN KEY (id_paciente) REFERENCES Paciente (id_paciente),
+    CONSTRAINT FK_Expediente_Doctor   FOREIGN KEY (id_doctor)   REFERENCES Doctor   (id_doctor)
 );
 
 -- ------------------------------------------------------------
 -- 15. ConsultaFisica
+-- CAMBIOS: id_expediente ahora es NULL (opcional)
 -- ------------------------------------------------------------
 CREATE TABLE ConsultaFisica (
     id_consulta           INT             NOT NULL AUTO_INCREMENT,
     id_cita               INT             NOT NULL,
-    id_expediente         INT             NOT NULL,
+    id_expediente         INT             NULL,
     id_doctor             INT             NOT NULL,
     motivo_consulta       VARCHAR(500)    NULL,
     peso_kg               DECIMAL(5,2)    NULL,
@@ -263,7 +264,6 @@ CREATE TABLE ConsultaFisica (
     CONSTRAINT FK_Consulta_Expediente FOREIGN KEY (id_expediente) REFERENCES Expediente (id_expediente),
     CONSTRAINT FK_Consulta_Doctor     FOREIGN KEY (id_doctor)     REFERENCES Doctor     (id_doctor)
 );
-
 
 -- ------------------------------------------------------------
 -- 16. Notificacion

@@ -88,15 +88,15 @@
 
                     <div class="card-actions">
                         <button
-                            v-if="appointment.estado === 'Programada' && citaHaEmpezado(appointment)"
+                            v-if="(appointment.estado === 'Programada' || appointment.estado === 'En curso') && citaHaEmpezado(appointment)"
                             class="button button-success"
                             type="button"
                             @click="marcarEnCurso(appointment.id)"
                         >
-                            Iniciar consulta
+                            {{ appointment.estado === 'En curso' ? 'Continuar consulta' : 'Iniciar consulta' }}
                         </button>
                         <button
-                            v-if="(appointment.estado === 'Programada' || appointment.estado === 'En curso') && citaHaEmpezado(appointment)"
+                            v-if="appointment.estado === 'Programada' && citaHaEmpezado(appointment)"
                             class="button button-warning"
                             type="button"
                             @click="marcarNoAtendida(appointment.id)"
@@ -104,7 +104,7 @@
                             No atendida
                         </button>
                         <button
-                            v-if="appointment.estado !== 'Cancelada' && appointment.estado !== 'Completada' && appointment.estado !== 'No atendida'"
+                            v-if="appointment.estado !== 'Cancelada' && appointment.estado !== 'Completada' && appointment.estado !== 'No atendida' && appointment.estado !== 'En curso'"
                             class="button button-danger"
                             type="button"
                             @click="handleCancelar(appointment.id)"
@@ -266,15 +266,23 @@ const citaHaEmpezado = (appointment: any): boolean => {
 }
 
 const marcarEnCurso = async (id_cita: number) => {
-    const res  = await fetch(`${API}/cita/estado`, {
-        method:  'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_cita, estado: 'En curso' })
-    })
-    const data = await res.json()
-    if (!data.error) {
-        await router.push({ name: 'doctor-consulta', params: { id_cita } })
+    const cita = appointments.value.find(a => a.id === id_cita)
+    
+    if (cita?.estado !== 'En curso') {
+        const res  = await fetch(`${API}/cita/estado`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_cita,
+                estado:    'En curso',
+                id_doctor: Number(usuarioActual.value?.id_doctor)
+            })
+        })
+        const data = await res.json()
+        if (data.error) return
     }
+
+    await router.push({ name: 'doctor-consulta', params: { id_cita } })
 }
 
 const marcarNoAtendida = async (id_cita: number) => {

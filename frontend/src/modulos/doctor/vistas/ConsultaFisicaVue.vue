@@ -23,7 +23,7 @@
             <div class="field-row">
                 <label>
                     <span>Tensión arterial</span>
-                    <input v-model="form.tension_arterial" type="text" placeholder="120/80" maxlength="10" required />
+                    <input v-model="form.tension_arterial" type="text" placeholder="*/*" maxlength="10" required />
                 </label>
                 <label>
                     <span>Temperatura (°C)</span>
@@ -101,7 +101,11 @@ const form = reactive({
 onMounted(async () => {
     const res  = await fetch(`${API}/cita/${id_cita}`)
     const data = await res.json()
-    if (!data.error) citaInfo.value = data
+    const cita = Array.isArray(data) ? data[0] : data 
+    if (cita && !cita.error) {
+        citaInfo.value       = cita
+        form.motivo_consulta = cita.motivo_consulta ?? ''
+    }
 })
 
 const guardar = async () => {
@@ -115,7 +119,6 @@ const guardar = async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 id_cita,
-                id_expediente: null,
                 id_doctor:     Number(usuarioActual.value?.id_doctor),
                 ...form
             })
@@ -128,7 +131,7 @@ const guardar = async () => {
         }
 
         exito.value = 'Consulta registrada correctamente. Redirigiendo...'
-        setTimeout(() => router.push({ name: 'doctor-citas' }), 1500)
+        setTimeout(() => router.push({ name: 'citas' }), 1500)
 
     } catch {
         error.value = 'No se pudo conectar con el servidor.'

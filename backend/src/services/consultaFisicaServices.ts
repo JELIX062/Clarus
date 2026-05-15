@@ -44,10 +44,9 @@ export const obtieneConsultaFisica = async (id_consulta: number) => {
 export const obtieneConsultasPorPaciente = async (id_paciente: number) => {
     try {
         const [results] = await conexion.query(`
-            SELECT cf.id_consulta, cf.motivo_consulta, cf.tratamiento,
-                    cf.indicaciones, cf.fecha_consulta,
-                    ud.nombre as nombre_doctor, ud.apellido_paterno as apellido_doctor,
-                    d.especialidad
+            SELECT cf.*,
+                ud.nombre as nombre_doctor, ud.apellido_paterno as apellido_doctor,
+                d.especialidad
             FROM consultafisica cf
             INNER JOIN doctor d ON cf.id_doctor = d.id_doctor
             INNER JOIN usuario ud ON d.id_usuario = ud.id_usuario
@@ -93,6 +92,25 @@ export const registraConsultaFisica = async (nuevo: ConsultaFisicaNuevo) => {
             [nuevo.id_cita]
         );
 
+        // Busca si el paciente ya tiene expediente con este doctor
+        const [citaInfo]: any = await conexion.query(
+            'SELECT id_paciente FROM cita WHERE id_cita = ? LIMIT 1',
+            [nuevo.id_cita]
+        )
+        const id_paciente = citaInfo[0]?.id_paciente
+
+        let id_expediente = nuevo.id_expediente ?? null
+
+        if (id_paciente) {
+            const [expExiste]: any = await conexion.query(
+                'SELECT id_expediente FROM expediente WHERE id_paciente = ? AND id_doctor = ? LIMIT 1',
+                [id_paciente, nuevo.id_doctor]
+            )
+            if (expExiste.length > 0) {
+                id_expediente = expExiste[0].id_expediente
+            }
+        }
+
         if (cita.length === 0) {
             return { error: 'No se encuentra la cita' };
         }
@@ -110,7 +128,7 @@ export const registraConsultaFisica = async (nuevo: ConsultaFisicaNuevo) => {
 
         if (consultaExiste.length > 0) {
             return { error: 'La cita ya tiene una consulta fisica registrada' };
-        }
+        };
 
         const [result]: any = await conexion.query(
             `INSERT INTO consultafisica(
@@ -119,7 +137,7 @@ export const registraConsultaFisica = async (nuevo: ConsultaFisicaNuevo) => {
                 notas_examen_fisico, notas_clinicas, tratamiento, indicaciones, firmada
             ) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
-                nuevo.id_cita, nuevo.id_expediente, nuevo.id_doctor, nuevo.motivo_consulta,
+                nuevo.id_cita, id_expediente, nuevo.id_doctor, nuevo.motivo_consulta,
                 nuevo.peso_kg, nuevo.talla_cm, nuevo.tension_arterial, nuevo.temperatura_c, nuevo.frecuencia_cardiaca,
                 nuevo.notas_examen_fisico, nuevo.notas_clinicas, nuevo.tratamiento, nuevo.indicaciones, 0
             ]

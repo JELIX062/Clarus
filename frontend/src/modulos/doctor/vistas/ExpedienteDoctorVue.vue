@@ -30,9 +30,15 @@
                 <div class="exp-card__header">
                     <div>
                         <h3>{{ exp.nombre_paciente }} {{ exp.apellido_paterno }} {{ exp.apellido_materno ?? '' }}</h3>
-                        <p class="meta">Código: {{ exp.codigo }} · {{ exp.tipo_sangre ?? '–' }} · {{ formatSexo(exp.sexo) }}</p>
+                        <div>
+                            <p class="meta">{{ exp.tipo_sangre ?? '–' }} · {{ formatSexo(exp.sexo) }}</p>
+                            <p class="meta">Expediente #{{ exp.id_expediente }}</p>
+                        </div>
                     </div>
-                    <button class="button button-sm" type="button" @click="abrirEditar(exp)">Editar</button>
+                    <div style="display:flex; gap:0.5rem">
+                        <button class="button button-sm button-white" type="button" @click="abrirConsultas(exp)">Ver consultas</button>
+                        <button class="button button-sm" type="button" @click="abrirEditar(exp)">Editar</button>
+                    </div>
                 </div>
 
                 <div class="exp-card__body">
@@ -97,6 +103,37 @@
             </div>
         </div>
 
+        <!-- Modal consultas físicas -->
+        <div v-if="modalConsultas" class="modal-backdrop-custom" @click.self="modalConsultas = false">
+            <div class="modal-custom">
+                <div class="modal-custom-header">
+                    <h3>Consultas de {{ expedienteSeleccionado?.nombre_paciente }}</h3>
+                    <button class="btn-close-custom" @click="modalConsultas = false">✕</button>
+                </div>
+                <div v-if="cargandoConsultas" class="empty-state">Cargando...</div>
+                <div v-else-if="consultas.length === 0" class="empty-state">No hay consultas registradas.</div>
+                <div v-else class="consultas-lista">
+                    <div v-for="c in consultas" :key="c.id_consulta" class="consulta-item">
+                        <div class="consulta-item-header">
+                            <strong>{{ formatFecha(c.fecha_consulta) }}</strong>
+                            <span :class="c.firmada ? 'badge-active' : 'badge-warning'">
+                                {{ c.firmada ? 'Firmada' : 'Borrador' }}
+                            </span>
+                        </div>
+                        <div class="campo"><span class="campo-label">Motivo</span><span>{{ c.motivo_consulta || '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Peso</span><span>{{ c.peso_kg ? `${c.peso_kg} kg` : '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Talla</span><span>{{ c.talla_cm ? `${c.talla_cm} cm` : '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Tensión arterial</span><span>{{ c.tension_arterial || '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Temperatura</span><span>{{ c.temperatura_c ? `${c.temperatura_c} °C` : '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Frecuencia cardíaca</span><span>{{ c.frecuencia_cardiaca ? `${c.frecuencia_cardiaca} lpm` : '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Notas examen físico</span><span>{{ c.notas_examen_fisico || '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Notas clínicas</span><span>{{ c.notas_clinicas || '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Tratamiento</span><span>{{ c.tratamiento || '—' }}</span></div>
+                        <div class="campo"><span class="campo-label">Indicaciones</span><span>{{ c.indicaciones || '—' }}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 </template>
 
@@ -114,6 +151,11 @@ const busqueda         = ref('')
 const guardando        = ref(false)
 const modoEdicion      = ref(false)
 const modalError       = ref('')
+const modalConsultas         = ref(false)
+const consultas              = ref<any[]>([])
+const cargandoConsultas      = ref(false)
+const expedienteSeleccionado = ref<any>(null)
+
 
 const form = reactive({
     id_expediente:        0,
@@ -124,6 +166,7 @@ const form = reactive({
 })
 
 const formatSexo = (s: string) => s === 'M' ? 'Masculino' : s === 'F' ? 'Femenino' : '–'
+const formatFecha = (f: string) => new Intl.DateTimeFormat('es-MX', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(f))
 
 const expedientesFiltrados = computed(() => {
     const q = busqueda.value.toLowerCase()
@@ -132,6 +175,20 @@ const expedientesFiltrados = computed(() => {
         `${e.nombre_paciente} ${e.apellido_paterno} ${e.apellido_materno ?? ''}`.toLowerCase().includes(q)
     )
 })
+
+const abrirConsultas = async (exp: any) => {
+    expedienteSeleccionado.value = exp
+    modalConsultas.value         = true
+    cargandoConsultas.value      = true
+    consultas.value              = []
+    try {
+        const res  = await fetch(`${API}/consultafisica/paciente/${exp.id_paciente}`)
+        const data = await res.json()
+        if (Array.isArray(data)) consultas.value = data
+    } finally {
+        cargandoConsultas.value = false
+    }
+}
 
 const cargarExpedientes = async () => {
     const id = Number(usuarioActual.value?.id_doctor)
@@ -286,6 +343,70 @@ h1, h2, h3, p { margin: 0; }
     display: grid;
     gap: 1rem;
 }
+
+.modal-backdrop-custom {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+.modal-custom {
+    background: var(--clarus-ivory);
+    border-radius: 20px;
+    padding: 1.75rem;
+    width: min(680px, 90vw);
+    max-height: 80vh;
+    overflow-y: auto;
+    display: grid;
+    gap: 1rem;
+}
+.modal-custom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.btn-close-custom {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--clarus-oxford);
+}
+.consultas-lista { display: grid; gap: 1rem; }
+.consulta-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: grid;
+    gap: 0.4rem;
+    border: 1px solid var(--clarus-border);
+}
+.consulta-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+.badge-active {
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+.badge-warning {
+    background: #fef9c3;
+    color: #854d0e;
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
 .exp-card__header {
     display: flex;
     justify-content: space-between;
@@ -314,6 +435,8 @@ h1, h2, h3, p { margin: 0; }
     text-decoration: none;
     white-space: nowrap;
 }
+
+
 .button-sm { padding: 0.45rem 1rem; font-size: 0.88rem; }
 @media (max-width: 768px) {
     .header, .exp-card__header { flex-direction: column; align-items: flex-start; }
