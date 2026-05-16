@@ -8,16 +8,22 @@ import CrearCuentaVue from '@/modulos/principal/vistas/CrearCuentaVue.vue'
 import CitasDoctorVue from '@/modulos/doctor/vistas/CitasdoctorVue.vue'
 import ExpedientesDoctorVue from '@/modulos/doctor/vistas/ExpedienteDoctorVue.vue'
 import ConsultaFisicaVue from '@/modulos/doctor/vistas/ConsultaFisicaVue.vue'
+import CitasRecepcionistaVue from '@/modulos/recepcionista/vistas/CitasRecepcionistaVue.vue'
+import PacientesVue from '@/modulos/recepcionista/vistas/PacientesVue.vue'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 import { createRouter, createWebHistory } from 'vue-router'
 import { defineComponent, h } from 'vue'
 
 // Componente puente: muestra CitasDoctorVue si es doctor, CitasVue si no
 const CitasRouter = defineComponent({
-  setup() {
-    const { rolUsuario } = useSesion()
-    return () => h(rolUsuario.value === 'doctor' ? CitasDoctorVue : CitasVue)
-  }
+    setup() {
+        const { rolUsuario } = useSesion()
+        return () => {
+            if (rolUsuario.value === 'doctor')        return h(CitasDoctorVue)
+            if (rolUsuario.value === 'recepcionista') return h(CitasRecepcionistaVue)
+            return h(CitasVue)
+        }
+    }
 })
 
 const router = createRouter({
@@ -76,56 +82,62 @@ const router = createRouter({
       path: '/doctor/consulta/:id_cita',
       name: 'doctor-consulta',
       component: ConsultaFisicaVue
+    },
+    {
+        path: '/recepcionista/pacientes',
+        name: 'recepcionista-pacientes',
+        component: PacientesVue
     }
   ]
 })
 
 router.beforeEach((to) => {
-  const { rolUsuario } = useSesion()
+    const { estaAutenticado, rolUsuario } = useSesion()
 
-  // Los doctores no pueden agregar citas
-  if (to.name === 'agregar-cita' && rolUsuario.value === 'doctor') {
-    return { name: 'citas' }
-  }
+    const rutasPublicas = new Set(['inicio-sesion', 'crear-cuenta'])
 
-  // Los doctores van a expedientes en lugar de recetas
-  if (rolUsuario.value === 'doctor' && to.name === 'recetas') {
-    return { name: 'expedientes' }
-  }
+    // Redirige a login si no está autenticado
+    if (!estaAutenticado.value && !rutasPublicas.has(String(to.name))) {
+        return { name: 'inicio-sesion' }
+    }
 
-  // Los recepcionistas no tienen recetas
-  if (rolUsuario.value === 'recepcionista' && to.name === 'recetas') {
-    return { name: 'citas' }
-  }
+    // Redirige a citas si ya está autenticado e intenta ir al login
+    if (estaAutenticado.value && rutasPublicas.has(String(to.name))) {
+        return { name: 'citas' }
+    }
 
-  // Solo doctores pueden ver expedientes
-  if (rolUsuario.value !== 'doctor' && to.name === 'expedientes') {
-    return { name: 'citas' }
-  }
+    // Los doctores no pueden agregar citas
+    if (to.name === 'agregar-cita' && rolUsuario.value === 'doctor') {
+        return { name: 'citas' }
+    }
 
-  return true
+    // Los doctores van a expedientes en lugar de recetas
+    if (rolUsuario.value === 'doctor' && to.name === 'recetas') {
+        return { name: 'expedientes' }
+    }
+
+    // Los recepcionistas no tienen recetas
+    if (rolUsuario.value === 'recepcionista' && to.name === 'recetas') {
+        return { name: 'citas' }
+    }
+
+    // Solo doctores pueden ver expedientes
+    if (rolUsuario.value !== 'doctor' && to.name === 'expedientes') {
+        return { name: 'citas' }
+    }
+
+    // Solo recepcionistas pueden ver pacientes
+    if (rolUsuario.value !== 'recepcionista' && to.name === 'recepcionista-pacientes') {
+        return { name: 'citas' }
+    }
+
+    // Solo doctores pueden registrar consultas físicas
+    if (rolUsuario.value !== 'doctor' && to.name === 'doctor-consulta') {
+        return { name: 'citas' }
+    }
+
+    return true
 })
 
-router.beforeEach((to) => {
-  const { estaAutenticado, rolUsuario } = useSesion()
-
-  const rutasPublicas = new Set(['inicio-sesion', 'crear-cuenta'])
-
-  // Redirige a login si no está autenticado
-  if (!estaAutenticado.value && !rutasPublicas.has(String(to.name))) {
-    return { name: 'inicio-sesion' }
-  }
-
-  // Redirige a citas si ya está autenticado e intenta ir al login
-  if (estaAutenticado.value && rutasPublicas.has(String(to.name))) {
-    return { name: 'citas' }
-  }
-
-  // ... resto de los guards existentes
-  if (to.name === 'agregar-cita' && rolUsuario.value === 'doctor') {
-    return { name: 'citas' }
-  }
-  // etc.
-})
 
 export default router

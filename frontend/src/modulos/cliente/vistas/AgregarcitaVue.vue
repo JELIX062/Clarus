@@ -96,14 +96,36 @@
 				</label>
 
 				<label>
-					<span>Costo de consulta</span>
-					<input :value="costoTotal ? `$${costoTotal}` : ''" type="text" disabled placeholder="Se llena al elegir médico" />
+					<span>Nombre del paciente</span>
+					<div style="position: relative">
+						<input
+							v-if="esRecepcionista"
+							v-model="busquedaPaciente"
+							type="text"
+							placeholder="Buscar paciente..."
+							@focus="mostrarSugerencias = true"
+							@blur="mostrarSugerencias = false"
+						/>
+						<input
+							v-else
+							:value="nombrePaciente"
+							type="text"
+							disabled
+						/>
+						<div v-if="mostrarSugerencias && sugerencias.length > 0" class="sugerencias-list">
+							<button
+								v-for="p in sugerencias"
+								:key="p.id_paciente"
+								type="button"
+								class="sugerencia-item"
+								@mousedown.prevent="seleccionarPaciente(p)"
+							>
+								{{ p.nombre }} {{ p.apellido_paterno }} {{ p.apellido_materno ?? '' }}
+							</button>
+						</div>
+					</div>
 				</label>
 
-				<label>
-					<span>Nombre del paciente</span>
-					<input :value="nombrePaciente" type="text" disabled />
-				</label>
 			</div>
 
 			<!-- PACIENTE -->
@@ -222,10 +244,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRouter,useRoute } from 'vue-router'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
 const router   = useRouter()
+const route = useRoute()
 const { usuarioActual, rolUsuario  } = useSesion()
 
 // ── Datos del paciente (readonly) ──────────────────────────────
@@ -290,6 +313,32 @@ const tarjeta = reactive({
 const sucursales = ref<Sucursal[]>([])
 const doctores     = ref<Doctor[]>([])
 const consultorios = ref<Consultorio[]>([])
+const pacientes          = ref<any[]>([])
+const busquedaPaciente   = ref('')
+const mostrarSugerencias = ref(false)
+const pacienteSeleccionado = ref<any>(null)
+
+
+const sugerencias = computed(() => {
+    if (!busquedaPaciente.value.trim()) return []
+    
+    const normalizar = (str: string) => str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+
+    const q = normalizar(busquedaPaciente.value)
+    return pacientes.value.filter(p =>
+        normalizar(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno ?? ''}`).includes(q)
+    ).slice(0, 6)
+})
+
+const seleccionarPaciente = (p: any) => {
+    pacienteSeleccionado.value = p
+    busquedaPaciente.value     = `${p.nombre} ${p.apellido_paterno}`
+    mostrarSugerencias.value   = false
+    form.id_paciente           = p.id_paciente  // ← agrega este campo al form también
+}
 
 const consultoriosFiltrados = computed(() => {
     if (!horarios.value.length) return []
@@ -309,8 +358,13 @@ const consultoriosFiltrados = computed(() => {
 })
 
 onMounted(async () => {
-	try {
-		const [resDoctores, resConsultorios, resSucursales] = await Promise.all([
+	if (route.query.id_paciente) {
+        form.id_paciente           = Number(route.query.id_paciente)
+        busquedaPaciente.value     = String(route.query.nombre_paciente ?? '')
+        pacienteSeleccionado.value = { id_paciente: Number(route.query.id_paciente) }
+    }
+    try {
+        const [resDoctores, resConsultorios, resSucursales] = await Promise.all([
             fetch('http://localhost:3001/api/doctor'),
             fetch('http://localhost:3001/api/consultorio'),
             fetch('http://localhost:3001/api/sucursal'),
@@ -318,10 +372,17 @@ onMounted(async () => {
         doctores.value     = await resDoctores.json()
         consultorios.value = await resConsultorios.json()
         sucursales.value   = await resSucursales.json()
-	} catch {
-		error.value = 'No se pudo cargar la información del servidor.'
-	}
+
+        if (esRecepcionista.value) {
+            const res  = await fetch('http://localhost:3001/api/paciente')
+            const data = await res.json()
+            if (Array.isArray(data)) pacientes.value = data
+        }
+    } catch {
+        error.value = 'No se pudo cargar la información del servidor.'
+    }
 })
+
 
 // ── Formulario ─────────────────────────────────────────────────
 const form = reactive({
@@ -332,7 +393,8 @@ const form = reactive({
     hora_inicio:     '',
     motivo_consulta: '',
     metodo_pago:     '',
-    duracion:        30,   
+    duracion:        30,  
+	id_paciente:     0, 
 })
 
 const error   = ref('')
@@ -416,6 +478,11 @@ const guardarCita = async () => {
 		return
 	}
 
+	if (form.motivo_consulta.length < 5) {
+		error.value = 'El motivo de consulta debe tener al menos 5 caracteres.'
+		return
+	}
+
     cargando.value = true
 
     try {
@@ -423,19 +490,23 @@ const guardarCita = async () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                id_paciente:      usuarioActual.value?.id_paciente,
-                id_doctor:        Number(form.id_doctor),
-                id_consultorio:   Number(form.id_consultorio),
-                id_recepcionista: null,
-                fecha:            form.fecha,
-                hora_inicio:      `${form.hora_inicio}:00`,
-                hora_fin:         horaFin.value,
-                motivo_consulta:  form.motivo_consulta,
-                costo_total:      Number(costoTotal.value),
-                registrado_por:   usuarioActual.value?.id_usuario,
-                metodo_pago:      esRecepcionista.value ? form.metodo_pago : 'Tarjeta',
-                referencia:       null,
-            }),
+				id_paciente: esRecepcionista.value
+					? Number(pacienteSeleccionado.value?.id_paciente)
+					: usuarioActual.value?.id_paciente,
+				id_doctor:        Number(form.id_doctor),
+				id_consultorio:   Number(form.id_consultorio),
+				id_recepcionista: esRecepcionista.value 
+					? Number(usuarioActual.value?.id_recepcionista) 
+					: null,
+				fecha:            form.fecha,
+				hora_inicio:      `${form.hora_inicio}:00`,
+				hora_fin:         horaFin.value,
+				motivo_consulta:  form.motivo_consulta,
+				costo_total:      Number(costoTotal.value),
+				registrado_por:   usuarioActual.value?.id_usuario,
+				metodo_pago:      esRecepcionista.value ? form.metodo_pago : 'Tarjeta',
+				referencia:       null,
+			}),
         })
 
         const datos = await respuesta.json()
@@ -551,6 +622,37 @@ const guardarCita = async () => {
     .success {
     color: #15803d;
     }
+
+	.sugerencias-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--clarus-ivory);
+    border: 1px solid var(--clarus-gold-soft);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px var(--clarus-shadow);
+    z-index: 50;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.sugerencia-item {
+    display: block;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: var(--clarus-midnight);
+}
+
+.sugerencia-item:hover {
+    background: var(--clarus-gold-soft);
+}
+
     @media (max-width: 768px) {
     .actions {
         flex-direction: column;

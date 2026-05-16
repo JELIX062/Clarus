@@ -93,7 +93,7 @@
                             type="button"
                             @click="marcarEnCurso(appointment.id)"
                         >
-                            {{ appointment.estado === 'En curso' ? 'Continuar consulta' : 'Iniciar consulta' }}
+                            {{ appointment.estado === 'En curso' ? 'Continuar consulta' : 'Iniciar' }}
                         </button>
                         <button
                             v-if="appointment.estado === 'Programada' && citaHaEmpezado(appointment)"
@@ -104,7 +104,7 @@
                             No atendida
                         </button>
                         <button
-                            v-if="appointment.estado !== 'Cancelada' && appointment.estado !== 'Completada' && appointment.estado !== 'No atendida' && appointment.estado !== 'En curso'"
+                            v-if="appointment.estado !== 'Cancelada' && appointment.estado !== 'Completada' && appointment.estado !== 'No atendida' && appointment.estado !== 'En curso' && appointment.estado !== 'Finalizada'"
                             class="button button-danger"
                             type="button"
                             @click="handleCancelar(appointment.id)"
@@ -140,9 +140,9 @@
                             class="form-control mb-3"
                             placeholder="Escribe el motivo..."
                         />
-                        <div :class="aplicaReembolso ? 'alert alert-success' : 'alert alert-warning'" class="mb-0">
-                            <strong>{{ aplicaReembolso ? '✓ Aplica reembolso' : '✗ No aplica reembolso' }}</strong><br>
-                            {{ mensajeReembolso }}
+                        <div class="alert alert-success mb-0">
+                            <strong>✓ Aplica reembolso</strong><br>
+                            El doctor cancela la cita, se devolverá el 100% del anticipo pagado.
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -256,7 +256,9 @@ const tagClass = (estado: string) => ({
     'tag-warning':     estado === 'Programada',
     'tag-danger':      estado === 'Cancelada',
     'tag-muted':       estado === 'Completada' || estado === 'Atendida',
-    'tag-no-atendida': estado === 'No atendida'
+    'tag-no-atendida': estado === 'No atendida',
+    'tag-finalizada':  estado === 'Finalizada'  
+
 })
 
 const citaHaEmpezado = (appointment: any): boolean => {
@@ -346,7 +348,7 @@ const confirmarCancelacion = async () => {
     display: grid;
     gap: 1.5rem;
 }
-.calendar-card, .details-card, .appointment-card {
+.calendar-card, .details-card {
     background: var(--clarus-ivory);
     border-radius: 20px;
     box-shadow: 0 18px 45px var(--clarus-shadow);
@@ -367,6 +369,10 @@ h1, h2, h3, p { margin: 0; }
 .button-success { background: #15803d; border-color: #15803d; padding: 0.55rem 1.1rem; font-size: 0.88rem; color: var(--clarus-ivory); border-radius: 999px; font-weight: 700; cursor: pointer; }
 .button-warning { background: #d97706; border-color: #d97706; padding: 0.55rem 1.1rem; font-size: 0.88rem; color: var(--clarus-ivory); border-radius: 999px; font-weight: 700; cursor: pointer; }
 .tag-no-atendida { background: #fef3c7 !important; color: #d97706 !important; }
+.tag-finalizada {
+    background: #e0e7ff !important;
+    color: #3730a3 !important;
+}
 .calendar-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
@@ -446,11 +452,33 @@ h1, h2, h3, p { margin: 0; }
     background: var(--clarus-gold-soft); color: var(--clarus-midnight);
     border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 700;
 }
+.appointment-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--clarus-gold-soft) transparent;
+}
+
+.appointment-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.appointment-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.appointment-list::-webkit-scrollbar-thumb {
+    background: var(--clarus-gold-soft);
+    border-radius: 999px;
+}
 .tag-success { background: #dcfce7 !important; color: #15803d !important; }
 .tag-warning { background: var(--clarus-gold-soft); color: var(--clarus-midnight); }
 .tag-danger  { background: #fee2e2 !important; color: #b42318 !important; }
 .tag-muted   { background: #f1f5f9 !important; color: #64748b !important; }
-.appointment-list       { display: grid; gap: 1rem; margin-top: 1rem; }
 .details-actions        { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .details-actions-bottom { margin-top: auto; padding-top: 2rem; }
 .appointment-card       { padding: 1rem 1.25rem; border: 1px solid var(--clarus-border); border-radius: 16px; display: grid; gap: 0.35rem; }

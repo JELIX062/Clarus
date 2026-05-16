@@ -23,12 +23,12 @@ export const obtieneHorarios = async () => {
 export const obtieneHorariosPorDoctor = async (id_doctor: number) => {
     try {
         const [results] = await conexion.query(`
-            SELECT h.*,
-                c.numero as numero_consultorio, s.nombre as nombre_sucursal
-            FROM horariodoctor h
-            INNER JOIN consultorio c ON h.id_consultorio = c.id_consultorio
+            SELECT hd.*, c.numero as numero_consultorio, s.nombre as nombre_sucursal
+            FROM horariodoctor hd
+            INNER JOIN consultorio c ON hd.id_consultorio = c.id_consultorio
             INNER JOIN sucursal s ON c.id_sucursal = s.id_sucursal
-            WHERE h.id_doctor = ? AND h.activo = 1
+            WHERE hd.id_doctor = ? AND hd.activo = 1
+            ORDER BY hd.dia_semana
         `, [id_doctor]);
         return results;
     } catch {

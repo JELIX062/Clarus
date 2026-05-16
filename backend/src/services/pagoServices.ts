@@ -78,8 +78,8 @@ export const registraPagoFinal = async (nuevo: PagoNuevo) => {
             return { error: 'No se puede registrar pago de una cita cancelada' };
         }
 
-        if (cita[0].estado !== 'Atendida') {
-            return { error: 'La cita aún no ha sido atendida' };
+        if (cita[0].estado !== 'En curso') {
+            return { error: 'La cita debe estar En curso para registrar el pago final' };
         }
 
         const [anticipo]: any = await conexion.query(
@@ -105,12 +105,6 @@ export const registraPagoFinal = async (nuevo: PagoNuevo) => {
         const [result]: any = await conexion.query(
             'INSERT INTO pago(id_cita, metodo_pago, tipo_pago, monto, referencia, registrado_por, estado) values(?,?,?,?,?,?,?)',
             [nuevo.id_cita, nuevo.metodo_pago, 'Total', montoFinal, nuevo.referencia ?? null, nuevo.registrado_por, 'Completado']
-        );
-
-        // Marca la cita como Pagada
-        await conexion.query(
-            "UPDATE cita SET estado = 'Pagada' WHERE id_cita = ?",
-            [nuevo.id_cita]
         );
 
         return { 

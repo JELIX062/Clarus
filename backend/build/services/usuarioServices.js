@@ -46,12 +46,20 @@ export const login = async (correo, contraseña) => {
             redireccion = '/admin/dashboard';
         }
         else if (usuario.id_rol === 2) {
-            const [doctor] = await conexion.query('SELECT id_doctor, especialidad, tarifa_consulta, id_sucursal FROM doctor WHERE id_usuario = ?', [usuario.id_usuario]);
+            const [doctor] = await conexion.query(`SELECT d.id_doctor, d.especialidad, d.tarifa_consulta, d.id_sucursal,
+                    d.rfc, d.cedula_profesional, s.nombre as nombre_sucursal
+                FROM doctor d
+                INNER JOIN sucursal s ON d.id_sucursal = s.id_sucursal
+                WHERE d.id_usuario = ?`, [usuario.id_usuario]);
             datosExtra = doctor[0] ?? {};
             redireccion = '/doctor/dashboard';
         }
         else if (usuario.id_rol === 3) {
-            const [recepcionista] = await conexion.query('SELECT id_recepcionista, id_sucursal, turno FROM recepcionista WHERE id_usuario = ?', [usuario.id_usuario]);
+            const [recepcionista] = await conexion.query(`SELECT r.id_recepcionista, r.id_sucursal, r.turno,
+                    s.nombre as nombre_sucursal
+                FROM recepcionista r
+                INNER JOIN sucursal s ON r.id_sucursal = s.id_sucursal
+                WHERE r.id_usuario = ?`, [usuario.id_usuario]);
             datosExtra = recepcionista[0] ?? {};
             redireccion = '/recepcionista/dashboard';
         }

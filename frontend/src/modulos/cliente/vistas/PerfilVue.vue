@@ -31,12 +31,12 @@
                     <input id="apellido_materno" v-model.trim="perfil.apellido_materno" class="input" type="text" />
                 </div>
 
-                <div class="form-field full-row">
+                <div class="form-field">
                     <label for="correo">Correo</label>
                     <input id="correo" v-model.trim="perfil.correo" class="input" type="email" />
                 </div>
 
-                <div class="form-field full-row">
+                <div class="form-field">
                     <label for="telefono">Teléfono</label>
                     <input id="telefono" v-model.trim="perfil.telefono" class="input" type="tel" />
                 </div>
@@ -74,15 +74,33 @@
 
                 <template v-if="esDoctor">
                     <div class="form-field full-row">
-                        <label for="especialidad">Especialidad</label>
-                        <input id="especialidad" v-model.trim="perfil.especialidad" class="input" type="text" disabled />
+                        <label>Especialidad</label>
+                        <input v-model.trim="perfil.especialidad" class="input" type="text" disabled />
+                    </div>
+                    
+                    <div v-if="horarios.length > 0" class="form-field full-row">
+                        <label>Horario asignado</label>
+                        <div class="horario-cards">
+                            <div v-for="h in horarios" :key="h.id_horario" class="horario-card">
+                                <div class="horario-dia">{{ diasSemana[h.dia_semana] }}</div>
+                                <div class="horario-detalle">
+                                    <span> {{ formatHora(h.hora_inicio) }} – {{ formatHora(h.hora_fin) }}</span>
+                                    <span> {{ h.nombre_sucursal ?? perfil.nombre_sucursal }}</span>
+                                    <span> Consultorio {{ h.numero_consultorio }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </template>
 
                 <template v-if="esRecepcionista">
                     <div class="form-field">
-                        <label for="turno">Turno</label>
-                        <input id="turno" v-model.trim="perfil.turno" class="input" type="text" disabled />
+                        <label>Turno</label>
+                        <input v-model.trim="perfil.turno" class="input" type="text" disabled />
+                    </div>
+                    <div class="form-field">
+                        <label>Sucursal</label>
+                        <input :value="perfil.nombre_sucursal" class="input" type="text" disabled />
                     </div>
                 </template>
 
@@ -111,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 import { RouterLink } from 'vue-router'
 
@@ -141,11 +159,19 @@ const perfil = reactive({
 	tipo_sangre:      (u?.tipo_sangre       as string)           ?? '',
 	especialidad:     (u?.especialidad      as string)           ?? '',
 	turno:            (u?.turno             as string)           ?? '',
+    nombre_sucursal:  (u?.nombre_sucursal as string) ?? '',
 })
 
 const cargando = ref(false)
 const mensaje  = ref('')
 const error    = ref('')
+const horarios = ref<any[]>([])
+
+const diasSemana: Record<number, string> = {
+    1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
+    4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo'
+}
+const formatHora = (h: string) => h.slice(0, 5)
 
 const esPaciente      = computed(() => rolUsuario.value === 'paciente')
 const esDoctor        = computed(() => rolUsuario.value === 'doctor')
@@ -230,8 +256,19 @@ const saveProfile = async () => {
 	} finally {
 		cargando.value = false
 	}
+
+    
 }
+
+onMounted(async () => {
+    if (esDoctor.value) {
+        const res  = await fetch(`http://localhost:3001/api/horario/doctor/${u?.id_doctor}`)
+        const data = await res.json()
+        if (Array.isArray(data)) horarios.value = data
+    }
+    })
 </script>
+
 <style scoped>
     .perfil-view {
     max-width: 1200px;
@@ -321,14 +358,53 @@ const saveProfile = async () => {
     cursor: pointer;
     }
 
-    @media (max-width: 900px) {
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
+    .horario-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    }
+    .horario-tag {
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
     }
 
-    .form-grid {
-        grid-template-columns: 1fr;
+    .horario-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 0.75rem;
     }
+    .horario-card {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        display: grid;
+        gap: 0.4rem;
+    }
+    .horario-dia {
+        font-weight: 700;
+        color: #166534;
+        font-size: 0.95rem;
+    }
+    .horario-detalle {
+        display: grid;
+        gap: 0.2rem;
+        font-size: 0.88rem;
+        color: #334155;
+    }
+
+    @media (max-width: 900px) {
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

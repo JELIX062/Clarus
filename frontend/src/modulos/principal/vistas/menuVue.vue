@@ -10,7 +10,10 @@
                     <li class="nav_item margin">
                         <router-link class="nav-link item" :to="rutaCitas">Citas</router-link>
                     </li>
-                    <li class="nav_item margin">
+                    <li v-if="rolUsuario === 'recepcionista'" class="nav_item margin">
+                        <router-link class="nav-link item" to="/recepcionista/pacientes">Pacientes</router-link>
+                    </li>
+                    <li v-if="rolUsuario !== 'recepcionista'" class="nav_item margin">
                         <router-link class="nav-link item" :to="rutaSecundaria">{{ etiquetaSecundaria }}</router-link>
                     </li>
                     <li class="nav_item margin">

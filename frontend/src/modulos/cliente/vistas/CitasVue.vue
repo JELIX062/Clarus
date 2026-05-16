@@ -296,7 +296,7 @@ const nextMonth = () => {
     display: grid;
     gap: 1.5rem;
 }
-.calendar-card, .details-card, .appointment-card {
+.calendar-card, .details-card {
     background: var(--clarus-ivory);
     border-radius: 20px;
     box-shadow: 0 18px 45px var(--clarus-shadow);
@@ -404,6 +404,29 @@ h1, h2, h3, p { margin: 0; }
     border-radius: 16px;
     display: grid;
     gap: 0.35rem;
+}
+.appointment-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--clarus-gold-soft) transparent;
+}
+
+.appointment-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.appointment-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.appointment-list::-webkit-scrollbar-thumb {
+    background: var(--clarus-gold-soft);
+    border-radius: 999px;
 }
 .card-row {
     display: flex;

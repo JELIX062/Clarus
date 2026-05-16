@@ -57,6 +57,41 @@ export const obtieneCita = async (id_cita: number) => {
     }
 }
 
+export const obtieneCitasPorSucursal = async (id_sucursal: number) => {
+    try {
+        await conexion.query(`
+            UPDATE cita SET estado = 'No atendida'
+            WHERE estado = 'Programada'
+            AND CONCAT(fecha, ' ', hora_fin) < NOW()
+        `)
+
+        const [results] = await conexion.query(`
+            SELECT c.*,
+                up.nombre as nombre_paciente, up.apellido_paterno as apellido_paciente,
+                ud.nombre as nombre_doctor, ud.apellido_paterno as apellido_doctor,
+                d.especialidad,
+                co.numero as numero_consultorio, s.nombre as nombre_sucursal,
+                ca.motivo as motivo_cancelacion,
+                ca.fecha_cancelacion,
+                ca.aplica_reembolso,
+                ca.porcentaje_reembolso
+            FROM cita c
+            INNER JOIN paciente p ON c.id_paciente = p.id_paciente
+            INNER JOIN usuario up ON p.id_usuario = up.id_usuario
+            INNER JOIN doctor d ON c.id_doctor = d.id_doctor
+            INNER JOIN usuario ud ON d.id_usuario = ud.id_usuario
+            INNER JOIN consultorio co ON c.id_consultorio = co.id_consultorio
+            INNER JOIN sucursal s ON co.id_sucursal = s.id_sucursal
+            LEFT JOIN cancelacion ca ON c.id_cita = ca.id_cita
+            WHERE co.id_sucursal = ?
+            ORDER BY c.fecha DESC, c.hora_inicio ASC
+        `, [id_sucursal])
+        return results
+    } catch {
+        return { error: 'No se pueden obtener las citas de la sucursal' }
+    }
+}
+
 export const obtieneCitasPorPaciente = async (id_paciente: number) => {
     try {
         // Marca como No atendida las citas programadas cuya hora ya pasó
@@ -155,7 +190,8 @@ export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; ref
 
         const [citaExistente]: any = await conexion.query(
             `SELECT id_cita FROM cita
-            WHERE id_doctor = ? AND fecha = ? AND estado != 'Cancelada'
+            WHERE id_doctor = ? AND fecha = ? 
+            AND estado NOT IN ('Cancelada', 'No atendida', 'Finalizada')
             AND hora_inicio < ? AND hora_fin > ?`,
             [nuevo.id_doctor, nuevo.fecha, nuevo.hora_fin, nuevo.hora_inicio]
         );
@@ -251,7 +287,10 @@ export const cancelaCita = async (id_cita: number, motivo: string, cancelado_por
             return { error: 'La cita ya fue cancelada' };
         }
 
-        const fechaHoraCita = new Date(`${existe[0].fecha}T${existe[0].hora_inicio}`);
+        const fechaStr = typeof existe[0].fecha === 'string' 
+            ? existe[0].fecha.split('T')[0] 
+            : existe[0].fecha.toISOString().split('T')[0]
+        const fechaHoraCita = new Date(`${fechaStr}T${existe[0].hora_inicio}`)
         const ahora = new Date();
         const diferenciaHoras = (fechaHoraCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
 
@@ -266,6 +305,26 @@ export const cancelaCita = async (id_cita: number, motivo: string, cancelado_por
             'INSERT INTO cancelacion(id_cita, cancelado_por, motivo, aplica_reembolso, porcentaje_reembolso) values(?,?,?,?,?)',
             [id_cita, cancelado_por, motivo, aplicaReembolso, aplicaReembolso ? 100.00 : 0.00]
         );
+
+        // Si aplica reembolso, suma el anticipo al saldo del paciente
+        if (aplicaReembolso) {
+            const [anticipo]: any = await conexion.query(
+                "SELECT monto FROM pago WHERE id_cita = ? AND tipo_pago = 'Anticipo' AND estado = 'Completado' LIMIT 1",
+                [id_cita]
+            )
+            if (anticipo.length > 0) {
+                const [pacienteInfo]: any = await conexion.query(
+                    'SELECT id_paciente FROM cita WHERE id_cita = ? LIMIT 1',
+                    [id_cita]
+                )
+                if (pacienteInfo.length > 0) {
+                    await conexion.query(
+                        'UPDATE paciente SET saldo_pendiente = saldo_pendiente + ? WHERE id_paciente = ?',
+                        [anticipo[0].monto, pacienteInfo[0].id_paciente]
+                    )
+                }
+            }
+        }
 
         // Notificacion al paciente
         const [pacienteCita]: any = await conexion.query(
@@ -318,6 +377,24 @@ export const cancelaCitaDoctor = async (id_cita: number, motivo: string, cancela
             'INSERT INTO cancelacion(id_cita, cancelado_por, motivo, aplica_reembolso, porcentaje_reembolso) values(?,?,?,?,?)',
             [id_cita, cancelado_por, motivo, 1, 100.00]
         );
+
+        // Doctor siempre aplica reembolso — suma anticipo al saldo del paciente
+        const [anticipo]: any = await conexion.query(
+            "SELECT monto FROM pago WHERE id_cita = ? AND tipo_pago = 'Anticipo' AND estado = 'Completado' LIMIT 1",
+            [id_cita]
+        )
+        if (anticipo.length > 0) {
+            const [pacienteInfo]: any = await conexion.query(
+                'SELECT id_paciente FROM cita WHERE id_cita = ? LIMIT 1',
+                [id_cita]
+            )
+            if (pacienteInfo.length > 0) {
+                await conexion.query(
+                    'UPDATE paciente SET saldo_pendiente = saldo_pendiente + ? WHERE id_paciente = ?',
+                    [anticipo[0].monto, pacienteInfo[0].id_paciente]
+                )
+            }
+        }
 
         return {
             mensaje: 'Cita cancelada correctamente',

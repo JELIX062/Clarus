@@ -130,6 +130,16 @@ const guardar = async () => {
             return
         }
 
+        // Firma automáticamente la consulta recién creada
+        await fetch(`${API}/consultafisica/firmar`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_consulta: data.id_consulta,
+                id_doctor:   Number(usuarioActual.value?.id_doctor)
+            })
+        })
+
         exito.value = 'Consulta registrada correctamente. Redirigiendo...'
         setTimeout(() => router.push({ name: 'citas' }), 1500)
 

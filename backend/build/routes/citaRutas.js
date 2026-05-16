@@ -6,10 +6,9 @@ router.get('/', async (_req, res) => {
     const citas = await citaServices.obtieneCitas();
     res.send(citas);
 });
-// http://localhost:3001/api/cita/1
-router.get('/:id_cita', async (req, res) => {
-    const cita = await citaServices.obtieneCita(Number(req.params.id_cita));
-    res.send(cita);
+router.get('/sucursal/:id_sucursal', async (req, res) => {
+    const citas = await citaServices.obtieneCitasPorSucursal(Number(req.params.id_sucursal));
+    res.send(citas);
 });
 // http://localhost:3001/api/cita/paciente/1
 router.get('/paciente/:id_paciente', async (req, res) => {
@@ -20,6 +19,11 @@ router.get('/paciente/:id_paciente', async (req, res) => {
 router.get('/doctor/:id_doctor', async (req, res) => {
     const citas = await citaServices.obtieneCitasPorDoctor(Number(req.params.id_doctor));
     res.send(citas);
+});
+// http://localhost:3001/api/cita/1
+router.get('/:id_cita', async (req, res) => {
+    const cita = await citaServices.obtieneCita(Number(req.params.id_cita));
+    res.send(cita);
 });
 // http://localhost:3001/api/cita
 router.post('/', async (req, res) => {
