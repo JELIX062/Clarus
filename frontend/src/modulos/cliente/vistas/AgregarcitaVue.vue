@@ -131,10 +131,24 @@
 			<!-- PACIENTE -->
 			<div v-if="!esRecepcionista && costoTotal > 0" class="payment-section">
 				<h3>Pago de anticipo requerido</h3>
-				<p>Para confirmar tu cita debes pagar el 50% de anticipo con tarjeta.
+				<p>Para confirmar tu cita debes pagar el 50% de anticipo.
 				<strong>Total a pagar ahora: ${{ (costoTotal * 0.5).toFixed(2) }}</strong>
 				</p>
+
 				<div class="field-row">
+					<label>
+						<span>Método de pago</span>
+						<select v-model="form.metodo_pago" required>
+							<option disabled value="">Selecciona una opción</option>
+							<option>Tarjeta</option>
+							<option value="Saldo" :disabled="saldoPaciente < costoTotal * 0.5">
+								Saldo disponible (${{ saldoPaciente.toFixed(2) }})
+							</option>
+						</select>
+					</label>
+				</div>
+
+				<div v-if="form.metodo_pago === 'Tarjeta'" class="field-row">
 					<label>
 						<span>Tipo de tarjeta</span>
 						<select v-model="tarjeta.tipo" required>
@@ -152,7 +166,7 @@
 						<input v-model="tarjeta.titular" type="text" placeholder="Nombre del titular" required />
 					</label>
 				</div>
-				<div class="field-row">
+				<div v-if="form.metodo_pago === 'Tarjeta'" class="field-row">
 					<label>
 						<span>Mes de vencimiento</span>
 						<select v-model="tarjeta.mes" required>
@@ -182,6 +196,9 @@
 						<select v-model="form.metodo_pago">
 							<option disabled value="">Selecciona una opción</option>
 							<option v-for="m in metodosPago" :key="m" :value="m">{{ m }}</option>
+							<option value="Saldo" :disabled="saldoPaciente < costoTotal * 0.5">
+								Saldo disponible (${{ saldoPaciente.toFixed(2) }})
+							</option>
 						</select>
 					</label>
 				</div>
@@ -359,10 +376,15 @@ const consultoriosFiltrados = computed(() => {
 
 onMounted(async () => {
 	if (route.query.id_paciente) {
-        form.id_paciente           = Number(route.query.id_paciente)
-        busquedaPaciente.value     = String(route.query.nombre_paciente ?? '')
-        pacienteSeleccionado.value = { id_paciente: Number(route.query.id_paciente) }
-    }
+		form.id_paciente       = Number(route.query.id_paciente)
+		busquedaPaciente.value = String(route.query.nombre_paciente ?? '')
+		
+		// Busca el paciente completo para tener el saldo
+		const res  = await fetch(`http://localhost:3001/api/paciente/${route.query.id_paciente}`)
+		const data = await res.json()
+		const p    = Array.isArray(data) ? data[0] : data
+		pacienteSeleccionado.value = p ?? { id_paciente: Number(route.query.id_paciente) }
+	}
     try {
         const [resDoctores, resConsultorios, resSucursales] = await Promise.all([
             fetch('http://localhost:3001/api/doctor'),
@@ -443,6 +465,13 @@ const horaFin = computed(() => {
 
 const metodosPago = ['Efectivo', 'Tarjeta']
 
+const saldoPaciente = computed(() => {
+    if (esRecepcionista.value) {
+        return Number(pacienteSeleccionado.value?.saldo_pendiente ?? 0)
+    }
+    return Number(usuarioActual.value?.saldo_pendiente ?? 0)
+})
+
 // ── Submit ─────────────────────────────────────────────────────
 const guardarCita = async () => {
     error.value = ''
@@ -455,11 +484,19 @@ const guardarCita = async () => {
 
     // Paciente debe llenar datos de tarjeta
     if (!esRecepcionista.value) {
-        if (!tarjeta.tipo || !tarjeta.numero || !tarjeta.titular || !tarjeta.mes || !tarjeta.anio || !tarjeta.cvv) {
-            error.value = 'Completa los datos de la tarjeta para pagar el anticipo.'
-            return
-        }
-    }
+		if (!form.metodo_pago) {
+			error.value = 'Selecciona un método de pago.'
+			return
+		}
+		if (form.metodo_pago === 'Tarjeta') {
+			if (!tarjeta.tipo || !tarjeta.numero || !tarjeta.titular || !tarjeta.mes || !tarjeta.anio || !tarjeta.cvv) {
+				error.value = 'Completa los datos de la tarjeta para pagar el anticipo.'
+				return
+			}
+		}
+	}
+
+
 
     // Recepcionista debe elegir método
     if (esRecepcionista.value && !form.metodo_pago) {
@@ -504,7 +541,7 @@ const guardarCita = async () => {
 				motivo_consulta:  form.motivo_consulta,
 				costo_total:      Number(costoTotal.value),
 				registrado_por:   usuarioActual.value?.id_usuario,
-				metodo_pago:      esRecepcionista.value ? form.metodo_pago : 'Tarjeta',
+				metodo_pago: form.metodo_pago,
 				referencia:       null,
 			}),
         })

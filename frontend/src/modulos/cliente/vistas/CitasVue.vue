@@ -78,7 +78,7 @@
                 >
                     <div class="card-row">
                         <h3>{{ appointment.doctor }}</h3>
-                        <span class="tag">{{ appointment.estado }}</span>
+                        <span class="tag" :class="tagClass(appointment.estado)">{{ appointment.estado }}</span>
                     </div>
                     <div class="card-row muted">
                         <span>{{ appointment.time }} – {{ appointment.horaFin }}</span>
@@ -218,6 +218,14 @@ const visibleMonth = ref(now.getMonth())
 const selectedDay  = ref(now.getDate())
 const todayDay     = now.getDate()
 const showMonthMenu = ref(false)
+const tagClass = (estado: string) => ({
+    'tag-programada':  estado === 'Programada',
+    'tag-en-curso':    estado === 'En curso',
+    'tag-cancelada':   estado === 'Cancelada',
+    'tag-no-atendida': estado === 'No atendida',
+    'tag-finalizada':  estado === 'Finalizada'
+})
+
 
 const isCurrentVisibleMonth = computed(
     () => visibleYear.value === now.getFullYear() && visibleMonth.value === now.getMonth()
@@ -395,6 +403,11 @@ h1, h2, h3, p { margin: 0; }
     background: var(--clarus-gold-soft); color: var(--clarus-midnight);
     border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 700;
 }
+
+.tag-cancelada   { background: #fee2e2; color: #b42318; }
+.tag-no-atendida { background: #fef9c3; color: #854d0e; }
+.tag-en-curso    { background: #dcfce7; color: #166534; }
+.tag-finalizada  { background: #e0e7ff; color: #3730a3; }
 .appointment-list     { display: grid; gap: 1rem; margin-top: 1rem; }
 .details-actions      { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .details-actions-bottom { margin-top: auto; padding-top: 2rem; }

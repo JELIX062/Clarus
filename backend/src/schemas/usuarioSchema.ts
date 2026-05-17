@@ -29,11 +29,11 @@ export const doctorSchema = z.object({
     apellido_paterno: z.string().min(2).max(100),
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
-    telefono: z.string().min(10).max(15).nullable().optional(),
+    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
     contraseña: z.string().min(6).max(256),
     id_sucursal: z.number().int().positive(),
     especialidad: z.string().min(2).max(100),
-    rfc: z.string().min(12).max(13),
+    rfc: z.string().min(12).max(13).regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/, 'RFC no válido.'),
     cedula_profesional: z.string().min(5).max(20),
     tarifa_consulta: z.number().positive()
 });
@@ -44,7 +44,7 @@ export const recepcionistaSchema = z.object({
     apellido_paterno: z.string().min(2).max(100),
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
-    telefono: z.string().min(10).max(15).nullable().optional(),
+    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
     contraseña: z.string().min(6).max(256),
     id_sucursal: z.number().int().positive(),
     turno: z.string().min(2).max(20)
@@ -56,7 +56,7 @@ export const administradorSchema = z.object({
     apellido_paterno: z.string().min(2).max(100),
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
-    telefono: z.string().min(10).max(15).nullable().optional(),
+    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
     contraseña: z.string().min(6).max(256),
     cargo: z.string().min(2).max(100)
 });
@@ -64,14 +64,14 @@ export const administradorSchema = z.object({
 // Sucursal
 export const sucursalSchema = z.object({
     id_administrador: z.number().int().positive(),
-    nombre: z.string().min(2).max(100),
-    calle: z.string().min(2).max(150),
-    numero: z.string().max(10),
-    colonia: z.string().min(2).max(100),
-    ciudad: z.string().min(2).max(100),
-    codigo_postal: z.string().length(5),
-    telefono: z.string().min(10).max(15),
-    correo: z.string().email()
+    nombre:        z.string().min(2).max(100),
+    calle:         z.string().min(2).max(150),
+    numero: z.string().max(10).regex(/^\d+$/, 'El número debe contener solo dígitos.'),
+    colonia:       z.string().min(2).max(100),
+    ciudad:        z.string().min(2).max(100),
+    codigo_postal: z.string().length(5).regex(/^\d{5}$/, 'El código postal debe ser 5 dígitos numéricos.'),
+    telefono:      z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.'),
+    correo:        z.string().email()
 });
 
 // Consultorio
@@ -193,11 +193,11 @@ export const editarDoctorSchema = z.object({
     apellido_paterno: z.string().min(2).max(100),
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
-    telefono: z.string().min(10).max(15).nullable().optional(),
+    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
     contraseña: z.string().min(6).max(256).optional(),
     id_sucursal: z.number().int().positive(),
     especialidad: z.string().min(2).max(100),
-    rfc: z.string().min(12).max(13),
+    rfc: z.string().min(12).max(13).regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/, 'RFC no válido.'),
     cedula_profesional: z.string().min(5).max(20),
     tarifa_consulta: z.number().positive()
 });
@@ -210,7 +210,7 @@ export const editarRecepcionistaSchema = z.object({
     apellido_paterno: z.string().min(2).max(100),
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
-    telefono: z.string().min(10).max(15).nullable().optional(),
+    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
     contraseña: z.string().min(6).max(256).optional(),
     id_sucursal: z.number().int().positive(),
     turno: z.string().min(2).max(20)
@@ -224,24 +224,24 @@ export const editarAdministradorSchema = z.object({
     apellido_paterno: z.string().min(2).max(100),
     apellido_materno: z.string().min(2).max(100).nullable().optional(),
     correo: z.string().email(),
-    telefono: z.string().min(10).max(15).nullable().optional(),
+    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
     contraseña: z.string().min(6).max(256).optional(),
     cargo: z.string().min(2).max(100)
 });
 
 // Editar Sucursal
 export const editarSucursalSchema = z.object({
-    id_sucursal: z.number().int().positive(),
+    id_sucursal:      z.number().int().positive(),
     id_administrador: z.number().int().positive(),
-    nombre: z.string().min(2).max(100),
-    calle: z.string().min(2).max(150),
-    numero: z.string().max(10),
-    colonia: z.string().min(2).max(100),
-    ciudad: z.string().min(2).max(100),
-    codigo_postal: z.string().length(5),
-    telefono: z.string().min(10).max(15),
-    correo: z.string().email(),
-    activa: z.number().int().min(0).max(1)
+    nombre:        z.string().min(2).max(100),
+    calle:         z.string().min(2).max(150),
+    numero: z.string().max(10).regex(/^\d+$/, 'El número debe contener solo dígitos.'),
+    colonia:       z.string().min(2).max(100),
+    ciudad:        z.string().min(2).max(100),
+    codigo_postal: z.string().length(5).regex(/^\d{5}$/, 'El código postal debe ser 5 dígitos numéricos.'),
+    telefono:      z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.'),
+    correo:        z.string().email(),
+    activa:        z.number().int().min(0).max(1)
 });
 
 // Editar Consultorio

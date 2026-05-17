@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 
-export type RolUsuario = 'paciente' | 'doctor' | 'recepcionista'
+export type RolUsuario = 'paciente' | 'doctor' | 'recepcionista' | 'administrador'
 
 export interface UsuarioSesion {
     id_usuario: number
@@ -19,8 +19,9 @@ const STORAGE_KEY = 'clarus-sesion'
 // Normaliza el nombre_rol que viene del backend al tipo del frontend
 const normalizarRol = (nombreRol: string): RolUsuario => {
     const rol = nombreRol.toLowerCase().trim()
-    if (rol === 'doctor') return 'doctor'
-    if (rol === 'recepcionista') return 'recepcionista'
+    if (rol === 'doctor')         return 'doctor'
+    if (rol === 'recepcionista')  return 'recepcionista'
+    if (rol === 'administrador')  return 'administrador'
     return 'paciente'
 }
 

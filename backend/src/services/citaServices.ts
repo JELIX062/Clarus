@@ -200,6 +200,8 @@ export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; ref
             return { error: 'El doctor ya tiene una cita en ese horario' };
         }
 
+        
+
         // Registra la cita
         const [result]: any = await conexion.query(
             `INSERT INTO cita(id_paciente, id_doctor, id_consultorio, id_recepcionista, fecha, hora_inicio, hora_fin, estado, motivo_consulta, costo_total, registrado_por)
@@ -209,6 +211,21 @@ export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; ref
 
         const id_cita = result.insertId;
         const montoAnticipo = nuevo.costo_total * 0.5;
+
+        // Si paga con saldo, descuenta del saldo del paciente
+        if (nuevo.metodo_pago === 'Saldo') {
+            const [paciente]: any = await conexion.query(
+                'SELECT saldo_pendiente FROM paciente WHERE id_paciente = ? LIMIT 1',
+                [nuevo.id_paciente]
+            )
+            if (paciente[0].saldo_pendiente < montoAnticipo) {
+                return { error: 'Saldo insuficiente para cubrir el anticipo' }
+            }
+            await conexion.query(
+                'UPDATE paciente SET saldo_pendiente = saldo_pendiente - ? WHERE id_paciente = ?',
+                [montoAnticipo, nuevo.id_paciente]
+            )
+        }
 
         // Registra el anticipo
         const [pago]: any = await conexion.query(

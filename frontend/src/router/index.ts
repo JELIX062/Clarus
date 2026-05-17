@@ -10,6 +10,9 @@ import ExpedientesDoctorVue from '@/modulos/doctor/vistas/ExpedienteDoctorVue.vu
 import ConsultaFisicaVue from '@/modulos/doctor/vistas/ConsultaFisicaVue.vue'
 import CitasRecepcionistaVue from '@/modulos/recepcionista/vistas/CitasRecepcionistaVue.vue'
 import PacientesVue from '@/modulos/recepcionista/vistas/PacientesVue.vue'
+import AdminSucursalVue    from '@/modulos/administrador/vistas/AdminSucursalVue.vue'
+import AdminDoctoresVue    from '@/modulos/administrador/vistas/AdminDoctoresVue.vue'
+import AdminRecepcionistasVue from '@/modulos/administrador/vistas/AdminRecepcionistasVue.vue'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 import { createRouter, createWebHistory } from 'vue-router'
 import { defineComponent, h } from 'vue'
@@ -84,10 +87,25 @@ const router = createRouter({
       component: ConsultaFisicaVue
     },
     {
-        path: '/recepcionista/pacientes',
-        name: 'recepcionista-pacientes',
-        component: PacientesVue
-    }
+      path: '/recepcionista/pacientes',
+      name: 'recepcionista-pacientes',
+      component: PacientesVue
+    },
+    {
+      path: '/admin/sucursales',
+      name: 'admin-sucursales',
+      component: AdminSucursalVue
+    },
+    {
+      path: '/admin/doctores',
+      name: 'admin-doctores',
+      component: AdminDoctoresVue
+    },
+    {
+      path: '/admin/recepcionistas',
+      name: 'admin-recepcionistas',
+      component: AdminRecepcionistasVue
+    },
   ]
 })
 
@@ -134,6 +152,21 @@ router.beforeEach((to) => {
     // Solo doctores pueden registrar consultas físicas
     if (rolUsuario.value !== 'doctor' && to.name === 'doctor-consulta') {
         return { name: 'citas' }
+    }
+
+        // Redirige a citas si ya está autenticado e intenta ir al login
+    if (estaAutenticado.value && rutasPublicas.has(String(to.name))) {
+        return { name: 'citas' }
+    }
+
+    if (rolUsuario.value !== 'administrador' && 
+    ['admin-sucursales','admin-doctores','admin-recepcionistas'].includes(String(to.name))) {
+    return { name: 'citas' }
+}
+
+    // Admin va a sucursales por defecto ← agrega aquí
+    if (estaAutenticado.value && rolUsuario.value === 'administrador' && to.name === 'citas') {
+        return { name: 'admin-sucursales' }
     }
 
     return true

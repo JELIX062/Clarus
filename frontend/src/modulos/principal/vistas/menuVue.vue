@@ -7,25 +7,42 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav_item margin">
-                        <router-link class="nav-link item" :to="rutaCitas">Citas</router-link>
-                    </li>
-                    <li v-if="rolUsuario === 'recepcionista'" class="nav_item margin">
-                        <router-link class="nav-link item" to="/recepcionista/pacientes">Pacientes</router-link>
-                    </li>
-                    <li v-if="rolUsuario !== 'recepcionista'" class="nav_item margin">
-                        <router-link class="nav-link item" :to="rutaSecundaria">{{ etiquetaSecundaria }}</router-link>
-                    </li>
-                    <li class="nav_item margin">
-                        <router-link class="nav-link item" to="/perfil">Perfil</router-link>
-                    </li>
+
+                    <!-- Admin -->
+                    <template v-if="rolUsuario === 'administrador'">
+                        <li class="nav_item margin">
+                            <router-link class="nav-link item" to="/admin/sucursales">Sucursal</router-link>
+                        </li>
+                        <li class="nav_item margin">
+                            <router-link class="nav-link item" to="/admin/doctores">Doctores</router-link>
+                        </li>
+                        <li class="nav_item margin">
+                            <router-link class="nav-link item" to="/admin/recepcionistas">Recepcionistas</router-link>
+                        </li>
+                    </template>
+
+                    <!-- Otros roles -->
+                    <template v-else>
+                        <li class="nav_item margin">
+                            <router-link class="nav-link item" :to="rutaCitas">Citas</router-link>
+                        </li>
+                        <li v-if="rolUsuario === 'recepcionista'" class="nav_item margin">
+                            <router-link class="nav-link item" to="/recepcionista/pacientes">Pacientes</router-link>
+                        </li>
+                        <li v-if="rolUsuario !== 'recepcionista'" class="nav_item margin">
+                            <router-link class="nav-link item" :to="rutaSecundaria">{{ etiquetaSecundaria }}</router-link>
+                        </li>
+                        <li class="nav_item margin">
+                            <router-link class="nav-link item" to="/perfil">Perfil</router-link>
+                        </li>
+                    </template>
+
                 </ul>
                 <button class="btn btn-danger btn-sm" @click="cerrarSesionYRedirigir">Cerrar sesión</button>
             </div>
         </div>
     </nav>
 </template>
-
 <script setup lang="ts">
     import { computed } from 'vue'
     import { useRouter } from 'vue-router'
