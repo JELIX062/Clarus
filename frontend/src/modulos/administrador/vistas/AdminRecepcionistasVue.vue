@@ -56,27 +56,27 @@
                 <div class="form-grid">
                     <label>
                         <span>Nombre</span>
-                        <input v-model.trim="form.nombre" class="input" type="text" />
+                        <input v-model.trim="form.nombre" class="input" type="text" placeholder="Nombre" />
                     </label>
                     <label>
                         <span>Apellido paterno</span>
-                        <input v-model.trim="form.apellido_paterno" class="input" type="text" />
+                        <input v-model.trim="form.apellido_paterno" class="input" type="text" placeholder="Apellido paterno" />
                     </label>
                     <label>
                         <span>Apellido materno</span>
-                        <input v-model.trim="form.apellido_materno" class="input" type="text" />
+                        <input v-model.trim="form.apellido_materno" class="input" type="text" placeholder="Apellido materno" />
                     </label>
                     <label>
                         <span>Correo</span>
-                        <input v-model.trim="form.correo" class="input" type="email" />
+                        <input v-model.trim="form.correo" class="input" type="email" placeholder="correo@clarus.com" />
                     </label>
                     <label>
                         <span>Teléfono</span>
-                        <input v-model.trim="form.telefono" class="input" type="tel" />
+                        <input v-model.trim="form.telefono" class="input" type="tel" placeholder="6671234567" />
                     </label>
                     <label v-if="!modoEdicion">
                         <span>Contraseña</span>
-                        <input v-model.trim="form.contraseña" class="input" type="password" />
+                        <input v-model.trim="form.contraseña" class="input" type="password" placeholder="Mínimo 6 caracteres" />
                     </label>
                     <label>
                         <span>Turno</span>
@@ -84,7 +84,6 @@
                             <option disabled value="">Selecciona un turno</option>
                             <option>Matutino</option>
                             <option>Vespertino</option>
-                            <option>Nocturno</option>
                         </select>
                     </label>
                     <label>
@@ -98,10 +97,44 @@
                     </label>
                 </div>
 
+                <div v-if="modalEliminar" class="modal-backdrop-custom" @click.self="modalEliminar = false">
+                    <div class="modal-custom" style="max-width: 480px">
+                        <div class="modal-custom-header">
+                            <h3>Eliminar recepcionista</h3>
+                            <button class="btn-close-custom" @click="modalEliminar = false">✕</button>
+                        </div>
+                        <p style="color: var(--clarus-oxford)">
+                            Esta acción es irreversible. Para confirmar escribe el nombre completo:
+                            <strong>{{ form.nombre }} {{ form.apellido_paterno }}</strong>
+                        </p>
+                        <input
+                            v-model="confirmNombre"
+                            class="input"
+                            type="text"
+                            placeholder="Escribe el nombre exacto..."
+                        />
+                        <div v-if="errorEliminar" class="alert alert-danger">{{ errorEliminar }}</div>
+                        <div class="modal-actions">
+                            <button class="button button-white" type="button" @click="modalEliminar = false">
+                                Cancelar
+                            </button>
+                            <button class="button button-danger" type="button" :disabled="eliminando" @click="eliminar">
+                                {{ eliminando ? 'Eliminando...' : 'Confirmar eliminación' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div v-if="modalError" class="alert alert-danger">{{ modalError }}</div>
 
                 <div class="modal-actions">
-                    <button class="button button-white" type="button" @click="modalAbierto = false">Cancelar</button>
+                    <button v-if="modoEdicion" class="button button-danger" type="button" @click="abrirEliminar">
+                        Eliminar
+                    </button>
+                    <div style="flex: 1"></div>
+                    <button class="button button-white" type="button" @click="modalAbierto = false">
+                        Cancelar
+                    </button>
                     <button class="button" type="button" :disabled="guardando" @click="guardar">
                         {{ guardando ? 'Guardando...' : modoEdicion ? 'Guardar cambios' : 'Registrar' }}
                     </button>
@@ -123,6 +156,11 @@ const modalAbierto   = ref(false)
 const modoEdicion    = ref(false)
 const modalError     = ref('')
 const guardando      = ref(false)
+const confirmNombre   = ref('')
+const modalEliminar   = ref(false)
+const eliminando      = ref(false)
+const errorEliminar   = ref('')
+
 
 const form = reactive({
     id_recepcionista: 0,
@@ -188,13 +226,76 @@ const abrirEditar = (r: any) => {
     modalAbierto.value = true
 }
 
+const abrirEliminar = () => {
+    confirmNombre.value = ''
+    errorEliminar.value = ''
+    modalEliminar.value = true
+}
+
+const eliminar = async () => {
+    const nombreCompleto = `${form.nombre} ${form.apellido_paterno}`.trim()
+    if (confirmNombre.value.trim() !== nombreCompleto) {
+        errorEliminar.value = 'El nombre no coincide.'
+        return
+    }
+    eliminando.value = true
+    try {
+        const res  = await fetch(`${API}/recepcionista`, {
+            method:  'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ id_recepcionista: form.id_recepcionista })
+        })
+        const data = await res.json()
+        if (data.error) {
+            errorEliminar.value = typeof data.error === 'string' ? data.error : 'Error al eliminar.'
+            return
+        }
+        modalEliminar.value = false
+        modalAbierto.value  = false
+        await cargarDatos()
+    } catch {
+        errorEliminar.value = 'No se pudo conectar con el servidor.'
+    } finally {
+        eliminando.value = false
+    }
+}
+
+
 const guardar = async () => {
     modalError.value = ''
-    guardando.value  = true
+
+    if (!form.nombre.trim() || form.nombre.length < 2) {
+        modalError.value = 'El nombre debe tener al menos 2 caracteres.'
+        return
+    }
+    if (!form.apellido_paterno.trim() || form.apellido_paterno.length < 2) {
+        modalError.value = 'El apellido paterno debe tener al menos 2 caracteres.'
+        return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
+        modalError.value = 'El correo no tiene un formato válido.'
+        return
+    }
+    if (form.telefono && !/^\d{10,15}$/.test(form.telefono)) {
+        modalError.value = 'El teléfono debe tener entre 10 y 15 dígitos numéricos.'
+        return
+    }
+    if (!modoEdicion.value && form.contraseña.length < 6) {
+        modalError.value = 'La contraseña debe tener al menos 6 caracteres.'
+        return
+    }
+    if (!form.turno) {
+        modalError.value = 'Selecciona un turno.'
+        return
+    }
+    if (!form.id_sucursal) {
+        modalError.value = 'Selecciona una sucursal.'
+        return
+    }
+
+    guardando.value = true
     try {
-        const url    = `${API}/recepcionista`
-        const method = modoEdicion.value ? 'PUT' : 'POST'
-        const body   = modoEdicion.value
+        const body = modoEdicion.value
             ? {
                 id_recepcionista: form.id_recepcionista,
                 id_usuario:       form.id_usuario,
@@ -204,18 +305,40 @@ const guardar = async () => {
                 correo:           form.correo,
                 telefono:         form.telefono,
                 turno:            form.turno,
-                id_sucursal:      form.id_sucursal
+                id_sucursal:      form.id_sucursal,
+                ...(form.contraseña ? { contraseña: form.contraseña } : {})
             }
             : { ...form }
 
-        const res  = await fetch(url, {
-            method,
+        const res  = await fetch(`${API}/recepcionista`, {
+            method:  modoEdicion.value ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(body)
         })
         const data = await res.json()
         if (data.error) {
-            modalError.value = typeof data.error === 'string' ? data.error : 'Error al guardar.'
+            if (data.error.name === 'ZodError') {
+                try {
+                    const errores = JSON.parse(data.error.message)
+                    const mensajes: Record<string, string> = {
+                        nombre:           'El nombre debe tener al menos 2 caracteres.',
+                        apellido_paterno: 'El apellido paterno debe tener al menos 2 caracteres.',
+                        apellido_materno: 'El apellido materno es demasiado largo.',
+                        correo:           'El correo no tiene un formato válido.',
+                        telefono:         'El teléfono debe tener entre 10 y 15 dígitos.',
+                        contraseña:       'La contraseña debe tener al menos 6 caracteres.',
+                        turno:            'El turno debe tener al menos 2 caracteres.',
+                        id_sucursal:      'Selecciona una sucursal válida.',
+                    }
+                    modalError.value = errores
+                        .map((e: any) => mensajes[e.path?.[0]] ?? `${e.path?.[0]}: ${e.message}`)
+                        .join(' • ')
+                } catch {
+                    modalError.value = 'Error de validación al guardar.'
+                }
+            } else {
+                modalError.value = typeof data.error === 'string' ? data.error : 'Error al guardar.'
+            }
             return
         }
         modalAbierto.value = false
@@ -266,6 +389,8 @@ h1, h2, h3, p { margin: 0; }
 }
 
 .grid { display: grid; gap: 1rem; }
+
+
 
 .card {
     background: var(--clarus-ivory);
@@ -333,6 +458,11 @@ h1, h2, h3, p { margin: 0; }
 .button-white {
     background: var(--clarus-ivory);
     color: var(--clarus-midnight);
+}
+
+.button-danger {
+    background: #b42318;
+    border-color: #b42318;
 }
 
 .modal-backdrop-custom {

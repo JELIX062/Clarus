@@ -70,12 +70,34 @@
 
                 <label>
                     Contraseña
-                    <input v-model="contrasena" type="password" placeholder="••••••••" required minlength="6" />
+                    <div class="password-wrapper">
+                        <input
+                            v-model="contrasena"
+                            :type="mostrarPassword ? 'text' : 'password'"
+                            placeholder="••••••••"
+                            required
+                            minlength="6"
+                        />
+                        <button type="button" class="toggle-password" @click.stop="mostrarPassword = !mostrarPassword">
+                            <img :src="mostrarPassword ? ojoAbierto : ojoCerrado" alt="toggle" />
+                        </button>
+                    </div>
                 </label>
 
                 <label>
                     Confirmar contraseña
-                    <input v-model="confirmacionContrasena" type="password" placeholder="••••••••" required minlength="6" />
+                    <div class="password-wrapper">
+                        <input
+                            v-model="confirmacionContrasena"
+                            :type="mostrarConfirmPassword ? 'text' : 'password'"
+                            placeholder="••••••••"
+                            required
+                            minlength="6"
+                        />
+                        <button type="button" class="toggle-password" @click.stop="mostrarConfirmPassword = !mostrarConfirmPassword">
+                            <img :src="mostrarConfirmPassword ? ojoAbierto : ojoCerrado" alt="toggle" />
+                        </button>
+                    </div>
                 </label>
 
                 <p v-if="error" class="error">{{ error }}</p>
@@ -98,6 +120,11 @@
 import { computed, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useSesion } from '../controladores/useSesion'
+import ojoAbierto from '../Recursos/ojo_abierto.png'
+import ojoCerrado from '../Recursos/ojo_cerrado.png'
+
+const mostrarPassword        = ref(false)
+const mostrarConfirmPassword = ref(false)
 
 const router = useRouter()
 const { rolUsuario, setUsuario } = useSesion()
@@ -252,6 +279,42 @@ const crearCuenta = async () => {
     border-radius: 20px;
     background: var(--clarus-ivory);
     box-shadow: 0 14px 36px var(--clarus-shadow);
+    text-align: center;
+}
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    padding-right: 3rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    border-radius: 0;
+}
+
+.toggle-password img {
+    width: 28px;
+    height: 28px;
+    opacity: 0.5;
+    filter: invert(0.5);
+}
+
+.toggle-password:hover img {
+    opacity: 1;
+    filter: invert(0.3);
 }
 .brand {
     margin: 0;
@@ -265,6 +328,7 @@ h1 { margin: 0.4rem 0; font-size: 1.9rem; }
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
+    text-align: left;
 }
 label {
     display: grid;

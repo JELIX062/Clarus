@@ -47,37 +47,37 @@
                 <div class="form-grid">
                     <label class="full-row">
                         <span>Nombre</span>
-                        <input v-model.trim="form.nombre" class="input" type="text" />
+                        <input v-model.trim="form.nombre" class="input" type="text" placeholder="Nombre de la sucursal" />
                     </label>
                     <label>
                         <span>Calle</span>
-                        <input v-model.trim="form.calle" class="input" type="text" />
+                        <input v-model.trim="form.calle" class="input" type="text" placeholder="Calle" />
                     </label>
                     <label>
                         <span>Número</span>
-                        <input v-model.trim="form.numero" class="input" type="text" />
+                        <input v-model.trim="form.numero" class="input" type="text" placeholder="Número" />
                     </label>
                     <label>
                         <span>Colonia</span>
-                        <input v-model.trim="form.colonia" class="input" type="text" />
+                        <input v-model.trim="form.colonia" class="input" type="text" placeholder="Colonia" />
                     </label>
                     <label>
                         <span>Ciudad</span>
-                        <input v-model.trim="form.ciudad" class="input" type="text" />
+                        <input v-model.trim="form.ciudad" class="input" type="text" placeholder="Ciudad" />
                     </label>
                     <label>
                         <span>Código postal</span>
-                        <input v-model.trim="form.codigo_postal" class="input" type="text" 
-                            maxlength="5" pattern="\d{5}" placeholder="00000" />
+                        <input v-model.trim="form.codigo_postal" class="input" type="text"
+                            maxlength="5" pattern="\d{5}" placeholder="Código postal" />
                     </label>
                     <label>
                         <span>Teléfono</span>
-                        <input v-model.trim="form.telefono" class="input" type="tel" 
-                            maxlength="15" placeholder="6671234567" />
+                        <input v-model.trim="form.telefono" class="input" type="tel"
+                            maxlength="15" placeholder="Teléfono" />
                     </label>
                     <label class="full-row">
                         <span>Correo</span>
-                        <input v-model.trim="form.correo" class="input" type="email" />
+                        <input v-model.trim="form.correo" class="input" type="email" placeholder="Correo electrónico" />
                     </label>
                     <label v-if="modoEdicion" class="full-row">
                         <span>Estado</span>
@@ -86,6 +86,53 @@
                             <option :value="0">Inactiva</option>
                         </select>
                     </label>
+                </div>
+
+                <!-- Consultorios (solo en edición) -->
+                <div v-if="modoEdicion">
+                    <h4 style="margin: 0 0 0.75rem; font-size: 1rem;">Consultorios</h4>
+
+                    <div v-if="consultorios.length > 0" style="display: grid; gap: 0.5rem; margin-bottom: 1rem;">
+                        <div
+                            v-for="c in consultorios"
+                            :key="c.id_consultorio"
+                            style="display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; border-radius: 10px; padding: 0.6rem 1rem;"
+                        >
+                            <span style="font-size: 0.9rem;">
+                                <strong>Consultorio {{ c.numero }}</strong>
+                                <span v-if="c.piso"> · Piso {{ c.piso }}</span>
+                                <span v-if="c.descripcion"> · {{ c.descripcion }}</span>
+                                <span :style="c.activo ? 'color:#166534' : 'color:#b42318'">
+                                    · {{ c.activo ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </span>
+                            <div style="display: flex; gap: 0.4rem;">
+                                <button
+                                    class="button button-sm"
+                                    type="button"
+                                    style="padding: 0.3rem 0.75rem; font-size: 0.82rem;"
+                                    @click="abrirEditarConsultorio(c)"
+                                >
+                                    Editar
+                                </button>
+                                <button
+                                    class="button button-danger button-sm"
+                                    type="button"
+                                    style="padding: 0.3rem 0.75rem; font-size: 0.82rem;"
+                                    @click="eliminarConsultorio(c.id_consultorio)"
+                                >
+                                    Quitar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-else style="color: var(--clarus-oxford); font-size: 0.9rem; margin-bottom: 0.75rem;">
+                        No hay consultorios registrados.
+                    </p>
+
+                    <button class="button" type="button" style="width: 100%;" @click="abrirNuevoConsultorio">
+                        + Agregar consultorio
+                    </button>
                 </div>
 
                 <div v-if="modalError" class="alert alert-danger">{{ modalError }}</div>
@@ -128,6 +175,43 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="modalConsultorio" class="modal-backdrop-custom" @click.self="modalConsultorio = false">
+            <div class="modal-custom" style="max-width: 480px">
+                <div class="modal-custom-header">
+                    <h3>{{ modoEditConsult ? 'Editar consultorio' : 'Nuevo consultorio' }}</h3>
+                    <button class="btn-close-custom" @click="modalConsultorio = false">✕</button>
+                </div>
+                <div class="form-grid">
+                    <label>
+                        <span>Número</span>
+                        <input v-model.trim="formConsult.numero" class="input" type="text" placeholder="Ej. 101" />
+                    </label>
+                    <label>
+                        <span>Piso</span>
+                        <input v-model.trim="formConsult.piso" class="input" type="text" placeholder="Ej. 1" maxlength="5" />
+                    </label>
+                    <label class="full-row">
+                        <span>Descripción</span>
+                        <input v-model.trim="formConsult.descripcion" class="input" type="text" placeholder="Opcional" maxlength="200" />
+                    </label>
+                    <label v-if="modoEditConsult" class="full-row">
+                        <span>Estado</span>
+                        <select v-model="formConsult.activo" class="input">
+                            <option :value="1">Activo</option>
+                            <option :value="0">Inactivo</option>
+                        </select>
+                    </label>
+                </div>
+                <div v-if="errorConsultorio" class="alert alert-danger">{{ errorConsultorio }}</div>
+                <div class="modal-actions">
+                    <button class="button button-white" type="button" @click="modalConsultorio = false">Cancelar</button>
+                    <button class="button" type="button" :disabled="guardandoConsult" @click="guardarConsultorio">
+                        {{ guardandoConsult ? 'Guardando...' : modoEditConsult ? 'Guardar cambios' : 'Agregar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </section>
 </template>
 
@@ -148,6 +232,93 @@ const confirmNombre   = ref('')
 const modalEliminar   = ref(false)
 const eliminando      = ref(false)
 const errorEliminar   = ref('')
+const consultorios     = ref<any[]>([])
+const modalConsultorio = ref(false)
+const modoEditConsult  = ref(false)
+const errorConsultorio = ref('')
+const guardandoConsult = ref(false)
+
+const formConsult = reactive({
+    id_consultorio: 0,
+    id_sucursal:    0,
+    numero:         '',
+    piso:           '',
+    descripcion:    '',
+    activo:         1
+})
+
+const cargarConsultorios = async (id_sucursal: number) => {
+    const res  = await fetch(`${API}/consultorio`)
+    const data = await res.json()
+    if (Array.isArray(data)) {
+        consultorios.value = data.filter((c: any) => c.id_sucursal === id_sucursal)
+    }
+}
+
+const abrirNuevoConsultorio = () => {
+    modoEditConsult.value  = false
+    errorConsultorio.value = ''
+    Object.assign(formConsult, {
+        id_consultorio: 0,
+        id_sucursal:    form.id_sucursal,
+        numero:         '',
+        piso:           '',
+        descripcion:    '',
+        activo:         1
+    })
+    modalConsultorio.value = true
+}
+
+const abrirEditarConsultorio = (c: any) => {
+    modoEditConsult.value  = true
+    errorConsultorio.value = ''
+    Object.assign(formConsult, {
+        id_consultorio: c.id_consultorio,
+        id_sucursal:    c.id_sucursal,
+        numero:         c.numero      ?? '',
+        piso:           c.piso        ?? '',
+        descripcion:    c.descripcion ?? '',
+        activo:         c.activo
+    })
+    modalConsultorio.value = true
+}
+
+const guardarConsultorio = async () => {
+    errorConsultorio.value = ''
+    if (!formConsult.numero.trim()) {
+        errorConsultorio.value = 'El número es requerido.'
+        return
+    }
+    guardandoConsult.value = true
+    try {
+        const res  = await fetch(`${API}/consultorio`, {
+            method:  modoEditConsult.value ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ ...formConsult })
+        })
+        const data = await res.json()
+        if (data.error) {
+            errorConsultorio.value = typeof data.error === 'string' ? data.error : 'Error al guardar.'
+            return
+        }
+        modalConsultorio.value = false
+        await cargarConsultorios(form.id_sucursal)
+    } catch {
+        errorConsultorio.value = 'No se pudo conectar con el servidor.'
+    } finally {
+        guardandoConsult.value = false
+    }
+}
+
+const eliminarConsultorio = async (id_consultorio: number) => {
+    if (!confirm('¿Seguro que deseas eliminar este consultorio?')) return
+    await fetch(`${API}/consultorio`, {
+        method:  'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ id_consultorio })
+    })
+    await cargarConsultorios(form.id_sucursal)
+}
 
 const abrirEliminar = () => {
     confirmNombre.value = ''
@@ -216,12 +387,14 @@ const abrirCrear = () => {
         colonia: '', ciudad: '', codigo_postal: '',
         telefono: '', correo: '', activa: 1
     })
+    consultorios.value = []
     modalAbierto.value = true
 }
 
-const abrirEditar = (s: any) => {
+const abrirEditar = async(s: any) => {
     modoEdicion.value = true
     modalError.value  = ''
+    
     Object.assign(form, {
         id_sucursal:   s.id_sucursal,
         id_administrador: s.id_administrador,
@@ -235,6 +408,7 @@ const abrirEditar = (s: any) => {
         correo:        s.correo        ?? '',
         activa:        s.activa
     })
+    await cargarConsultorios(s.id_sucursal)
     modalAbierto.value = true
 }
 

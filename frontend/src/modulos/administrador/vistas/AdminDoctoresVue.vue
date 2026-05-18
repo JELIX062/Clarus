@@ -68,43 +68,43 @@
                 <div class="form-grid">
                     <label>
                         <span>Nombre</span>
-                        <input v-model.trim="form.nombre" class="input" type="text" />
+                        <input v-model.trim="form.nombre" class="input" type="text" placeholder="Nombre" />
                     </label>
                     <label>
                         <span>Apellido paterno</span>
-                        <input v-model.trim="form.apellido_paterno" class="input" type="text" />
+                        <input v-model.trim="form.apellido_paterno" class="input" type="text" placeholder="Apellido paterno" />
                     </label>
                     <label>
                         <span>Apellido materno</span>
-                        <input v-model.trim="form.apellido_materno" class="input" type="text" />
+                        <input v-model.trim="form.apellido_materno" class="input" type="text" placeholder="Apellido materno" />
                     </label>
                     <label>
                         <span>Correo</span>
-                        <input v-model.trim="form.correo" class="input" type="email" />
+                        <input v-model.trim="form.correo" class="input" type="email" placeholder="doctor@clarus.com" />
                     </label>
                     <label>
                         <span>Teléfono</span>
-                        <input v-model.trim="form.telefono" class="input" type="tel" />
+                        <input v-model.trim="form.telefono" class="input" type="tel" placeholder="6671234567" />
                     </label>
                     <label v-if="!modoEdicion">
                         <span>Contraseña</span>
-                        <input v-model.trim="form.contraseña" class="input" type="password" />
+                        <input v-model.trim="form.contraseña" class="input" type="password" placeholder="Mínimo 6 caracteres" />
                     </label>
                     <label>
                         <span>Especialidad</span>
-                        <input v-model.trim="form.especialidad" class="input" type="text" />
+                        <input v-model.trim="form.especialidad" class="input" type="text" placeholder="Ej. Medicina General" />
                     </label>
                     <label>
                         <span>RFC</span>
-                        <input v-model.trim="form.rfc" class="input" type="text" maxlength="13" />
+                        <input v-model.trim="form.rfc" class="input" type="text" maxlength="13" placeholder="ABC121212XYZ" />
                     </label>
                     <label>
                         <span>Cédula profesional</span>
-                        <input v-model.trim="form.cedula_profesional" class="input" type="text" />
+                        <input v-model.trim="form.cedula_profesional" class="input" type="text" placeholder="Ej. 1234567" />
                     </label>
                     <label>
                         <span>Tarifa consulta</span>
-                        <input v-model.number="form.tarifa_consulta" class="input" type="number" step="0.01" />
+                        <input v-model.number="form.tarifa_consulta" class="input" type="number" step="0.01" placeholder="Ej. 500.00" />
                     </label>
                     <label class="full-row">
                         <span>Sucursal</span>
@@ -115,6 +115,67 @@
                             </option>
                         </select>
                     </label>
+                </div>
+
+                <div v-if="modoEdicion">
+                    <h4 style="margin: 0 0 0.75rem; font-size: 1rem;">Horarios de atención</h4>
+
+                    <div v-if="horarios.length > 0" style="display: grid; gap: 0.5rem; margin-bottom: 1rem;">
+                        <div
+                            v-for="h in horarios"
+                            :key="h.id_horario"
+                            style="display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; border-radius: 10px; padding: 0.6rem 1rem;"
+                        >
+                            <span style="font-size: 0.9rem;">
+                                <strong>{{ diasSemana.find(d => d.valor === h.dia_semana)?.label }}</strong>
+                                · {{ h.hora_inicio.slice(0,5) }} – {{ h.hora_fin.slice(0,5) }}
+                                · Consultorio {{ h.numero_consultorio }}
+                            </span>
+                            <button
+                                class="button button-danger"
+                                type="button"
+                                style="padding: 0.3rem 0.75rem; font-size: 0.82rem;"
+                                @click="eliminarHorario(h.id_horario)"
+                            >
+                                Quitar
+                            </button>
+                        </div>
+                    </div>
+                    <p v-else style="color: var(--clarus-oxford); font-size: 0.9rem; margin-bottom: 0.75rem;">
+                        No hay horarios registrados.
+                    </p>
+
+                    <div class="form-grid" style="background: #f8fafc; border-radius: 12px; padding: 1rem;">
+                        <label>
+                            <span>Día</span>
+                            <select v-model="nuevoHorario.dia_semana" class="input">
+                                <option v-for="d in diasSemana" :key="d.valor" :value="d.valor">{{ d.label }}</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Consultorio</span>
+                            <select v-model="nuevoHorario.id_consultorio" class="input">
+                                <option disabled :value="0">Selecciona</option>
+                                <option v-for="c in consultorios" :key="c.id_consultorio" :value="c.id_consultorio">
+                                    Consultorio {{ c.numero }}
+                                </option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Hora inicio</span>
+                            <input v-model="nuevoHorario.hora_inicio" class="input" type="time" />
+                        </label>
+                        <label>
+                            <span>Hora fin</span>
+                            <input v-model="nuevoHorario.hora_fin" class="input" type="time" />
+                        </label>
+                        <div class="full-row">
+                            <div v-if="errorHorario" class="alert alert-danger" style="margin-bottom: 0.5rem;">{{ errorHorario }}</div>
+                            <button class="button" type="button" @click="agregarHorario" style="width: 100%;">
+                                + Agregar horario
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="modalError" class="alert alert-danger">{{ modalError }}</div>
@@ -162,6 +223,8 @@ const API = 'http://localhost:3001/api'
 
 const doctores   = ref<any[]>([])
 const sucursales = ref<any[]>([])
+const horarios       = ref<any[]>([])
+const consultorios   = ref<any[]>([])
 const busqueda    = ref('')
 const modalAbierto = ref(false)
 const modoEdicion  = ref(false)
@@ -172,6 +235,73 @@ const modalEliminar   = ref(false)
 const eliminando      = ref(false)
 const errorEliminar   = ref('')
 
+const diasSemana = [
+    { valor: 0, label: 'Domingo' },
+    { valor: 1, label: 'Lunes' },
+    { valor: 2, label: 'Martes' },
+    { valor: 3, label: 'Miércoles' },
+    { valor: 4, label: 'Jueves' },
+    { valor: 5, label: 'Viernes' },
+    { valor: 6, label: 'Sábado' },
+]
+
+const nuevoHorario = reactive({
+    dia_semana:    1,
+    hora_inicio:   '',
+    hora_fin:      '',
+    id_consultorio: 0
+})
+
+const errorHorario = ref('')
+
+const cargarHorarios = async (id_doctor: number) => {
+    const res  = await fetch(`${API}/horario/doctor/${id_doctor}`)
+    const data = await res.json()
+    if (Array.isArray(data)) horarios.value = data
+}
+
+const cargarConsultorios = async (id_sucursal: number) => {
+    const res  = await fetch(`${API}/consultorio`)
+    const data = await res.json()
+    if (Array.isArray(data)) {
+        consultorios.value = data.filter((c: any) => c.id_sucursal === id_sucursal)
+    }
+}
+
+const agregarHorario = async () => {
+    errorHorario.value = ''
+    if (!nuevoHorario.hora_inicio || !nuevoHorario.hora_fin || !nuevoHorario.id_consultorio) {
+        errorHorario.value = 'Completa todos los campos del horario.'
+        return
+    }
+    const res  = await fetch(`${API}/horario`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+            id_doctor:      form.id_doctor,
+            id_consultorio: nuevoHorario.id_consultorio,
+            dia_semana:     nuevoHorario.dia_semana,
+            hora_inicio:    `${nuevoHorario.hora_inicio}:00`,
+            hora_fin:       `${nuevoHorario.hora_fin}:00`
+        })
+    })
+    const data = await res.json()
+    if (data.error) {
+        errorHorario.value = typeof data.error === 'string' ? data.error : 'Error al agregar horario.'
+        return
+    }
+    await cargarHorarios(form.id_doctor)
+    Object.assign(nuevoHorario, { dia_semana: 1, hora_inicio: '', hora_fin: '', id_consultorio: 0 })
+}
+
+const eliminarHorario = async (id_horario: number) => {
+    await fetch(`${API}/horario`, {
+        method:  'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ id_horario })
+    })
+    await cargarHorarios(form.id_doctor)
+}
 
 const form = reactive({
     id_doctor:         0,
@@ -212,8 +342,10 @@ const cargarDatos = async () => {
 }
 
 const abrirCrear = () => {
-    modoEdicion.value = false
-    modalError.value  = ''
+    modoEdicion.value  = false
+    modalError.value   = ''
+    horarios.value     = []
+    consultorios.value = []
     Object.assign(form, {
         id_doctor: 0, id_usuario: 0, nombre: '', apellido_paterno: '',
         apellido_materno: '', correo: '', telefono: '', contraseña: '',
@@ -223,25 +355,27 @@ const abrirCrear = () => {
     modalAbierto.value = true
 }
 
-const abrirEditar = (d: any) => {
+const abrirEditar = async (d: any) => {
     modoEdicion.value = true
     modalError.value  = ''
     Object.assign(form, {
         id_doctor:          d.id_doctor,
         id_usuario:         d.id_usuario,
-        nombre:             d.nombre            ?? '',
-        apellido_paterno:   d.apellido_paterno  ?? '',
-        apellido_materno:   d.apellido_materno  ?? '',
-        correo:             d.correo            ?? '',
-        telefono:           d.telefono          ?? '',
+        nombre:             d.nombre             ?? '',
+        apellido_paterno:   d.apellido_paterno   ?? '',
+        apellido_materno:   d.apellido_materno   ?? '',
+        correo:             d.correo             ?? '',
+        telefono:           d.telefono           ?? '',
         contraseña:         '',
-        especialidad:       d.especialidad      ?? '',
-        rfc:                d.rfc               ?? '',
+        especialidad:       d.especialidad       ?? '',
+        rfc:                d.rfc                ?? '',
         cedula_profesional: d.cedula_profesional ?? '',
         tarifa_consulta:    Number(d.tarifa_consulta),
         id_sucursal:        d.id_sucursal
     })
     modalAbierto.value = true
+    await cargarHorarios(d.id_doctor)
+    await cargarConsultorios(d.id_sucursal)
 }
 
 const abrirEliminar = () => {
@@ -316,10 +450,28 @@ const guardar = async () => {
 
     guardando.value = true
     try {
+        const body = modoEdicion.value
+            ? {
+                id_doctor:          form.id_doctor,
+                id_usuario:         form.id_usuario,
+                nombre:             form.nombre,
+                apellido_paterno:   form.apellido_paterno,
+                apellido_materno:   form.apellido_materno,
+                correo:             form.correo,
+                telefono:           form.telefono,
+                especialidad:       form.especialidad,
+                rfc:                form.rfc,
+                cedula_profesional: form.cedula_profesional,
+                tarifa_consulta:    form.tarifa_consulta,
+                id_sucursal:        form.id_sucursal,
+                ...(form.contraseña ? { contraseña: form.contraseña } : {})
+            }
+            : { ...form }
+
         const res  = await fetch(`${API}/doctor`, {
             method:  modoEdicion.value ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ ...form })
+            body:    JSON.stringify(body)
         })
         const data = await res.json()
         if (data.error) {
@@ -350,8 +502,16 @@ const guardar = async () => {
             }
             return
         }
-        modalAbierto.value = false
-        await cargarDatos()
+        if (!modoEdicion.value) {
+            await cargarDatos()
+            const doctorNuevo = doctores.value.find(d => d.correo === form.correo)
+            if (doctorNuevo) {
+                await abrirEditar(doctorNuevo)
+            }
+        } else {
+            modalAbierto.value = false
+            await cargarDatos()
+        }
     } catch {
         modalError.value = 'No se pudo conectar con el servidor.'
     } finally {
