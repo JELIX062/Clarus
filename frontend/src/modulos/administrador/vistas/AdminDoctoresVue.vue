@@ -203,6 +203,18 @@
                     Esta acción es irreversible. Para confirmar escribe el nombre completo:
                     <strong>{{ form.nombre }} {{ form.apellido_paterno }}</strong>
                 </p>
+
+                <div class="advertencia-eliminar">
+                    <p class="advertencia-titulo">⚠️ Al eliminar este doctor:</p>
+                    <ul>
+                        <li>Las citas <strong>Programadas</strong> y <strong>En curso</strong> serán canceladas automáticamente.</li>
+                        <li>Las citas pasadas quedarán sin doctor asignado.</li>
+                        <li>Los expedientes y consultas físicas quedarán sin doctor asignado.</li>
+                        <li>Sus horarios y bloqueos de horario serán eliminados.</li>
+                        <li>Su cuenta de usuario será eliminada permanentemente.</li>
+                    </ul>
+                </div>
+
                 <input v-model="confirmNombre" class="input" type="text" placeholder="Escribe el nombre exacto..." />
                 <div v-if="errorEliminar" class="alert alert-danger">{{ errorEliminar }}</div>
                 <div class="modal-actions">
@@ -652,6 +664,32 @@ h1, h2, h3, p { margin: 0; }
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.advertencia-eliminar {
+    background: #fefce8;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+}
+
+.advertencia-titulo {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+}
+
+.advertencia-eliminar ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 0.3rem;
+}
+
+.advertencia-eliminar li {
+    font-size: 0.88rem;
+    color: #78350f;
 }
 
 .btn-close-custom {

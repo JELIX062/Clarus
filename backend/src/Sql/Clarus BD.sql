@@ -89,7 +89,7 @@ CREATE TABLE Consultorio (
 CREATE TABLE Doctor (
     id_doctor           INT             NOT NULL AUTO_INCREMENT,
     id_usuario          INT             NOT NULL,
-    id_sucursal         INT             NOT NULL,
+    id_sucursal         INT             NULL,
     especialidad        VARCHAR(100)    NULL,
     rfc                 VARCHAR(13)     NULL,
     cedula_profesional  VARCHAR(20)     NULL,
@@ -120,7 +120,7 @@ CREATE TABLE Paciente (
 CREATE TABLE Recepcionista (
     id_recepcionista  INT          NOT NULL AUTO_INCREMENT,
     id_usuario        INT          NOT NULL,
-    id_sucursal       INT          NOT NULL,
+    id_sucursal       INT          NULL,
     turno             VARCHAR(20)  NULL,
     PRIMARY KEY (id_recepcionista),
     CONSTRAINT FK_Recepcionista_Usuario  FOREIGN KEY (id_usuario)  REFERENCES Usuario  (id_usuario),
@@ -167,8 +167,8 @@ CREATE TABLE BloqueoHorario (
 CREATE TABLE Cita (
     id_cita          INT             NOT NULL AUTO_INCREMENT,
     id_paciente      INT             NOT NULL,
-    id_doctor        INT             NOT NULL,
-    id_consultorio   INT             NOT NULL,
+    id_doctor        INT             NULL,
+    id_consultorio   INT             NULL,
     id_recepcionista INT             NULL,
     fecha            DATE            NOT NULL,
     hora_inicio      TIME            NOT NULL,
@@ -227,7 +227,7 @@ CREATE TABLE Pago (
 CREATE TABLE Expediente (
     id_expediente         INT           NOT NULL AUTO_INCREMENT,
     id_paciente           INT           NOT NULL,
-    id_doctor             INT           NOT NULL,
+    id_doctor             INT           NULL,
     ant_patologicos       VARCHAR(1000) NULL,
     medicamentos_actuales VARCHAR(500)  NULL,
     alergias              VARCHAR(500)  NULL,
@@ -245,7 +245,7 @@ CREATE TABLE ConsultaFisica (
     id_consulta           INT             NOT NULL AUTO_INCREMENT,
     id_cita               INT             NOT NULL,
     id_expediente         INT             NULL,
-    id_doctor             INT             NOT NULL,
+    id_doctor             INT             NULL,
     motivo_consulta       VARCHAR(500)    NULL,
     peso_kg               DECIMAL(5,2)    NULL,
     talla_cm              DECIMAL(5,2)    NULL,

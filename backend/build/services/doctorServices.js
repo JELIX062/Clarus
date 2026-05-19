@@ -81,10 +81,15 @@ export const editaDoctor = async (datos) => {
 export const borrarDoctor = async (id_doctor) => {
     try {
         const [doctor] = await conexion.query('SELECT id_usuario FROM doctor WHERE id_doctor = ? LIMIT 1', [id_doctor]);
-        if (doctor.length === 0) {
+        if (doctor.length === 0)
             return { error: 'No se encuentra el doctor' };
-        }
         const id_usuario = doctor[0].id_usuario;
+        await conexion.query(`UPDATE cita SET estado = 'Cancelada' WHERE id_doctor = ? AND estado IN ('Programada', 'En curso')`, [id_doctor]);
+        await conexion.query('UPDATE cita SET id_doctor = NULL WHERE id_doctor = ?', [id_doctor]);
+        await conexion.query('UPDATE expediente SET id_doctor = NULL WHERE id_doctor = ?', [id_doctor]);
+        await conexion.query('UPDATE consultafisica SET id_doctor = NULL WHERE id_doctor = ?', [id_doctor]);
+        await conexion.query('DELETE FROM horariodoctor WHERE id_doctor = ?', [id_doctor]);
+        await conexion.query('DELETE FROM bloqueohorario WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('DELETE FROM doctor WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('DELETE FROM usuario WHERE id_usuario = ?', [id_usuario]);
         return { mensaje: 'Doctor eliminado correctamente' };

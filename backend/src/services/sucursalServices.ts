@@ -88,15 +88,16 @@ export const borrarSucursal = async (id_sucursal: number) => {
             'SELECT id_sucursal FROM sucursal WHERE id_sucursal = ? LIMIT 1',
             [id_sucursal]
         );
+        if (existe.length === 0) return { error: 'No se encuentra la sucursal' };
 
-        if (existe.length === 0) {
-            return { error: 'No se encuentra la sucursal' };
-        }
-
+        await conexion.query('UPDATE doctor SET id_sucursal = NULL WHERE id_sucursal = ?', [id_sucursal]);
+        await conexion.query('UPDATE recepcionista SET id_sucursal = NULL WHERE id_sucursal = ?', [id_sucursal]);
+        await conexion.query('UPDATE cita SET id_consultorio = NULL WHERE id_consultorio IN (SELECT id_consultorio FROM consultorio WHERE id_sucursal = ?)', [id_sucursal]);
+        await conexion.query('DELETE FROM horariodoctor WHERE id_consultorio IN (SELECT id_consultorio FROM consultorio WHERE id_sucursal = ?)', [id_sucursal]);
+        await conexion.query('DELETE FROM consultorio WHERE id_sucursal = ?', [id_sucursal]);
         await conexion.query('DELETE FROM sucursal WHERE id_sucursal = ?', [id_sucursal]);
 
         return { mensaje: 'Sucursal eliminada correctamente' };
-
     } catch(err) {
         console.log("ERROR EN BD:", err);
         return { error: "No se puede borrar la sucursal" }

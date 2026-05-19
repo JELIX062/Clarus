@@ -160,6 +160,17 @@
                     Esta acción es irreversible. Para confirmar, escribe el nombre de la sucursal:
                     <strong>{{ form.nombre }}</strong>
                 </p>
+
+                <div class="advertencia-eliminar">
+                    <p class="advertencia-titulo">⚠️ Al eliminar esta sucursal:</p>
+                    <ul>
+                        <li>Todos sus <strong>consultorios</strong> serán eliminados.</li>
+                        <li>Las citas asociadas a sus consultorios quedarán sin consultorio asignado.</li>
+                        <li>Los horarios de doctores vinculados a sus consultorios serán eliminados.</li>
+                        <li>Los doctores y recepcionistas asignados quedarán sin sucursal.</li>
+                    </ul>
+                </div>
+
                 <input
                     v-model="confirmNombre"
                     class="input"

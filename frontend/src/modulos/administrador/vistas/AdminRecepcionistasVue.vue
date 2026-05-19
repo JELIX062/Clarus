@@ -107,6 +107,15 @@
                             Esta acción es irreversible. Para confirmar escribe el nombre completo:
                             <strong>{{ form.nombre }} {{ form.apellido_paterno }}</strong>
                         </p>
+
+                        <div class="advertencia-eliminar">
+                            <p class="advertencia-titulo">⚠️ Al eliminar esta recepcionista:</p>
+                            <ul>
+                                <li>Su sucursal asignada quedará sin esta recepcionista.</li>
+                                <li>Su cuenta de usuario será eliminada permanentemente.</li>
+                            </ul>
+                        </div>
+
                         <input
                             v-model="confirmNombre"
                             class="input"
