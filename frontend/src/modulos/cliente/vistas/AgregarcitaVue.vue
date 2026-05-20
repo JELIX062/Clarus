@@ -6,19 +6,21 @@
 
 			<div class="field-row">
 				<label>
-					<span>Selección de edificio</span>
-					<select v-model="form.id_sucursal" required>
-						<option disabled value="">Selecciona un edificio</option>
-						<option v-for="s in sucursales" :key="s.id_sucursal" :value="s.id_sucursal">
-							{{ s.nombre }}
+					<span>Especialidad</span>
+					<select v-model="form.especialidad_filtro" required>
+						<option disabled value="">Selecciona una especialidad</option>
+						<option v-for="e in especialidades" :key="e" :value="e">
+							{{ e }}
 						</option>
 					</select>
 				</label>
 
 				<label>
-					<span>Selección de médico</span>
-					<select v-model="form.id_doctor" :disabled="!form.id_sucursal" required>
-						<option disabled value="">{{ form.id_sucursal ? 'Selecciona un médico' : 'Elige edificio primero' }}</option>
+					<span>Médico</span>
+					<select v-model="form.id_doctor" :disabled="!form.especialidad_filtro" required>
+						<option disabled value="">
+							{{ form.especialidad_filtro ? 'Selecciona un médico' : 'Elige especialidad primero' }}
+						</option>
 						<option v-for="d in doctoresFiltrados" :key="d.id_doctor" :value="d.id_doctor">
 							Dr. {{ d.nombre }} {{ d.apellido_paterno }}
 						</option>
@@ -26,12 +28,25 @@
 				</label>
 
 				<label>
-					<span>Especialidad</span>
-					<input :value="especialidad" type="text" disabled placeholder="Se llena al elegir médico" />
+					<span>Sucursal</span>
+					<select
+						v-if="sucursalesDoctor.length > 1"
+						v-model="form.id_sucursal"
+						required
+					>
+						<option disabled value="">Selecciona una sucursal</option>
+						<option v-for="s in sucursalesDoctor" :key="s.id_sucursal" :value="s.id_sucursal">
+							{{ s.nombre }}
+						</option>
+					</select>
+					<input
+						v-else
+						:value="sucursalesDoctor[0]?.nombre ?? ''"
+						type="text"
+						disabled
+					/>
 				</label>
-				
 			</div>
-
 			<div v-if="horarios.length > 0" class="horario-info">
 				<p class="horario-titulo">Horario de atención</p>
 				<div class="horario-tags">
@@ -45,20 +60,6 @@
 
 			<div class="field-row">
 				<label>
-					<span>Consultorio</span>
-					<select v-model="form.id_consultorio">
-						<option value="">Selecciona un consultorio</option>
-						<option
-							v-for="c in consultoriosFiltrados"
-							:key="c.id_consultorio"
-							:value="c.id_consultorio"
-						>
-							Consultorio {{ c.numero }}
-						</option>
-					</select>
-				</label>
-
-				<label>
 					<span>Qué día</span>
 					<input v-model="form.fecha" type="date" required />
 				</label>
@@ -66,6 +67,23 @@
 				<label>
 					<span>A qué hora</span>
 					<input v-model="form.hora_inicio" type="time" required />
+				</label>
+
+				<label>
+					<span>Consultorio asignado</span>
+					<input
+						v-if="consultorioAutoAsignado"
+						:value="`Consultorio ${consultorioAutoAsignado.numero_consultorio}`"
+						type="text"
+						disabled
+						style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;"
+					/>
+					<input
+						v-else
+						value="Se asigna al elegir día y hora"
+						type="text"
+						disabled
+					/>
 				</label>
 
 				<label class="full-width">
@@ -285,7 +303,7 @@ type Doctor = {
 	apellido_paterno: string       
 	especialidad:    string
 	tarifa_consulta: number
-    id_sucursal:      number 
+    sucursales:         number[]
 }
 
 type Consultorio = {
@@ -357,21 +375,18 @@ const seleccionarPaciente = (p: any) => {
     form.id_paciente           = p.id_paciente  // ← agrega este campo al form también
 }
 
-const consultoriosFiltrados = computed(() => {
-    if (!horarios.value.length) return []
-    
-    const vistos = new Set<number>()
-    return horarios.value
-        .filter(h => {
-            if (vistos.has(h.id_consultorio)) return false
-            vistos.add(h.id_consultorio)
-            return true
-        })
-        .map(h => ({
-            id_consultorio: h.id_consultorio,
-            id_sucursal:    Number(form.id_sucursal),
-            numero:         h.numero_consultorio
-        }))
+// Autoasigna el consultorio según el día y hora seleccionados
+const consultorioAutoAsignado = computed(() => {
+    if (!form.fecha || !form.hora_inicio || !horarios.value.length) return null
+
+    const diaSemana = new Date(`${form.fecha}T00:00:00`).getDay()
+    const horaSeleccionada = `${form.hora_inicio}:00`
+
+    return horarios.value.find(h =>
+        h.dia_semana === diaSemana &&
+        horaSeleccionada >= h.hora_inicio &&
+        horaSeleccionada < h.hora_fin
+    ) ?? null
 })
 
 onMounted(async () => {
@@ -408,30 +423,69 @@ onMounted(async () => {
 
 // ── Formulario ─────────────────────────────────────────────────
 const form = reactive({
-    id_sucursal:     '',
-    id_doctor:       '',
-    id_consultorio:  '',
-    fecha:           '',
-    hora_inicio:     '',
-    motivo_consulta: '',
-    metodo_pago:     '',
-    duracion:        30,  
-	id_paciente:     0, 
+    especialidad_filtro: '',
+    id_sucursal:         '',
+    id_doctor:           '',
+    id_consultorio:      '',
+    fecha:               '',
+    hora_inicio:         '',
+    motivo_consulta:     '',
+    metodo_pago:         '',
+    duracion:            30,
+    id_paciente:         0,
 })
 
 const error   = ref('')
 const exito   = ref('')
 const cargando = ref(false)
 
+// Especialidades únicas de todos los doctores
+const especialidades = computed(() => {
+    const set = new Set(doctores.value.map(d => d.especialidad).filter(Boolean))
+    return Array.from(set).sort()
+})
+
+// Doctores filtrados por especialidad
 const doctoresFiltrados = computed(() =>
-	form.id_sucursal
-		? doctores.value.filter(d => d.id_sucursal === Number(form.id_sucursal))
-		: []
+    form.especialidad_filtro
+        ? doctores.value.filter(d => d.especialidad === form.especialidad_filtro)
+        : []
 )
 
-watch(() => form.id_sucursal, () => {
-	form.id_doctor      = ''
-	form.id_consultorio = ''
+// Sucursales del doctor seleccionado
+const sucursalesDoctor = computed(() => {
+    if (!form.id_doctor) return []
+    const doctor = doctores.value.find(d => d.id_doctor === Number(form.id_doctor))
+    if (!doctor) return []
+    return sucursales.value.filter(s => doctor.sucursales.includes(s.id_sucursal))
+})
+
+// Al cambiar especialidad, resetea doctor y sucursal
+watch(() => form.especialidad_filtro, () => {
+    form.id_doctor      = ''
+    form.id_sucursal    = ''
+    form.id_consultorio = ''
+    horarios.value      = []
+})
+
+// Al cambiar doctor, autoselecciona sucursal si solo tiene una
+watch(() => form.id_doctor, async (nuevoId) => {
+    horarios.value      = []
+    form.id_sucursal    = ''
+    form.id_consultorio = ''
+    if (!nuevoId) return
+
+    // Si el doctor solo trabaja en una sucursal, la selecciona automáticamente
+    const doctor = doctores.value.find(d => d.id_doctor === Number(nuevoId))
+    if (doctor?.sucursales?.length === 1) {
+        form.id_sucursal = String(doctor.sucursales[0])
+    }
+
+    try {
+        const res  = await fetch(`http://localhost:3001/api/horario/doctor/${nuevoId}`)
+        const data = await res.json()
+        if (Array.isArray(data)) horarios.value = data
+    } catch { /* silencioso */ }
 })
 
 watch(() => form.id_doctor, async (nuevoId) => {
@@ -443,6 +497,10 @@ watch(() => form.id_doctor, async (nuevoId) => {
 		const data = await res.json()
 		if (Array.isArray(data)) horarios.value = data
 	} catch { /* silencioso */ }
+})
+
+watch(consultorioAutoAsignado, (h) => {
+    form.id_consultorio = h ? String(h.id_consultorio) : ''
 })
 
 // Doctor seleccionado → autocompleta especialidad y costo

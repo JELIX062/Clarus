@@ -25,17 +25,17 @@ export const loginSchema = z.object({
 
 // Doctor
 export const doctorSchema = z.object({
-    nombre: z.string().min(2).max(100),
-    apellido_paterno: z.string().min(2).max(100),
-    apellido_materno: z.string().min(2).max(100).nullable().optional(),
-    correo: z.string().email(),
-    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
-    contraseña: z.string().min(6).max(256),
-    id_sucursal: z.number().int().positive(),
-    especialidad: z.string().min(2).max(100),
-    rfc: z.string().min(12).max(13).regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/, 'RFC no válido.'),
+    nombre:             z.string().min(2).max(100),
+    apellido_paterno:   z.string().min(2).max(100),
+    apellido_materno:   z.string().min(2).max(100).nullable().optional(),
+    correo:             z.string().email(),
+    telefono:           z.string().min(10).max(15).regex(/^\d+$/).nullable().optional(),
+    contraseña:         z.string().min(6).max(256),
+    sucursales:         z.array(z.number().int().positive()).min(1, 'Selecciona al menos una sucursal.'),
+    especialidad:       z.string().min(2).max(100),
+    rfc:                z.string().min(12).max(13).regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/),
     cedula_profesional: z.string().min(5).max(20),
-    tarifa_consulta: z.number().positive()
+    tarifa_consulta:    z.number().positive()
 });
 
 // Recepcionista
@@ -187,19 +187,19 @@ export const editarPacienteSchema = z.object({
 
 // Editar Doctor
 export const editarDoctorSchema = z.object({
-    id_doctor: z.number().int().positive(),
-    id_usuario: z.number().int().positive(),
-    nombre: z.string().min(2).max(100),
-    apellido_paterno: z.string().min(2).max(100),
-    apellido_materno: z.string().min(2).max(100).nullable().optional(),
-    correo: z.string().email(),
-    telefono: z.string().min(10).max(15).regex(/^\d+$/, 'El teléfono debe contener solo dígitos.').nullable().optional(),
-    contraseña: z.string().min(6).max(256).optional(),
-    id_sucursal: z.number().int().positive(),
-    especialidad: z.string().min(2).max(100),
-    rfc: z.string().min(12).max(13).regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/, 'RFC no válido.'),
+    id_doctor:          z.number().int().positive(),
+    id_usuario:         z.number().int().positive(),
+    nombre:             z.string().min(2).max(100),
+    apellido_paterno:   z.string().min(2).max(100),
+    apellido_materno:   z.string().min(2).max(100).nullable().optional(),
+    correo:             z.string().email(),
+    telefono:           z.string().min(10).max(15).regex(/^\d+$/).nullable().optional(),
+    contraseña:         z.string().min(6).max(256).optional(),
+    sucursales:         z.array(z.number().int().positive()).min(1, 'Selecciona al menos una sucursal.'),
+    especialidad:       z.string().min(2).max(100),
+    rfc:                z.string().min(12).max(13).regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/),
     cedula_profesional: z.string().min(5).max(20),
-    tarifa_consulta: z.number().positive()
+    tarifa_consulta:    z.number().positive()
 });
 
 // Editar Recepcionista

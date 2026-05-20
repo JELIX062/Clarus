@@ -66,15 +66,27 @@ export const login = async (correo: string, contraseña: string) => {
 
         } else if (usuario.id_rol === 2) {
             const [doctor]: any = await conexion.query(
-                `SELECT d.id_doctor, d.especialidad, d.tarifa_consulta, d.id_sucursal,
-                    d.rfc, d.cedula_profesional, s.nombre as nombre_sucursal
+                `SELECT d.id_doctor, d.especialidad, d.tarifa_consulta,
+                    d.rfc, d.cedula_profesional
                 FROM doctor d
-                INNER JOIN sucursal s ON d.id_sucursal = s.id_sucursal
                 WHERE d.id_usuario = ?`,
                 [usuario.id_usuario]
             );
-            datosExtra = doctor[0] ?? {};
-            redireccion = '/doctor/dashboard';
+            const docData = doctor[0] ?? {};
+
+            // Carga las sucursales del doctor
+            const [sucursales]: any = await conexion.query(
+                `SELECT ds.id_sucursal, s.nombre
+                FROM doctor_sucursal ds
+                INNER JOIN sucursal s ON ds.id_sucursal = s.id_sucursal
+                WHERE ds.id_doctor = ?`,
+                [docData.id_doctor]
+            );
+            docData.sucursales       = sucursales.map((s: any) => s.id_sucursal);
+            docData.nombres_sucursal = sucursales.map((s: any) => s.nombre).join(', ');
+
+            datosExtra  = docData;
+            redireccion = '/citas';
 
         } else if (usuario.id_rol === 3) {
             const [recepcionista]: any = await conexion.query(

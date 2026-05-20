@@ -46,9 +46,9 @@ INSERT INTO Consultorio (id_sucursal, numero, piso, descripcion, activo) VALUES
 -- ------------------------------------------------------------
 -- 6. Doctor
 -- ------------------------------------------------------------
-INSERT INTO Doctor (id_usuario, id_sucursal, especialidad, rfc, cedula_profesional, tarifa_consulta) VALUES
-(2, 1, 'Medicina General', 'VELD900512AB1', '1234567', 500.00),
-(3, 2, 'Cardiología',      'LOBR850318CD2', '7654321', 800.00);
+INSERT INTO Doctor (id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta) VALUES
+(2, 'Medicina General', 'VELD900512AB1', '1234567', 500.00),
+(3, 'Cardiología',      'LOBR850318CD2', '7654321', 800.00);
 
 -- ------------------------------------------------------------
 -- 7. Paciente
@@ -121,3 +121,11 @@ INSERT INTO ConsultaFisica (id_cita, id_expediente, id_doctor, motivo_consulta, 
 'Paracetamol 500mg cada 8 horas por 3 días.',
 'Evitar estrés, hidratarse correctamente, descanso adecuado.',
 1);
+
+-- ------------------------------------------------------------
+-- 16. Doctor_Sucursal
+-- ------------------------------------------------------------
+
+INSERT INTO Doctor_Sucursal (id_doctor, id_sucursal) VALUES
+(1, 1),  -- Diego trabaja en Clarus Sur
+(2, 2);  -- Bruno trabaja en Clarus Norte

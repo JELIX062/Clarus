@@ -50,8 +50,8 @@
                         <span>{{ d.telefono || '–' }}</span>
                     </div>
                     <div class="campo">
-                        <span class="campo-label">Sucursal</span>
-                        <span>{{ nombreSucursal(d.id_sucursal) }}</span>
+                        <span class="campo-label">Sucursales</span>
+                        <span>{{ (d.sucursales ?? []).map((id: number) => nombreSucursal(id)).join(', ') || '–' }}</span>
                     </div>
                 </div>
             </article>
@@ -67,8 +67,8 @@
 
                 <div class="form-grid">
                     <label>
-                        <span>Nombre</span>
-                        <input v-model.trim="form.nombre" class="input" type="text" placeholder="Nombre" />
+                        <span >Nombre</span>
+                        <input v-model.trim="form.nombre" class="input" type="text" placeholder="Nombre"/>
                     </label>
                     <label>
                         <span>Apellido paterno</span>
@@ -106,15 +106,24 @@
                         <span>Tarifa consulta</span>
                         <input v-model.number="form.tarifa_consulta" class="input" type="number" step="0.01" placeholder="Ej. 500.00" />
                     </label>
-                    <label class="full-row">
-                        <span>Sucursal</span>
-                        <select v-model="form.id_sucursal" class="input">
-                            <option disabled :value="0">Selecciona una sucursal</option>
-                            <option v-for="s in sucursales" :key="s.id_sucursal" :value="s.id_sucursal">
+                    <div class="full-row">
+                        <span style="font-weight: 500; font-size: 0.94rem; display: block; margin-bottom: 0.5rem;">Sucursales</span>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                            <label
+                                v-for="s in sucursales"
+                                :key="s.id_sucursal"
+                                style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-weight: 400;"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :value="s.id_sucursal"
+                                    v-model="form.sucursales"
+                                    @change="modoEdicion && cargarConsultorios(form.sucursales)"
+                                />
                                 {{ s.nombre }}
-                            </option>
-                        </select>
-                    </label>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="modoEdicion">
@@ -272,11 +281,11 @@ const cargarHorarios = async (id_doctor: number) => {
     if (Array.isArray(data)) horarios.value = data
 }
 
-const cargarConsultorios = async (id_sucursal: number) => {
+const cargarConsultorios = async (sucursales: number[]) => {
     const res  = await fetch(`${API}/consultorio`)
     const data = await res.json()
     if (Array.isArray(data)) {
-        consultorios.value = data.filter((c: any) => c.id_sucursal === id_sucursal)
+        consultorios.value = data.filter((c: any) => sucursales.includes(c.id_sucursal))
     }
 }
 
@@ -328,7 +337,7 @@ const form = reactive({
     rfc:               '',
     cedula_profesional:'',
     tarifa_consulta:   0,
-    id_sucursal:       0
+    sucursales:         [] as number[]
 })
 
 const doctoresFiltrados = computed(() => {
@@ -359,11 +368,11 @@ const abrirCrear = () => {
     horarios.value     = []
     consultorios.value = []
     Object.assign(form, {
-        id_doctor: 0, id_usuario: 0, nombre: '', apellido_paterno: '',
-        apellido_materno: '', correo: '', telefono: '', contraseña: '',
-        especialidad: '', rfc: '', cedula_profesional: '',
-        tarifa_consulta: 0, id_sucursal: 0
-    })
+    id_doctor: 0, id_usuario: 0, nombre: '', apellido_paterno: '',
+    apellido_materno: '', correo: '', telefono: '', contraseña: '',
+    especialidad: '', rfc: '', cedula_profesional: '',
+    tarifa_consulta: 0, sucursales: []
+})
     modalAbierto.value = true
 }
 
@@ -383,11 +392,11 @@ const abrirEditar = async (d: any) => {
         rfc:                d.rfc                ?? '',
         cedula_profesional: d.cedula_profesional ?? '',
         tarifa_consulta:    Number(d.tarifa_consulta),
-        id_sucursal:        d.id_sucursal
+        sucursales:         d.sucursales ?? []
     })
     modalAbierto.value = true
     await cargarHorarios(d.id_doctor)
-    await cargarConsultorios(d.id_sucursal)
+    await cargarConsultorios(d.sucursales ?? [])
 }
 
 const abrirEliminar = () => {
@@ -455,8 +464,8 @@ const guardar = async () => {
         modalError.value = 'La tarifa debe ser mayor a 0.'
         return
     }
-    if (!form.id_sucursal) {
-        modalError.value = 'Selecciona una sucursal.'
+        if (!form.sucursales.length) {
+        modalError.value = 'Selecciona al menos una sucursal.'
         return
     }
 
@@ -475,7 +484,7 @@ const guardar = async () => {
                 rfc:                form.rfc,
                 cedula_profesional: form.cedula_profesional,
                 tarifa_consulta:    form.tarifa_consulta,
-                id_sucursal:        form.id_sucursal,
+                sucursales:         form.sucursales,
                 ...(form.contraseña ? { contraseña: form.contraseña } : {})
             }
             : { ...form }
@@ -501,7 +510,7 @@ const guardar = async () => {
                         rfc:                'El RFC no tiene un formato válido.',
                         cedula_profesional: 'La cédula debe tener entre 5 y 20 caracteres.',
                         tarifa_consulta:    'La tarifa debe ser mayor a 0.',
-                        id_sucursal:        'Selecciona una sucursal válida.',
+                        sucursales:         'Selecciona al menos una sucursal válida.',
                     }
                     modalError.value = errores
                         .map((e: any) => mensajes[e.path?.[0]] ?? `${e.path?.[0]}: ${e.message}`)

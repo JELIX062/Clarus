@@ -65,7 +65,8 @@ export const borrarSucursal = async (id_sucursal) => {
         const [existe] = await conexion.query('SELECT id_sucursal FROM sucursal WHERE id_sucursal = ? LIMIT 1', [id_sucursal]);
         if (existe.length === 0)
             return { error: 'No se encuentra la sucursal' };
-        await conexion.query('UPDATE doctor SET id_sucursal = NULL WHERE id_sucursal = ?', [id_sucursal]);
+        // Quitar al doctor de esta sucursal en doctor_sucursal
+        await conexion.query('DELETE FROM doctor_sucursal WHERE id_sucursal = ?', [id_sucursal]);
         await conexion.query('UPDATE recepcionista SET id_sucursal = NULL WHERE id_sucursal = ?', [id_sucursal]);
         await conexion.query('UPDATE cita SET id_consultorio = NULL WHERE id_consultorio IN (SELECT id_consultorio FROM consultorio WHERE id_sucursal = ?)', [id_sucursal]);
         await conexion.query('DELETE FROM horariodoctor WHERE id_consultorio IN (SELECT id_consultorio FROM consultorio WHERE id_sucursal = ?)', [id_sucursal]);

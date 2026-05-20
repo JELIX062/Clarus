@@ -1,4 +1,13 @@
 -- ------------------------------------------------------------
+-- Rol
+-- ------------------------------------------------------------
+INSERT INTO Rol (nombre, descripcion) VALUES
+('Administrador', 'Gestiona sucursales y usuarios del sistema'),
+('Doctor',        'Médico que atiende consultas'),
+('Recepcionista', 'Registra y gestiona citas'),
+('Paciente',      'Usuario que agenda y recibe consultas');
+
+-- ------------------------------------------------------------
 -- Usuario
 -- ------------------------------------------------------------
 INSERT INTO Usuario (id_rol, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena_hash, activo) VALUES
@@ -33,10 +42,11 @@ INSERT INTO Consultorio (id_sucursal, numero, piso, descripcion, activo) VALUES
 
 -- ------------------------------------------------------------
 -- Doctor
+-- CAMBIOS: eliminado id_sucursal (ahora en Doctor_Sucursal)
 -- ------------------------------------------------------------
-INSERT INTO Doctor (id_usuario, id_sucursal, especialidad, rfc, cedula_profesional, tarifa_consulta) VALUES
-(2, 1, 'Medicina General', 'VELD900512AB1', '1234567', 500.00),
-(3, 2, 'Cardiología',      'LOBR850318CD2', '7654321', 800.00);
+INSERT INTO Doctor (id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta) VALUES
+(2, 'Medicina General', 'VELD900512AB1', '1234567', 500.00),
+(3, 'Cardiología',      'LOBR850318CD2', '7654321', 800.00);
 
 -- ------------------------------------------------------------
 -- Recepcionista
@@ -60,3 +70,10 @@ INSERT INTO HorarioDoctor (id_doctor, id_consultorio, dia_semana, hora_inicio, h
 (1, 1, 5, '09:00:00', '13:00:00', 1),
 (2, 3, 2, '10:00:00', '15:00:00', 1),
 (2, 3, 4, '10:00:00', '15:00:00', 1);
+
+-- ------------------------------------------------------------
+-- Doctor_Sucursal
+-- ------------------------------------------------------------
+INSERT INTO Doctor_Sucursal (id_doctor, id_sucursal) VALUES
+(1, 1),  -- Diego trabaja en Clarus Sur
+(2, 2);  -- Bruno trabaja en Clarus Norte

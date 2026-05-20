@@ -68,18 +68,20 @@ export interface Doctor {
     rfc: string;
     cedula_profesional: string;
     tarifa_consulta: number;
-    id_sucursal: number;
+    sucursales: number[]; 
 }
 
+
 // Tipo para registrar un nuevo doctor
-export type DoctorNuevo = Omit<Doctor, 'id_doctor'> & {
-    contraseña: string;
+export type DoctorNuevo = Omit<Doctor, 'id_doctor'> & { 
+    contraseña: string 
 };
 
 // Tipo para editar doctor
-export type DoctorEditar = Doctor & {
-    contraseña?: string;
+export type DoctorEditar = Doctor & { 
+    contraseña?: string
 };
+
 
 // Interfaz principal de la recepcionista en la base de datos
 export interface Recepcionista {

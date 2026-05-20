@@ -85,18 +85,17 @@ CREATE TABLE Consultorio (
 
 -- ------------------------------------------------------------
 -- 6. Doctor
+-- CAMBIOS: eliminado campo id_sucursal (ahora en doctor_sucursal)
 -- ------------------------------------------------------------
 CREATE TABLE Doctor (
     id_doctor           INT             NOT NULL AUTO_INCREMENT,
     id_usuario          INT             NOT NULL,
-    id_sucursal         INT             NULL,
     especialidad        VARCHAR(100)    NULL,
     rfc                 VARCHAR(13)     NULL,
     cedula_profesional  VARCHAR(20)     NULL,
     tarifa_consulta     DECIMAL(10,2)   NULL,
     PRIMARY KEY (id_doctor),
-    CONSTRAINT FK_Doctor_Usuario  FOREIGN KEY (id_usuario)  REFERENCES Usuario  (id_usuario),
-    CONSTRAINT FK_Doctor_Sucursal FOREIGN KEY (id_sucursal) REFERENCES Sucursal (id_sucursal)
+    CONSTRAINT FK_Doctor_Usuario FOREIGN KEY (id_usuario) REFERENCES Usuario (id_usuario)
 );
 
 -- ------------------------------------------------------------
@@ -278,4 +277,15 @@ CREATE TABLE Notificacion (
     PRIMARY KEY (id_notificacion),
     CONSTRAINT FK_Notificacion_Usuario FOREIGN KEY (id_usuario)
         REFERENCES Usuario (id_usuario)
+);
+
+-- ------------------------------------------------------------
+-- 17. Doctor_Sucursal
+-- ------------------------------------------------------------
+CREATE TABLE Doctor_Sucursal (
+    id_doctor   INT  NOT NULL,
+    id_sucursal INT  NOT NULL,
+    PRIMARY KEY (id_doctor, id_sucursal),
+    CONSTRAINT FK_DoctorSucursal_Doctor   FOREIGN KEY (id_doctor)   REFERENCES Doctor   (id_doctor)   ON DELETE CASCADE,
+    CONSTRAINT FK_DoctorSucursal_Sucursal FOREIGN KEY (id_sucursal) REFERENCES Sucursal (id_sucursal) ON DELETE CASCADE
 );
