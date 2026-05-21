@@ -178,7 +178,8 @@ export const editarDoctorSchema = z.object({
     especialidad: z.string().min(2).max(100),
     rfc: z.string().min(12).max(13).regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/),
     cedula_profesional: z.string().min(5).max(20),
-    tarifa_consulta: z.number().positive()
+    tarifa_consulta: z.number().positive(),
+    duracion_consulta: z.number().int().min(15).max(120).default(30)
 });
 // Editar Recepcionista
 export const editarRecepcionistaSchema = z.object({

@@ -6,9 +6,6 @@
                 <h1>Expedientes médicos</h1>
                 <p class="subtitle">Pacientes que has atendido.</p>
             </div>
-            <button class="button" type="button" @click="abrirCrear">
-                + Nuevo expediente
-            </button>
         </header>
 
         <!-- Filtros -->

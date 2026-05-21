@@ -73,8 +73,8 @@ export const registraDoctor = async (nuevo: DoctorNuevo) => {
         const id_usuario = result.insertId;
 
         const [doctor]: any = await conexion.query(
-            'INSERT INTO doctor(id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta) VALUES(?,?,?,?,?)',
-            [id_usuario, nuevo.especialidad, nuevo.rfc, nuevo.cedula_profesional, nuevo.tarifa_consulta]
+            'INSERT INTO doctor(id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta, duracion_consulta) VALUES(?,?,?,?,?,?)',
+            [id_usuario, nuevo.especialidad, nuevo.rfc, nuevo.cedula_profesional, nuevo.tarifa_consulta, nuevo.duracion_consulta]
         );
         const id_doctor = doctor.insertId;
 
@@ -110,8 +110,8 @@ export const editaDoctor = async (datos: DoctorEditar) => {
         );
 
         await conexion.query(
-            `UPDATE doctor SET especialidad=?, rfc=?, cedula_profesional=?, tarifa_consulta=? WHERE id_doctor=?`,
-            [datos.especialidad, datos.rfc, datos.cedula_profesional, datos.tarifa_consulta, datos.id_doctor]
+            `UPDATE doctor SET especialidad=?, rfc=?, cedula_profesional=?, tarifa_consulta=?, duracion_consulta=? WHERE id_doctor=?`,
+            [datos.especialidad, datos.rfc, datos.cedula_profesional, datos.tarifa_consulta, datos.duracion_consulta, datos.id_doctor]  
         );
 
         // Actualiza las sucursales: borra las anteriores e inserta las nuevas

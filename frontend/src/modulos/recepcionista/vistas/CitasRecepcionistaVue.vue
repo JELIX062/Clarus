@@ -147,7 +147,11 @@
                                 <strong>{{ aplicaReembolso ? '✓ Aplica reembolso' : '✗ No aplica reembolso' }}</strong><br>
                                 {{ mensajeReembolso }}
                             </div>
+                            <div v-if="errorCancelacion" class="alert alert-danger mb-3">
+                                {{ errorCancelacion }}
+                            </div>
                         </div>
+
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                             <button type="button" class="btn btn-danger" @click="confirmarCancelacion">Confirmar cancelación</button>
@@ -209,6 +213,7 @@ const citaAFinalizar  = ref<number | null>(null)
 const metodoPagoFinal = ref('')
 const montoFinal      = ref(0)
 const errorFinal      = ref('')
+const errorCancelacion = ref('')
 
 const handleFinalizar = (id: number) => {
     citaAFinalizar.value  = id
@@ -261,8 +266,9 @@ const confirmarFinalizar = async () => {
 }
 
 const citaHaEmpezado = (appointment: any) => {
+    if (!appointment?.fecha) return false 
     const ahora     = new Date()
-    const fechaCita = new Date(`${appointment.fecha.split('T')[0]}T${appointment.hora_inicio}`)
+    const fechaCita = new Date(`${appointment.fecha.split('T')[0]}T00:00:00`)
     return ahora >= fechaCita
 }
 
@@ -306,6 +312,7 @@ const cargarCitas = async () => {
 const handleCancelar = (id: number) => {
     citaACancelar.value     = id
     motivoCancelacion.value = ''
+    errorCancelacion.value  = ''
     const cita = appointments.value.find(a => a.id_cita === id)
     if (cita) {
         const fechaCita = new Date(`${cita.fecha.split('T')[0]}T${cita.hora_inicio}`)
@@ -319,7 +326,13 @@ const handleCancelar = (id: number) => {
 }
 
 const confirmarCancelacion = async () => {
-    if (!motivoCancelacion.value.trim() || !citaACancelar.value) return
+    errorCancelacion.value = ''
+    if (!motivoCancelacion.value.trim()) {
+        errorCancelacion.value = 'Debes escribir el motivo de cancelación.'
+        return
+    }
+    if (!citaACancelar.value) return
+
     await fetch(`${API}/cita/cancelar`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json' },

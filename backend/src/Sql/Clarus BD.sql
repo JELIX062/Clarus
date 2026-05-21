@@ -94,10 +94,10 @@ CREATE TABLE Doctor (
     rfc                 VARCHAR(13)     NULL,
     cedula_profesional  VARCHAR(20)     NULL,
     tarifa_consulta     DECIMAL(10,2)   NULL,
+    duracion_consulta   INT             NOT NULL DEFAULT 30,
     PRIMARY KEY (id_doctor),
     CONSTRAINT FK_Doctor_Usuario FOREIGN KEY (id_usuario) REFERENCES Usuario (id_usuario)
 );
-
 -- ------------------------------------------------------------
 -- 7. Paciente
 -- ------------------------------------------------------------

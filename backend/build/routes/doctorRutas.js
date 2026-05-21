@@ -11,7 +11,7 @@ router.get('/:id_doctor', async (req, res) => {
 });
 router.post('/', async (req, res) => {
     try {
-        const { nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña, sucursales, especialidad, rfc, cedula_profesional, tarifa_consulta } = req.body;
+        const { nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña, sucursales, especialidad, rfc, cedula_profesional, tarifa_consulta, duracion_consulta } = req.body;
         const resultado = await doctorServices.registraDoctor({
             nombre,
             apellido_paterno,
@@ -24,6 +24,7 @@ router.post('/', async (req, res) => {
             rfc,
             cedula_profesional,
             tarifa_consulta,
+            duracion_consulta,
             id_usuario: 0
         });
         res.send(resultado);
@@ -34,7 +35,7 @@ router.post('/', async (req, res) => {
 });
 router.put('/', async (req, res) => {
     try {
-        const { id_doctor, id_usuario, nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña, especialidad, rfc, cedula_profesional, tarifa_consulta, sucursales } = req.body;
+        const { id_doctor, id_usuario, nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña, especialidad, rfc, cedula_profesional, tarifa_consulta, duracion_consulta, sucursales } = req.body;
         const resultado = await doctorServices.editaDoctor({
             id_doctor,
             id_usuario,
@@ -42,11 +43,13 @@ router.put('/', async (req, res) => {
             apellido_paterno,
             apellido_materno,
             correo,
-            telefono, contraseña,
+            telefono,
+            contraseña,
             especialidad,
             rfc,
             cedula_profesional,
             tarifa_consulta,
+            duracion_consulta,
             sucursales
         });
         res.send(resultado);

@@ -106,8 +106,17 @@ export const registraConsultaFisica = async (nuevo: ConsultaFisicaNuevo) => {
                 'SELECT id_expediente FROM expediente WHERE id_paciente = ? AND id_doctor = ? LIMIT 1',
                 [id_paciente, nuevo.id_doctor]
             )
+
             if (expExiste.length > 0) {
+                // Ya tiene expediente con este doctor
                 id_expediente = expExiste[0].id_expediente
+            } else {
+                // No tiene expediente — se crea automáticamente
+                const [nuevoExp]: any = await conexion.query(
+                    'INSERT INTO expediente(id_paciente, id_doctor) VALUES(?, ?)',
+                    [id_paciente, nuevo.id_doctor]
+                )
+                id_expediente = nuevoExp.insertId
             }
         }
 
@@ -174,6 +183,24 @@ export const firmaConsultaFisica = async (id_consulta: number, id_doctor: number
             'UPDATE consultafisica SET firmada = 1, fecha_firma = NOW() WHERE id_consulta = ?',
             [id_consulta]
         );
+
+        await conexion.query(
+            'UPDATE consultafisica SET firmada = 1, fecha_firma = NOW() WHERE id_consulta = ?',
+            [id_consulta]
+        );
+
+        // Actualiza medicamentos_actuales del expediente con el tratamiento de esta consulta
+        const [consultaFirmada]: any = await conexion.query(
+            'SELECT id_expediente, tratamiento FROM consultafisica WHERE id_consulta = ? LIMIT 1',
+            [id_consulta]
+        )
+        const exp = consultaFirmada[0]
+        if (exp?.id_expediente && exp?.tratamiento) {
+            await conexion.query(
+                'UPDATE expediente SET medicamentos_actuales = ? WHERE id_expediente = ?',
+                [exp.tratamiento, exp.id_expediente]
+            )
+        }
 
         return { mensaje: 'Consulta fisica firmada correctamente' };
 

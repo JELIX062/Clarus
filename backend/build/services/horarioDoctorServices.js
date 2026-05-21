@@ -40,6 +40,33 @@ export const registraHorario = async (nuevo) => {
         if (!validacion.success) {
             return { error: validacion.error };
         }
+        // Verifica que el consultorio no esté ocupado en ese día y horario por otro doctor
+        const [conflicto] = await conexion.query(`
+            SELECT id_horario FROM horariodoctor
+            WHERE id_consultorio = ?
+                AND dia_semana     = ?
+                AND activo         = 1
+                AND id_doctor     != ?
+                AND hora_inicio    < ?
+                AND hora_fin       > ?
+            LIMIT 1
+        `, [nuevo.id_consultorio, nuevo.dia_semana, nuevo.id_doctor, nuevo.hora_fin, nuevo.hora_inicio]);
+        if (conflicto.length > 0) {
+            return { error: 'El consultorio ya está ocupado por otro doctor en ese día y horario.' };
+        }
+        // Verifica que el mismo doctor no tenga ya ese horario en otro consultorio el mismo día
+        const [conflictoDoctor] = await conexion.query(`
+            SELECT id_horario FROM horariodoctor
+            WHERE id_doctor    = ?
+                AND dia_semana   = ?
+                AND activo       = 1
+                AND hora_inicio  < ?
+                AND hora_fin     > ?
+            LIMIT 1
+        `, [nuevo.id_doctor, nuevo.dia_semana, nuevo.hora_fin, nuevo.hora_inicio]);
+        if (conflictoDoctor.length > 0) {
+            return { error: 'El doctor ya tiene un horario registrado que se traslapa en ese día.' };
+        }
         const [result] = await conexion.query('INSERT INTO horariodoctor(id_doctor, id_consultorio, dia_semana, hora_inicio, hora_fin, activo) values(?,?,?,?,?,?)', [nuevo.id_doctor, nuevo.id_consultorio, nuevo.dia_semana, nuevo.hora_inicio, nuevo.hora_fin, 1]);
         return { mensaje: 'Horario registrado correctamente', id_horario: result.insertId };
     }

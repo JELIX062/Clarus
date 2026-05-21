@@ -79,33 +79,31 @@
 						style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;"
 					/>
 					<input
-						v-else
+						v-else-if="!form.fecha || !form.hora_inicio"
 						value="Se asigna al elegir día y hora"
 						type="text"
 						disabled
 					/>
-				</label>
-
-				<label class="full-width">
-					<span>Duración de la cita</span>
 					<input
-						type="range"
-						v-model="form.duracion"
-						min="30"
-						max="120"
-						step="30"
-						class="form-range mt-1"
+						v-else
+						value="Sin disponibilidad en esta sucursal"
+						type="text"
+						disabled
+						style="background: #fef2f2; color: #991b1b; border-color: #fecaca;"
 					/>
-					<div class="d-flex justify-content-between">
-						<small>30 min</small>
-						<small>1 hora</small>
-						<small>1h 30min</small>
-						<small>2 horas</small>
-					</div>
-					<p class="text-center fw-bold mb-0">{{ form.duracion }} minutos</p>
 				</label>
+			
 			</div>
 
+			<div v-if="consultorioAutoAsignado && doctorSeleccionado" class="horario-info">
+				<p class="horario-titulo">Resumen de la cita</p>
+				<div class="horario-tags">
+					<span class="horario-tag"> Duración: {{ doctorSeleccionado.duracion_consulta }} minutos</span>
+					<span class="horario-tag" v-if="form.hora_inicio">
+						Termina a las {{ horaFin.slice(0, 5) }}
+					</span>
+				</div>
+			</div>
 
 			<div class="field-row">
 				<label>
@@ -303,6 +301,7 @@ type Doctor = {
 	apellido_paterno: string       
 	especialidad:    string
 	tarifa_consulta: number
+	duracion_consulta: number
     sucursales:         number[]
 }
 
@@ -377,16 +376,21 @@ const seleccionarPaciente = (p: any) => {
 
 // Autoasigna el consultorio según el día y hora seleccionados
 const consultorioAutoAsignado = computed(() => {
-    if (!form.fecha || !form.hora_inicio || !horarios.value.length) return null
+    if (!form.fecha || !form.hora_inicio || !horarios.value.length || !form.id_sucursal) return null
 
-    const diaSemana = new Date(`${form.fecha}T00:00:00`).getDay()
+    const diaSemana        = new Date(`${form.fecha}T00:00:00`).getDay()
     const horaSeleccionada = `${form.hora_inicio}:00`
 
-    return horarios.value.find(h =>
-        h.dia_semana === diaSemana &&
-        horaSeleccionada >= h.hora_inicio &&
-        horaSeleccionada < h.hora_fin
-    ) ?? null
+    return horarios.value.find(h => {
+        if (Number(h.dia_semana) !== diaSemana)       return false
+        if (horaSeleccionada < h.hora_inicio)         return false
+        if (horaSeleccionada >= h.hora_fin)           return false
+
+        const consultorio = consultorios.value.find(
+            c => Number(c.id_consultorio) === Number(h.id_consultorio)
+        )
+        return Number(consultorio?.id_sucursal) === Number(form.id_sucursal)
+    }) ?? null
 })
 
 onMounted(async () => {
@@ -488,19 +492,8 @@ watch(() => form.id_doctor, async (nuevoId) => {
     } catch { /* silencioso */ }
 })
 
-watch(() => form.id_doctor, async (nuevoId) => {
-	horarios.value = []
-	if (!nuevoId) return
-
-	try {
-		const res  = await fetch(`http://localhost:3001/api/horario/doctor/${nuevoId}`)
-		const data = await res.json()
-		if (Array.isArray(data)) horarios.value = data
-	} catch { /* silencioso */ }
-})
-
 watch(consultorioAutoAsignado, (h) => {
-    form.id_consultorio = h ? String(h.id_consultorio) : ''
+    form.id_consultorio = h ? String(Number(h.id_consultorio)) : ''
 })
 
 // Doctor seleccionado → autocompleta especialidad y costo
@@ -514,10 +507,11 @@ const costoTotal   = computed(() => doctorSeleccionado.value?.tarifa_consulta ??
 // Hora fin = hora inicio + 30 minutos
 const horaFin = computed(() => {
     if (!form.hora_inicio) return ''
-    const partes = form.hora_inicio.split(':')
-    const h = Number(partes[0] ?? 0)
-    const m = Number(partes[1] ?? 0)
-    const fin = new Date(0, 0, 0, h, m + Number(form.duracion))
+    const duracion = doctorSeleccionado.value?.duracion_consulta ?? 30
+    const partes   = form.hora_inicio.split(':')
+    const h        = Number(partes[0] ?? 0)
+    const m        = Number(partes[1] ?? 0)
+    const fin      = new Date(0, 0, 0, h, m + duracion)
     return `${String(fin.getHours()).padStart(2, '0')}:${String(fin.getMinutes()).padStart(2, '0')}:00`
 })
 

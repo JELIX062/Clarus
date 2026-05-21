@@ -50,6 +50,10 @@
                         <span>{{ d.telefono || '–' }}</span>
                     </div>
                     <div class="campo">
+                        <span class="campo-label">Duración consulta</span>
+                        <span>{{ d.duracion_consulta }} min</span>
+                    </div>
+                    <div class="campo">
                         <span class="campo-label">Sucursales</span>
                         <span>{{ (d.sucursales ?? []).map((id: number) => nombreSucursal(id)).join(', ') || '–' }}</span>
                     </div>
@@ -124,6 +128,16 @@
                             </label>
                         </div>
                     </div>
+
+                    <label>
+                        <span>Duración de consulta (min)</span>
+                        <select v-model.number="form.duracion_consulta" class="input">
+                            <option :value="30">30 min</option>
+                            <option :value="60">60 min</option>
+                            <option :value="90">90 min</option>
+                            <option :value="120">120 min</option>
+                        </select>
+                    </label>
                 </div>
 
                 <div v-if="modoEdicion">
@@ -337,6 +351,7 @@ const form = reactive({
     rfc:               '',
     cedula_profesional:'',
     tarifa_consulta:   0,
+    duracion_consulta: 30,
     sucursales:         [] as number[]
 })
 
@@ -371,7 +386,7 @@ const abrirCrear = () => {
     id_doctor: 0, id_usuario: 0, nombre: '', apellido_paterno: '',
     apellido_materno: '', correo: '', telefono: '', contraseña: '',
     especialidad: '', rfc: '', cedula_profesional: '',
-    tarifa_consulta: 0, sucursales: []
+    tarifa_consulta: 0, duracion_consulta: 60, sucursales: []
 })
     modalAbierto.value = true
 }
@@ -392,6 +407,7 @@ const abrirEditar = async (d: any) => {
         rfc:                d.rfc                ?? '',
         cedula_profesional: d.cedula_profesional ?? '',
         tarifa_consulta:    Number(d.tarifa_consulta),
+        duracion_consulta:  Number(d.duracion_consulta) || 60,
         sucursales:         d.sucursales ?? []
     })
     modalAbierto.value = true
@@ -484,6 +500,7 @@ const guardar = async () => {
                 rfc:                form.rfc,
                 cedula_profesional: form.cedula_profesional,
                 tarifa_consulta:    form.tarifa_consulta,
+                duracion_consulta:  form.duracion_consulta, 
                 sucursales:         form.sucursales,
                 ...(form.contraseña ? { contraseña: form.contraseña } : {})
             }

@@ -57,18 +57,19 @@ export type PacienteEditar = Paciente & {
 
 // Interfaz principal del doctor en la base de datos
 export interface Doctor {
-    id_doctor: number;
-    id_usuario: number;
-    nombre: string;
-    apellido_paterno: string;
-    apellido_materno?: string | null;
-    correo: string;
-    telefono?: string | null;
-    especialidad: string;
-    rfc: string;
-    cedula_profesional: string;
-    tarifa_consulta: number;
-    sucursales: number[]; 
+    id_doctor:          number
+    id_usuario:         number
+    nombre:             string
+    apellido_paterno:   string
+    apellido_materno?:  string | null
+    correo:             string
+    telefono?:          string | null
+    especialidad:       string
+    rfc:                string
+    cedula_profesional: string
+    tarifa_consulta:    number
+    duracion_consulta:  number   // ← nuevo
+    sucursales:         number[]
 }
 
 

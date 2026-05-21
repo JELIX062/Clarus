@@ -144,6 +144,9 @@
                             <strong>✓ Aplica reembolso</strong><br>
                             El doctor cancela la cita, se devolverá el 100% del anticipo pagado.
                         </div>
+                        <div v-if="errorCancelacion" class="alert alert-danger mt-2">
+                            {{ errorCancelacion }}
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -262,9 +265,10 @@ const tagClass = (estado: string) => ({
 })
 
 const citaHaEmpezado = (appointment: any): boolean => {
-    const ahora      = new Date()
-    const inicioCita = new Date(`${appointment.date}T${appointment.time}:00`)
-    return ahora >= inicioCita
+    if (!appointment?.date) return false
+    const ahora     = new Date()
+    const fechaCita = new Date(`${appointment.date}T00:00:00`)
+    return ahora >= fechaCita
 }
 
 const marcarEnCurso = async (id_cita: number) => {
@@ -310,24 +314,33 @@ const motivoCancelacion = ref('')
 const citaACancelar     = ref<number | null>(null)
 const aplicaReembolso   = ref(false)
 const mensajeReembolso  = ref('')
+const errorCancelacion = ref('')
 
 const handleCancelar = (id: number) => {
     citaACancelar.value     = id
     motivoCancelacion.value = ''
+    errorCancelacion.value  = ''
     aplicaReembolso.value   = true
     mensajeReembolso.value  = 'Se realizará el reembolso del anticipo pagado por el paciente.'
     new Modal(document.getElementById('modalCancelarDoctor')!).show()
 }
 
+
+
 const confirmarCancelacion = async () => {
-    if (!motivoCancelacion.value.trim() || !citaACancelar.value) return
+    errorCancelacion.value = ''
+    if (!motivoCancelacion.value.trim()) {
+        errorCancelacion.value = 'Debes escribir el motivo de cancelación.'
+        return
+    }
+    if (!citaACancelar.value) return
 
     await fetch(`${API}/cita/cancelar-doctor`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            id_cita:      citaACancelar.value,
-            motivo:       motivoCancelacion.value,
+            id_cita:       citaACancelar.value,
+            motivo:        motivoCancelacion.value,
             cancelado_por: usuarioActual.value?.id_usuario as number ?? 0
         })
     })

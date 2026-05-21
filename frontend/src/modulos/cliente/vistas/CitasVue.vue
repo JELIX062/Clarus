@@ -131,6 +131,9 @@
                                 <strong>{{ aplicaReembolso ? '✓ Aplica reembolso' : '✗ No aplica reembolso' }}</strong><br>
                                 {{ mensajeReembolso }}
                             </div>
+                            <div v-if="errorCancelacion" class="alert alert-danger mb-2">
+                                {{ errorCancelacion }}
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -156,6 +159,7 @@ import { Modal } from 'bootstrap'
 
 const motivoCancelacion = ref('')
 const citaACancelar = ref<number | null>(null)
+const errorCancelacion = ref('')
 
 const { appointments, fetchCitasPaciente, cancelarCita } = useCitas()
 const { rolUsuario, usuarioActual } = useSesion()
@@ -166,6 +170,7 @@ const mensajeReembolso = ref('')
 const handleCancelar = (id: number) => {
     citaACancelar.value     = id
     motivoCancelacion.value = ''
+    errorCancelacion.value  = ''
 
     // Busca la cita para saber su fecha
     const cita = appointments.value.find(a => a.id === id)
@@ -188,7 +193,11 @@ const handleCancelar = (id: number) => {
 }
 
 const confirmarCancelacion = async () => {
-    if (!motivoCancelacion.value.trim()) return
+    errorCancelacion.value = ''
+    if (!motivoCancelacion.value.trim()) {
+        errorCancelacion.value = 'Debes escribir el motivo de cancelación.'
+        return
+    }
     if (!citaACancelar.value) return
 
     await cancelarCita(citaACancelar.value, motivoCancelacion.value, usuarioActual.value?.id_usuario as number ?? 0)

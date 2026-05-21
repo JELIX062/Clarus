@@ -17,19 +17,21 @@ router.get('/:id_doctor', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
     try {
         const { nombre, apellido_paterno, apellido_materno, correo, telefono, contraseña,
-                sucursales, especialidad, rfc, cedula_profesional, tarifa_consulta } = req.body;
+        sucursales, especialidad, rfc, cedula_profesional, tarifa_consulta,
+        duracion_consulta } = req.body;
         const resultado = await doctorServices.registraDoctor({
-            nombre, 
-            apellido_paterno, 
-            apellido_materno, 
-            correo, 
-            telefono, 
+            nombre,
+            apellido_paterno,
+            apellido_materno,
+            correo,
+            telefono,
             contraseña,
-            sucursales, 
-            especialidad, 
-            rfc, 
-            cedula_profesional, 
+            sucursales,
+            especialidad,
+            rfc,
+            cedula_profesional,
             tarifa_consulta,
+            duracion_consulta,
             id_usuario: 0
         });
         res.send(resultado);
@@ -41,20 +43,22 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/', async (req: Request, res: Response) => {
     try {
         const { id_doctor, id_usuario, nombre, apellido_paterno, apellido_materno, correo,
-                telefono, contraseña, especialidad, rfc, cedula_profesional, tarifa_consulta,
-                sucursales } = req.body;
+        telefono, contraseña, especialidad, rfc, cedula_profesional, tarifa_consulta,
+        duracion_consulta, sucursales } = req.body;
         const resultado = await doctorServices.editaDoctor({
-            id_doctor, 
+            id_doctor,
             id_usuario,
-            nombre, 
-            apellido_paterno, 
-            apellido_materno, 
+            nombre,
+            apellido_paterno,
+            apellido_materno,
             correo,
-            telefono, contraseña, 
-            especialidad, 
-            rfc, 
+            telefono,
+            contraseña,
+            especialidad,
+            rfc,
             cedula_profesional,
             tarifa_consulta,
+            duracion_consulta,
             sucursales
         });
         res.send(resultado);

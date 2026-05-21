@@ -51,7 +51,7 @@ export const registraDoctor = async (nuevo) => {
         const hash = await bcrypt.hash(nuevo.contraseña, 10);
         const [result] = await conexion.query('INSERT INTO usuario(id_rol, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena_hash) VALUES(?,?,?,?,?,?,?)', [2, nuevo.nombre, nuevo.apellido_paterno, nuevo.apellido_materno ?? null, nuevo.correo, nuevo.telefono ?? null, hash]);
         const id_usuario = result.insertId;
-        const [doctor] = await conexion.query('INSERT INTO doctor(id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta) VALUES(?,?,?,?,?)', [id_usuario, nuevo.especialidad, nuevo.rfc, nuevo.cedula_profesional, nuevo.tarifa_consulta]);
+        const [doctor] = await conexion.query('INSERT INTO doctor(id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta, duracion_consulta) VALUES(?,?,?,?,?,?)', [id_usuario, nuevo.especialidad, nuevo.rfc, nuevo.cedula_profesional, nuevo.tarifa_consulta, nuevo.duracion_consulta]);
         const id_doctor = doctor.insertId;
         // Inserta relaciones con sucursales
         for (const id_sucursal of nuevo.sucursales) {
@@ -73,7 +73,7 @@ export const editaDoctor = async (datos) => {
         if (existe.length === 0)
             return { error: 'No se encuentra el doctor' };
         await conexion.query(`UPDATE usuario SET nombre=?, apellido_paterno=?, apellido_materno=?, correo=?, telefono=? WHERE id_usuario=?`, [datos.nombre, datos.apellido_paterno, datos.apellido_materno, datos.correo, datos.telefono, datos.id_usuario]);
-        await conexion.query(`UPDATE doctor SET especialidad=?, rfc=?, cedula_profesional=?, tarifa_consulta=? WHERE id_doctor=?`, [datos.especialidad, datos.rfc, datos.cedula_profesional, datos.tarifa_consulta, datos.id_doctor]);
+        await conexion.query(`UPDATE doctor SET especialidad=?, rfc=?, cedula_profesional=?, tarifa_consulta=?, duracion_consulta=? WHERE id_doctor=?`, [datos.especialidad, datos.rfc, datos.cedula_profesional, datos.tarifa_consulta, datos.duracion_consulta, datos.id_doctor]);
         // Actualiza las sucursales: borra las anteriores e inserta las nuevas
         await conexion.query('DELETE FROM doctor_sucursal WHERE id_doctor = ?', [datos.id_doctor]);
         for (const id_sucursal of datos.sucursales) {
