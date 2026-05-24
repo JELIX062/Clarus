@@ -49,12 +49,17 @@
 			</div>
 			<div v-if="horarios.length > 0" class="horario-info">
 				<p class="horario-titulo">Horario de atención</p>
-				<div class="horario-tags">
-					<span v-for="h in horarios" :key="h.id_horario" class="horario-tag">
-						{{ diasSemana[h.dia_semana] }}
-						{{ formatHora(h.hora_inicio) }} – {{ formatHora(h.hora_fin) }}
-						· Consultorio {{ h.numero_consultorio }}
-					</span>
+				<div v-for="grupo in horariosPorSucursal" :key="grupo.nombre" style="margin-bottom: 0.5rem;">
+					<p style="font-size: 0.82rem; font-weight: 700; color: #166534; margin: 0 0 0.3rem;">
+						{{ grupo.nombre }}
+					</p>
+					<div class="horario-tags">
+						<span v-for="h in grupo.horarios" :key="h.id_horario" class="horario-tag">
+							{{ diasSemana[Number(h.dia_semana)] }}
+							{{ formatHora(h.hora_inicio) }} – {{ formatHora(h.hora_fin) }}
+							· Consultorio {{ h.numero_consultorio }}
+						</span>
+					</div>
 				</div>
 			</div>
 
@@ -95,7 +100,20 @@
 			
 			</div>
 
-			<div v-if="consultorioAutoAsignado && doctorSeleccionado" class="horario-info">
+			<div v-if="bloqueoActivo" class="horario-info" style="background: #fef2f2; border-color: #fecaca;">
+				<p class="horario-titulo" style="color: #991b1b;">El doctor tiene un bloqueo en ese horario</p>
+				<div class="horario-tags">
+					<span class="horario-tag" style="background: #fee2e2; color: #991b1b;">
+						{{ bloqueoActivo.fecha_inicio?.split('T')[0] }} – {{ bloqueoActivo.hora_inicio?.slice(0,5) }}  
+						&nbsp;{{ bloqueoActivo.fecha_fin?.split('T')[0] }} – {{ bloqueoActivo.hora_fin?.slice(0,5) }}
+					</span>
+					<span v-if="bloqueoActivo.motivo" class="horario-tag" style="background: #fee2e2; color: #991b1b;">
+						Motivo: {{ bloqueoActivo.motivo }}
+					</span>
+				</div>
+			</div>
+
+			<div v-if="consultorioAutoAsignado && doctorSeleccionado && !bloqueoActivo" class="horario-info">
 				<p class="horario-titulo">Resumen de la cita</p>
 				<div class="horario-tags">
 					<span class="horario-tag"> Duración: {{ doctorSeleccionado.duracion_consulta }} minutos</span>
@@ -143,6 +161,8 @@
 				</label>
 
 			</div>
+
+			
 
 			<!-- PACIENTE -->
 			<div v-if="!esRecepcionista && costoTotal > 0" class="payment-section">
@@ -314,8 +334,9 @@ type Consultorio = {
 }
 
 type Sucursal = {
-	id_sucursal: number
-	nombre:      string
+    id_sucursal: number
+    nombre:      string
+    activa:      number  
 }
 
 type HorarioDoctor = {
@@ -328,10 +349,30 @@ type HorarioDoctor = {
 }
 
 const horarios = ref<HorarioDoctor[]>([])
+const bloqueos = ref<any[]>([])
+
+const horariosPorSucursal = computed(() => {
+    if (!horarios.value.length) return []
+    const grupos = new Map<number, { nombre: string; horarios: any[] }>()
+    for (const h of horarios.value) {
+        const c = consultorios.value.find(c => Number(c.id_consultorio) === Number(h.id_consultorio))
+        if (!c) continue
+        const s = sucursales.value.find(s => s.id_sucursal === c.id_sucursal)
+        if (!s || !s.activa) continue   // ← agrega !s.activa
+        if (!grupos.has(c.id_sucursal)) grupos.set(c.id_sucursal, { nombre: s.nombre, horarios: [] })
+        grupos.get(c.id_sucursal)!.horarios.push(h)
+    }
+    return Array.from(grupos.values())
+})
 
 const diasSemana: Record<number, string> = {
-	1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
-	4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo'
+    0: 'Domingo',
+    1: 'Lunes',
+    2: 'Martes',
+    3: 'Miércoles',
+    4: 'Jueves',
+    5: 'Viernes',
+    6: 'Sábado'
 }
 
 const formatHora = (hora: string) => hora.slice(0, 5)
@@ -458,10 +499,18 @@ const doctoresFiltrados = computed(() =>
 
 // Sucursales del doctor seleccionado
 const sucursalesDoctor = computed(() => {
-    if (!form.id_doctor) return []
-    const doctor = doctores.value.find(d => d.id_doctor === Number(form.id_doctor))
-    if (!doctor) return []
-    return sucursales.value.filter(s => doctor.sucursales.includes(s.id_sucursal))
+    if (!form.id_doctor || !horarios.value.length) return []
+
+    const idsConHorario = new Set(
+        horarios.value
+            .map(h => {
+                const c = consultorios.value.find(c => Number(c.id_consultorio) === Number(h.id_consultorio))
+                return c?.id_sucursal
+            })
+            .filter(Boolean)
+    )
+
+    return sucursales.value.filter(s => idsConHorario.has(s.id_sucursal) && s.activa)
 })
 
 // Al cambiar especialidad, resetea doctor y sucursal
@@ -494,6 +543,47 @@ watch(() => form.id_doctor, async (nuevoId) => {
 
 watch(consultorioAutoAsignado, (h) => {
     form.id_consultorio = h ? String(Number(h.id_consultorio)) : ''
+})
+
+watch(() => form.id_doctor, async (nuevoId) => {
+    horarios.value      = []
+    bloqueos.value      = []
+    form.id_sucursal    = ''
+    form.id_consultorio = ''
+    if (!nuevoId) return
+
+    const doctor = doctores.value.find(d => d.id_doctor === Number(nuevoId))
+    if (doctor?.sucursales?.length === 1) {
+        form.id_sucursal = String(doctor.sucursales[0])
+    }
+
+    try {
+        const [resHorarios, resBloqueos] = await Promise.all([
+            fetch(`http://localhost:3001/api/horario/doctor/${nuevoId}`),
+            fetch(`http://localhost:3001/api/bloqueo/doctor/${nuevoId}`)
+        ])
+        const dataHorarios = await resHorarios.json()
+        const dataBloqueos = await resBloqueos.json()
+        if (Array.isArray(dataHorarios)) horarios.value = dataHorarios
+        if (Array.isArray(dataBloqueos)) bloqueos.value = dataBloqueos
+    } catch { /* silencioso */ }
+})
+
+const bloqueoActivo = computed(() => {
+    if (!form.fecha || !form.hora_inicio || !bloqueos.value.length) return null
+
+    const inicioAppt = new Date(`${form.fecha}T${form.hora_inicio}:00`)
+    const finAppt    = new Date(`${form.fecha}T${horaFin.value}`)
+
+    return bloqueos.value.find(b => {
+        const fechaInicioStr = b.fecha_inicio?.split('T')[0] ?? b.fecha_inicio
+        const fechaFinStr    = b.fecha_fin?.split('T')[0]   ?? b.fecha_fin
+        const inicioBloqueo  = new Date(`${fechaInicioStr}T${b.hora_inicio}`)
+        const finBloqueo     = new Date(`${fechaFinStr}T${b.hora_fin}`)
+
+        // Traslape: cita inicia antes de que termine el bloqueo Y cita termina después de que inicia el bloqueo
+        return inicioAppt < finBloqueo && finAppt > inicioBloqueo
+    }) ?? null
 })
 
 // Doctor seleccionado → autocompleta especialidad y costo

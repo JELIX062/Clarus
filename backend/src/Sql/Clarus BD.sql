@@ -191,7 +191,7 @@ CREATE TABLE Cita (
 CREATE TABLE Cancelacion (
     id_cancelacion       INT             NOT NULL AUTO_INCREMENT,
     id_cita              INT             NOT NULL,
-    cancelado_por        INT             NOT NULL,
+    cancelado_por        INT             NULL,
     motivo               VARCHAR(500)    NULL,
     fecha_cancelacion    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     aplica_reembolso     TINYINT(1)      NOT NULL DEFAULT 0,

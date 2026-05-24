@@ -2,6 +2,8 @@ import conexion from '../database/conexion.js';
 import type { DoctorNuevo, DoctorEditar } from './typesUsuarios.js';
 import bcrypt from 'bcrypt';
 import { doctorSchema, editarDoctorSchema } from '../schemas/usuarioSchema.js';
+import * as notificacionServices from './notificacionServices.js';
+
 
 export const obtieneDoctores = async () => {
     try {
@@ -138,23 +140,65 @@ export const editaDoctor = async (datos: DoctorEditar) => {
 export const borrarDoctor = async (id_doctor: number) => {
     try {
         const [doctor]: any = await conexion.query(
-            'SELECT id_usuario FROM doctor WHERE id_doctor = ? LIMIT 1', [id_doctor]
+            'SELECT id_usuario FROM doctor WHERE id_doctor = ? LIMIT 1',
+            [id_doctor]
         );
         if (doctor.length === 0) return { error: 'No se encuentra el doctor' };
 
         const id_usuario = doctor[0].id_usuario;
 
-        const [citasActivas]: any = await conexion.query(
-            "SELECT id_cita FROM cita WHERE id_doctor = ? AND estado = 'Programada' LIMIT 1", [id_doctor]
-        );
-        if (citasActivas.length > 0) return { error: 'No se puede eliminar el doctor porque tiene citas programadas activas' };
+        // Cancela citas futuras programadas y devuelve anticipo
+        const [citasFuturas]: any = await conexion.query(
+            `SELECT c.id_cita, c.fecha, c.hora_inicio, p.id_usuario AS id_usuario_paciente
+             FROM cita c
+             INNER JOIN paciente p ON c.id_paciente = p.id_paciente
+             WHERE c.id_doctor = ? AND c.estado = 'Programada' AND c.fecha >= CURDATE()`,
+            [id_doctor]
+        )
+        for (const cita of citasFuturas) {
+            await conexion.query(
+                "UPDATE cita SET estado = 'Cancelada' WHERE id_cita = ?",
+                [cita.id_cita]
+            )
+            await conexion.query(
+                `INSERT INTO cancelacion(id_cita, cancelado_por, motivo, aplica_reembolso, porcentaje_reembolso)
+                 VALUES(?, ?, 'Doctor eliminado del sistema', 1, 100.00)`,
+                [cita.id_cita, id_usuario]
+            )
 
-        await conexion.query(`UPDATE cita SET estado = 'Cancelada' WHERE id_doctor = ? AND estado IN ('Programada', 'En curso')`, [id_doctor]);
+            // Devuelve el anticipo al saldo del paciente
+            const [anticipo]: any = await conexion.query(
+                `SELECT monto FROM pago WHERE id_cita = ? AND tipo_pago = 'Anticipo' AND estado = 'Completado' LIMIT 1`,
+                [cita.id_cita]
+            )
+            if (anticipo.length > 0) {
+                await conexion.query(
+                    'UPDATE paciente SET saldo_pendiente = saldo_pendiente + ? WHERE id_usuario = ?',
+                    [anticipo[0].monto, cita.id_usuario_paciente]
+                )
+            }
+
+            const fechaStr = typeof cita.fecha === 'string'
+                ? cita.fecha.split('T')[0]
+                : cita.fecha.toISOString().split('T')[0]
+            await notificacionServices.creaNotificacion({
+                id_usuario: cita.id_usuario_paciente,
+                titulo:     'Cita cancelada',
+                mensaje:    `Tu cita del ${fechaStr} a las ${String(cita.hora_inicio).slice(0,5)} fue cancelada porque el doctor fue dado de baja. Se devolverá el 100% de tu anticipo.`
+            })
+        }
+
+
+        // Luego limpia las demás referencias
+        await conexion.query('DELETE FROM bloqueohorario WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('UPDATE cita SET id_doctor = NULL WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('UPDATE expediente SET id_doctor = NULL WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('UPDATE consultafisica SET id_doctor = NULL WHERE id_doctor = ?', [id_doctor]);
+        await conexion.query('UPDATE cita SET registrado_por = NULL WHERE registrado_por = ?', [id_usuario]);
+        await conexion.query('UPDATE pago SET registrado_por = NULL WHERE registrado_por = ?', [id_usuario]);
+        await conexion.query('UPDATE cancelacion SET cancelado_por = NULL WHERE cancelado_por = ?', [id_usuario]);
+        await conexion.query('DELETE FROM notificacion WHERE id_usuario = ?', [id_usuario]);
         await conexion.query('DELETE FROM horariodoctor WHERE id_doctor = ?', [id_doctor]);
-        await conexion.query('DELETE FROM bloqueohorario WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('DELETE FROM doctor_sucursal WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('DELETE FROM doctor WHERE id_doctor = ?', [id_doctor]);
         await conexion.query('DELETE FROM usuario WHERE id_usuario = ?', [id_usuario]);
@@ -164,4 +208,4 @@ export const borrarDoctor = async (id_doctor: number) => {
         console.log('ERROR EN BD:', err);
         return { error: 'No se puede borrar el doctor' };
     }
-};
+}

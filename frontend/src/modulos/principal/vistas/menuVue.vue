@@ -42,8 +42,8 @@
                 <span v-if="rolUsuario === 'paciente'" class="saldo-badge">
                     Saldo: ${{ Number(usuarioActual?.saldo_pendiente ?? 0).toFixed(2) }}
                 </span>
-                <!-- Notificaciones solo para paciente -->
-                <li v-if="rolUsuario === 'paciente'" class="nav_item margin position-relative">
+                <!-- Notificaciones para paciente y doctor -->
+                <li v-if="rolUsuario === 'paciente' || rolUsuario === 'doctor'" class="nav_item margin position-relative">
                     <button
                         class="btn-notif"
                         type="button"

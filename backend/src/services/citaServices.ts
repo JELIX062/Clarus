@@ -227,17 +227,41 @@ export const registraCita = async (nuevo: CitaNuevo & { metodo_pago: string; ref
             )
         }
 
-        // Registra el anticipo
-        const [pago]: any = await conexion.query(
-            'INSERT INTO pago(id_cita, metodo_pago, tipo_pago, monto, referencia, registrado_por, estado) values(?,?,?,?,?,?,?)',
-            [id_cita, nuevo.metodo_pago, 'Anticipo', montoAnticipo, nuevo.referencia ?? null, nuevo.registrado_por, 'Completado']
-        );
         // Notificacion al paciente
         await notificacionServices.creaNotificacion({
             id_usuario: (await conexion.query('SELECT id_usuario FROM paciente WHERE id_paciente = ?', [nuevo.id_paciente]) as any)[0][0].id_usuario,
             titulo: 'Cita confirmada',
             mensaje: `Tu cita para el ${nuevo.fecha} a las ${nuevo.hora_inicio} ha sido confirmada`
         });
+
+        // Registra el anticipo
+        const [pago]: any = await conexion.query(
+            'INSERT INTO pago(id_cita, metodo_pago, tipo_pago, monto, referencia, registrado_por, estado) values(?,?,?,?,?,?,?)',
+            [id_cita, nuevo.metodo_pago, 'Anticipo', montoAnticipo, nuevo.referencia ?? null, nuevo.registrado_por, 'Completado']
+        );
+
+        // Notificación al doctor
+        const [doctorInfo]: any = await conexion.query(
+            `SELECT u.id_usuario, u.nombre, u.apellido_paterno,
+                    c.fecha, c.hora_inicio
+            FROM doctor d
+            INNER JOIN usuario u ON d.id_usuario = u.id_usuario
+            INNER JOIN cita c ON c.id_cita = ?
+            WHERE d.id_doctor = c.id_doctor LIMIT 1`,
+            [result.insertId]
+        )
+        if (doctorInfo.length > 0) {
+            const d       = doctorInfo[0]
+            const fechaStr = typeof d.fecha === 'string'
+                ? d.fecha.split('T')[0]
+                : d.fecha.toISOString().split('T')[0]
+            await notificacionServices.creaNotificacion({
+                id_usuario: d.id_usuario,
+                titulo:     'Nueva cita agendada',
+                mensaje:    `Tienes una nueva cita el ${fechaStr} a las ${String(d.hora_inicio).slice(0,5)}.`
+            })
+        }
+
         return {
             mensaje: 'Cita registrada y anticipo pagado correctamente',
             id_cita,
@@ -323,6 +347,19 @@ export const cancelaCita = async (id_cita: number, motivo: string, cancelado_por
             [id_cita, cancelado_por, motivo, aplicaReembolso, aplicaReembolso ? 100.00 : 0.00]
         );
 
+        // Notificacion al paciente
+        const [pacienteCita]: any = await conexion.query(
+            'SELECT p.id_usuario FROM paciente p INNER JOIN cita c ON p.id_paciente = c.id_paciente WHERE c.id_cita = ?',
+            [id_cita]
+        );
+        await notificacionServices.creaNotificacion({
+            id_usuario: pacienteCita[0].id_usuario,
+            titulo: 'Cita cancelada',
+            mensaje: aplicaReembolso
+                ? `Tu cita ha sido cancelada. Motivo: ${motivo}. Se procesará el reembolso del 100% de tu anticipo.`
+                : `Tu cita ha sido cancelada. Motivo: ${motivo}. No aplica reembolso por cancelación con menos de 24 horas.`
+        });
+
         // Si aplica reembolso, suma el anticipo al saldo del paciente
         if (aplicaReembolso) {
             const [anticipo]: any = await conexion.query(
@@ -343,18 +380,24 @@ export const cancelaCita = async (id_cita: number, motivo: string, cancelado_por
             }
         }
 
-        // Notificacion al paciente
-        const [pacienteCita]: any = await conexion.query(
-            'SELECT p.id_usuario FROM paciente p INNER JOIN cita c ON p.id_paciente = c.id_paciente WHERE c.id_cita = ?',
+        // Notificación al doctor
+        const [doctorCita]: any = await conexion.query(
+            `SELECT u.id_usuario FROM doctor d
+            INNER JOIN usuario u ON d.id_usuario = u.id_usuario
+            INNER JOIN cita c ON c.id_doctor = d.id_doctor
+            WHERE c.id_cita = ? LIMIT 1`,
             [id_cita]
-        );
-        await notificacionServices.creaNotificacion({
-            id_usuario: pacienteCita[0].id_usuario,
-            titulo: 'Cita cancelada',
-            mensaje: aplicaReembolso
-                ? `Tu cita ha sido cancelada. Se procesará el reembolso del 100% de tu anticipo`
-                : `Tu cita ha sido cancelada. No aplica reembolso por cancelación con menos de 24 horas`
-        });
+        )
+        if (doctorCita.length > 0) {
+            const fechaStr = typeof existe[0].fecha === 'string'
+                ? existe[0].fecha.split('T')[0]
+                : existe[0].fecha.toISOString().split('T')[0]
+            await notificacionServices.creaNotificacion({
+                id_usuario: doctorCita[0].id_usuario,
+                titulo:     'Cita cancelada por el paciente',
+                mensaje:    `Una cita del ${fechaStr} a las ${String(existe[0].hora_inicio).slice(0,5)} ha sido cancelada por el paciente. Motivo: ${motivo}.`
+            })
+        }   
 
         return {
             mensaje: 'Cita cancelada correctamente',
@@ -400,6 +443,29 @@ export const cancelaCitaDoctor = async (id_cita: number, motivo: string, cancela
             "SELECT monto FROM pago WHERE id_cita = ? AND tipo_pago = 'Anticipo' AND estado = 'Completado' LIMIT 1",
             [id_cita]
         )
+
+        // Notificacion al paciente
+        const [pacienteCita]: any = await conexion.query(
+            `SELECT p.id_usuario, u.nombre, u.apellido_paterno,
+                c.fecha, c.hora_inicio
+            FROM paciente p
+            INNER JOIN cita c ON p.id_paciente = c.id_paciente
+            INNER JOIN usuario u ON p.id_usuario = u.id_usuario
+            WHERE c.id_cita = ? LIMIT 1`,
+            [id_cita]
+        )
+        if (pacienteCita.length > 0) {
+            const p       = pacienteCita[0]
+            const fechaStr = typeof p.fecha === 'string'
+                ? p.fecha.split('T')[0]
+                : p.fecha.toISOString().split('T')[0]
+            await notificacionServices.creaNotificacion({
+                id_usuario: p.id_usuario,
+                titulo:     'Tu cita fue cancelada por el doctor',
+                mensaje:    `Tu cita del ${fechaStr} a las ${String(p.hora_inicio).slice(0,5)} ha sido cancelada por el médico. Motivo: ${motivo}. Se devolverá el 100% de tu anticipo a tu saldo.`
+            });
+        }
+
         if (anticipo.length > 0) {
             const [pacienteInfo]: any = await conexion.query(
                 'SELECT id_paciente FROM cita WHERE id_cita = ? LIMIT 1',
@@ -412,6 +478,8 @@ export const cancelaCitaDoctor = async (id_cita: number, motivo: string, cancela
                 )
             }
         }
+
+        
 
         return {
             mensaje: 'Cita cancelada correctamente',

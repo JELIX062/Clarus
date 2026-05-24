@@ -284,7 +284,7 @@ export const editarHorarioDoctorSchema = z.object({
 export const cancelarCitaSchema = z.object({
     id_cita: z.number().int().positive(),
     motivo: z.string().min(2).max(500),
-    cancelado_por: z.number().int().positive()
+    cancelado_por: z.number().int().positive().nullable()
 });
 // Cambiar Contraseña
 export const cambiarContrasenaSchema = z.object({

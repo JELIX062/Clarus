@@ -180,7 +180,7 @@
                             <select v-model="nuevoHorario.id_consultorio" class="input">
                                 <option disabled :value="0">Selecciona</option>
                                 <option v-for="c in consultorios" :key="c.id_consultorio" :value="c.id_consultorio">
-                                    Consultorio {{ c.numero }}
+                                    {{ nombreSucursal(c.id_sucursal) }} · Consultorio {{ c.numero }}
                                 </option>
                             </select>
                         </label>

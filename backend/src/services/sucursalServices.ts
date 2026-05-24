@@ -1,6 +1,8 @@
 import conexion from '../database/conexion.js';
 import type { Sucursal, SucursalNuevo } from './typesUsuarios.js';
 import { sucursalSchema,editarSucursalSchema } from '../schemas/usuarioSchema.js';
+import * as notificacionServices from './notificacionServices.js';
+
 
 
 export const obtieneSucursales = async () => {
@@ -82,15 +84,78 @@ export const editaSucursal = async (datos: Sucursal) => {
     }
 }
 
+
 export const borrarSucursal = async (id_sucursal: number) => {
     try {
         const [existe]: any = await conexion.query(
-            'SELECT id_sucursal FROM sucursal WHERE id_sucursal = ? LIMIT 1',
+            'SELECT id_sucursal, nombre FROM sucursal WHERE id_sucursal = ? LIMIT 1',
             [id_sucursal]
         );
         if (existe.length === 0) return { error: 'No se encuentra la sucursal' };
 
-        // Quitar al doctor de esta sucursal en doctor_sucursal
+        const nombreSucursal = existe[0].nombre;
+
+        // Obtiene citas futuras programadas en esta sucursal para cancelarlas
+        const [citasFuturas]: any = await conexion.query(`
+            SELECT c.id_cita, c.fecha, c.hora_inicio, c.registrado_por,
+                p.id_usuario AS id_usuario_paciente,
+                d.id_usuario AS id_usuario_doctor
+            FROM cita c
+            INNER JOIN consultorio co ON c.id_consultorio = co.id_consultorio
+            INNER JOIN paciente p     ON c.id_paciente    = p.id_paciente
+            LEFT  JOIN doctor d       ON c.id_doctor      = d.id_doctor
+            WHERE co.id_sucursal = ?
+                AND c.estado       = 'Programada'
+                AND c.fecha        >= CURDATE()
+        `, [id_sucursal]);
+
+        // Cancela las citas futuras e inserta cancelaciones y notificaciones
+        for (const cita of citasFuturas) {
+            await conexion.query(
+                "UPDATE cita SET estado = 'Cancelada' WHERE id_cita = ?",
+                [cita.id_cita]
+            );
+
+            await conexion.query(
+                `INSERT INTO cancelacion(id_cita, cancelado_por, motivo, aplica_reembolso, porcentaje_reembolso)
+                VALUES(?, ?, ?, 1, 100.00)`,
+                [cita.id_cita, cita.registrado_por, `Sucursal ${nombreSucursal} eliminada`]
+            );
+
+            // Devuelve el anticipo al saldo del paciente
+            const [anticipo]: any = await conexion.query(
+                `SELECT monto FROM pago WHERE id_cita = ? AND tipo_pago = 'Anticipo' AND estado = 'Completado' LIMIT 1`,
+                [cita.id_cita]
+            )
+            if (anticipo.length > 0) {
+                await conexion.query(
+                    'UPDATE paciente SET saldo_pendiente = saldo_pendiente + ? WHERE id_usuario = ?',
+                    [anticipo[0].monto, cita.id_usuario_paciente]
+                )
+            }
+
+            const fechaStr = typeof cita.fecha === 'string'
+                ? cita.fecha.split('T')[0]
+                : cita.fecha.toISOString().split('T')[0];
+            const horaStr  = String(cita.hora_inicio).slice(0, 5);
+            const mensaje  = `Tu cita del ${fechaStr} a las ${horaStr} fue cancelada porque la sucursal ${nombreSucursal} fue eliminada. Se devolverá el 100% de tu anticipo.`;
+
+            await notificacionServices.creaNotificacion({
+                id_usuario: cita.id_usuario_paciente,
+                titulo:     'Cita cancelada por cierre de sucursal',
+                mensaje
+            });
+
+            if (cita.id_usuario_doctor) {
+                await notificacionServices.creaNotificacion({
+                    id_usuario: cita.id_usuario_doctor,
+                    titulo:     'Cita cancelada por cierre de sucursal',
+                    mensaje:    `La cita del ${fechaStr} a las ${horaStr} fue cancelada porque la sucursal ${nombreSucursal} fue eliminada.`
+                });
+            }
+        }
+
+        // Quita la sucursal de doctor_sucursal
         await conexion.query('DELETE FROM doctor_sucursal WHERE id_sucursal = ?', [id_sucursal]);
         await conexion.query('UPDATE recepcionista SET id_sucursal = NULL WHERE id_sucursal = ?', [id_sucursal]);
         await conexion.query('UPDATE cita SET id_consultorio = NULL WHERE id_consultorio IN (SELECT id_consultorio FROM consultorio WHERE id_sucursal = ?)', [id_sucursal]);
