@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSesion } from '../controladores/useSesion'
 
@@ -157,6 +157,8 @@ const marcarTodasLeidas = async () => {
 }
 
 onMounted(cargarNotificaciones)
+const intervalo = setInterval(cargarNotificaciones, 30000)
+onUnmounted(() => clearInterval(intervalo))
 </script>
 
 <style scoped>

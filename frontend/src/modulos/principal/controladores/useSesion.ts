@@ -58,6 +58,17 @@ const setRolUsuario = (rol: RolUsuario) => {
     }
 }
 
+const refreshUsuario = async () => {
+    if (!usuarioActual.value?.id_usuario) return
+    try {
+        const res  = await fetch(`http://localhost:3001/api/usuario/sesion/${usuarioActual.value.id_usuario}`)
+        const data = await res.json()
+        if (data && !data.error) {
+            setUsuario(data)
+        }
+    } catch { /* silencioso */ }
+}
+
 const cerrarSesion = () => {
     rolUsuario.value = 'paciente'
     usuarioActual.value = null
@@ -79,4 +90,5 @@ export const useSesion = () => ({
     setUsuario,
     setRolUsuario,
     cerrarSesion,
+    refreshUsuario, 
 })

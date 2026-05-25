@@ -26,4 +26,8 @@ router.post('/login', async (req, res) => {
         res.status(400).send({ error: 'Error al iniciar sesión' });
     }
 });
+router.get('/sesion/:id_usuario', async (req, res) => {
+    const datos = await usuarioServices.obtieneDatosSesion(Number(req.params.id_usuario));
+    res.send(datos);
+});
 export default router;

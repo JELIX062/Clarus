@@ -329,9 +329,10 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter,useRoute } from 'vue-router'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 
+
 const router   = useRouter()
 const route = useRoute()
-const { usuarioActual, rolUsuario  } = useSesion()
+const { usuarioActual, rolUsuario, refreshUsuario } = useSesion()
 
 // ── Datos del paciente (readonly) ──────────────────────────────
 const nombrePaciente = computed(() => {
@@ -614,53 +615,10 @@ watch(() => form.id_doctor, async (nuevoId) => {
 	}
 })
 
-// Al cambiar doctor, autoselecciona sucursal si solo tiene una
-watch(() => form.id_doctor, async (nuevoId) => {
-    horarios.value      = []
-    form.id_sucursal    = ''
-    form.id_consultorio = ''
-    if (!nuevoId) return
-
-    // Si el doctor solo trabaja en una sucursal, la selecciona automáticamente
-    const doctor = doctores.value.find(d => d.id_doctor === Number(nuevoId))
-    if (doctor?.sucursales?.length === 1) {
-        form.id_sucursal = String(doctor.sucursales[0])
-    }
-
-    try {
-        const res  = await fetch(`http://localhost:3001/api/horario/doctor/${nuevoId}`)
-        const data = await res.json()
-        if (Array.isArray(data)) horarios.value = data
-    } catch { /* silencioso */ }
-})
-
 watch(consultorioAutoAsignado, (h) => {
     form.id_consultorio = h ? String(Number(h.id_consultorio)) : ''
 })
 
-watch(() => form.id_doctor, async (nuevoId) => {
-    horarios.value      = []
-    bloqueos.value      = []
-    form.id_sucursal    = ''
-    form.id_consultorio = ''
-    if (!nuevoId) return
-
-    const doctor = doctores.value.find(d => d.id_doctor === Number(nuevoId))
-    if (doctor?.sucursales?.length === 1) {
-        form.id_sucursal = String(doctor.sucursales[0])
-    }
-
-    try {
-        const [resHorarios, resBloqueos] = await Promise.all([
-            fetch(`http://localhost:3001/api/horario/doctor/${nuevoId}`),
-            fetch(`http://localhost:3001/api/bloqueo/doctor/${nuevoId}`)
-        ])
-        const dataHorarios = await resHorarios.json()
-        const dataBloqueos = await resBloqueos.json()
-        if (Array.isArray(dataHorarios)) horarios.value = dataHorarios
-        if (Array.isArray(dataBloqueos)) bloqueos.value = dataBloqueos
-    } catch { /* silencioso */ }
-})
 
 const bloqueoActivo = computed(() => {
     if (!form.fecha || !form.hora_inicio || !bloqueos.value.length) return null
@@ -791,7 +749,8 @@ const guardarCita = async () => {
         }
 
         exito.value = 'Cita registrada correctamente. Redirigiendo...'
-        setTimeout(() => void router.push({ name: 'citas' }), 1500)
+		await refreshUsuario()
+		setTimeout(() => void router.push({ name: 'citas' }), 1500)
 
     } catch {
         error.value = 'No se pudo conectar con el servidor.'
@@ -799,6 +758,7 @@ const guardarCita = async () => {
         cargando.value = false
     }
 }
+
 </script>
 
 <style scoped>

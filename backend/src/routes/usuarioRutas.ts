@@ -34,4 +34,9 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 });
 
+router.get('/sesion/:id_usuario', async (req: Request, res: Response) => {
+    const datos = await usuarioServices.obtieneDatosSesion(Number(req.params.id_usuario))
+    res.send(datos)
+})
+
 export default router;

@@ -133,8 +133,7 @@ import { computed, reactive, ref, onMounted } from 'vue'
 import { useSesion } from '@/modulos/principal/controladores/useSesion'
 import { RouterLink } from 'vue-router'
 
-const { rolUsuario, usuarioActual } = useSesion()
-
+const { usuarioActual, rolUsuario, refreshUsuario } = useSesion()
 const u = usuarioActual.value
 
 const normalizarSexo = (sexo: string): string => {
@@ -298,6 +297,9 @@ const saveProfile = async () => {
         }
 
         mensaje.value = 'Cambios guardados correctamente.'
+        await refreshUsuario()
+
+        
 
     } catch {
         error.value = 'No se pudo conectar con el servidor.'

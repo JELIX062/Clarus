@@ -96,3 +96,34 @@ export const login = async (correo, contraseña) => {
         return { error: "No se puede iniciar sesión" };
     }
 };
+export const obtieneDatosSesion = async (id_usuario) => {
+    try {
+        const [usuario] = await conexion.query(`SELECT u.*, r.nombre AS nombre_rol FROM usuario u
+             INNER JOIN rol r ON u.id_rol = r.id_rol
+             WHERE u.id_usuario = ? LIMIT 1`, [id_usuario]);
+        if (!usuario.length)
+            return { error: 'No se encuentra el usuario' };
+        const u = usuario[0];
+        // Agrega datos extra según el rol
+        if (u.id_rol === 2) {
+            const [doctor] = await conexion.query('SELECT * FROM doctor WHERE id_usuario = ? LIMIT 1', [id_usuario]);
+            const [sucursales] = await conexion.query(`SELECT ds.id_sucursal FROM doctor_sucursal ds WHERE ds.id_doctor = ?`, [doctor[0]?.id_doctor]);
+            Object.assign(u, doctor[0] ?? {});
+            u.sucursales = sucursales.map((s) => s.id_sucursal);
+        }
+        else if (u.id_rol === 3) {
+            const [recep] = await conexion.query('SELECT * FROM recepcionista WHERE id_usuario = ? LIMIT 1', [id_usuario]);
+            Object.assign(u, recep[0] ?? {});
+        }
+        else if (u.id_rol === 4) {
+            const [paciente] = await conexion.query('SELECT * FROM paciente WHERE id_usuario = ? LIMIT 1', [id_usuario]);
+            Object.assign(u, paciente[0] ?? {});
+        }
+        delete u.contrasena_hash;
+        return u;
+    }
+    catch (err) {
+        console.log('ERROR EN BD:', err);
+        return { error: 'No se puede obtener los datos de sesión' };
+    }
+};
