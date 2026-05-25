@@ -147,19 +147,22 @@ const normalizarFecha = (fecha: string): string => {
 	if (!fecha) return ''
 	return fecha.split('T')[0] ?? ''
 }
-
 const perfil = reactive({
-	nombre:           u?.nombre                                  ?? '',
-	apellido_paterno: u?.apellido_paterno                        ?? '',
-	apellido_materno: (u?.apellido_materno  as string)           ?? '',
-	correo:           u?.correo                                  ?? '',
-	telefono:         (u?.telefono          as string)           ?? '',
-	fecha_nacimiento: normalizarFecha((u?.fecha_nacimiento as string) ?? ''),
-	sexo:             normalizarSexo((u?.sexo              as string) ?? ''),
-	tipo_sangre:      (u?.tipo_sangre       as string)           ?? '',
-	especialidad:     (u?.especialidad      as string)           ?? '',
-	turno:            (u?.turno             as string)           ?? '',
-    nombre_sucursal:  (u?.nombre_sucursal as string) ?? '',
+    nombre:             u?.nombre                                       ?? '',
+    apellido_paterno:   u?.apellido_paterno                             ?? '',
+    apellido_materno:   (u?.apellido_materno    as string)              ?? '',
+    correo:             u?.correo                                       ?? '',
+    telefono:           (u?.telefono            as string)              ?? '',
+    fecha_nacimiento:   normalizarFecha((u?.fecha_nacimiento as string) ?? ''),
+    sexo:               normalizarSexo((u?.sexo              as string) ?? ''),
+    tipo_sangre:        (u?.tipo_sangre         as string)              ?? '',
+    especialidad:       (u?.especialidad        as string)              ?? '',
+    turno:              (u?.turno               as string)              ?? '',
+    nombre_sucursal:    (u?.nombre_sucursal      as string)             ?? '',
+    rfc:                (u?.rfc                  as string)             ?? '',
+    cedula_profesional: (u?.cedula_profesional   as string)             ?? '',
+    tarifa_consulta:    Number(u?.tarifa_consulta   ?? 0),
+    duracion_consulta:  Number(u?.duracion_consulta ?? 30),
 })
 
 const cargando = ref(false)
@@ -215,54 +218,92 @@ const validar = (): string => {
 }
 
 const saveProfile = async () => {
-	mensaje.value = ''
-	error.value   = ''
+    mensaje.value = ''
+    error.value   = ''
 
-	const errorValidacion = validar()
-	if (errorValidacion) {
-		error.value = errorValidacion
-		return
-	}
+    const errorValidacion = validar()
+    if (errorValidacion) {
+        error.value = errorValidacion
+        return
+    }
 
-	cargando.value = true
+    cargando.value = true
 
-	try {
-		const respuesta = await fetch('http://localhost:3001/api/paciente', {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				id_paciente:      u?.id_paciente,
-				id_usuario:       u?.id_usuario,
-				nombre:           perfil.nombre,
-				apellido_paterno: perfil.apellido_paterno,
-				apellido_materno: perfil.apellido_materno,
-				correo:           perfil.correo,
-				telefono:         perfil.telefono,
-				fecha_nacimiento: perfil.fecha_nacimiento,
-				sexo:             perfil.sexo === 'Masculino' ? 'M' : 'F',
-				tipo_sangre:      perfil.tipo_sangre,
-				saldo_pendiente:  Number(u?.saldo_pendiente ?? 0),
-			}),
-		})
+    try {
+        let respuesta
 
-		const datos = await respuesta.json()
+        if (esDoctor.value) {
+            respuesta = await fetch('http://localhost:3001/api/doctor', {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_doctor:          u?.id_doctor,
+                    id_usuario:         u?.id_usuario,
+                    nombre:             perfil.nombre,
+                    apellido_paterno:   perfil.apellido_paterno,
+                    apellido_materno:   perfil.apellido_materno,
+                    correo:             perfil.correo,
+                    telefono:           perfil.telefono,
+                    especialidad:       perfil.especialidad,
+                    rfc:                perfil.rfc,
+                    cedula_profesional: perfil.cedula_profesional,
+                    tarifa_consulta:    Number(perfil.tarifa_consulta ?? 0),
+                    duracion_consulta:  Number(perfil.duracion_consulta ?? 30),
+                    sucursales:         u?.sucursales ?? []
+                }),
+            })
+        } else if (esRecepcionista.value) {
+            respuesta = await fetch('http://localhost:3001/api/recepcionista', {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_recepcionista: u?.id_recepcionista,
+                    id_usuario:       u?.id_usuario,
+                    nombre:           perfil.nombre,
+                    apellido_paterno: perfil.apellido_paterno,
+                    apellido_materno: perfil.apellido_materno,
+                    correo:           perfil.correo,
+                    telefono:         perfil.telefono,
+                    id_sucursal:      u?.id_sucursal,
+                    turno:            perfil.turno
+                }),
+            })
+        } else {
+            respuesta = await fetch('http://localhost:3001/api/paciente', {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_paciente:      u?.id_paciente,
+                    id_usuario:       u?.id_usuario,
+                    nombre:           perfil.nombre,
+                    apellido_paterno: perfil.apellido_paterno,
+                    apellido_materno: perfil.apellido_materno,
+                    correo:           perfil.correo,
+                    telefono:         perfil.telefono,
+                    fecha_nacimiento: perfil.fecha_nacimiento,
+                    sexo:             perfil.sexo === 'Masculino' ? 'M' : 'F',
+                    tipo_sangre:      perfil.tipo_sangre,
+                    saldo_pendiente:  Number(u?.saldo_pendiente ?? 0),
+                }),
+            })
+        }
 
-		if (datos.error) {
-			error.value = typeof datos.error === 'string'
-				? datos.error
-				: 'Error al guardar los cambios.'
-			return
-		}
+        const datos = await respuesta.json()
 
-		mensaje.value = 'Cambios guardados correctamente.'
+        if (datos.error) {
+            error.value = typeof datos.error === 'string'
+                ? datos.error
+                : 'Error al guardar los cambios.'
+            return
+        }
 
-	} catch {
-		error.value = 'No se pudo conectar con el servidor.'
-	} finally {
-		cargando.value = false
-	}
+        mensaje.value = 'Cambios guardados correctamente.'
 
-    
+    } catch {
+        error.value = 'No se pudo conectar con el servidor.'
+    } finally {
+        cargando.value = false
+    }
 }
 
 onMounted(async () => {
@@ -271,7 +312,7 @@ onMounted(async () => {
         const data = await res.json()
         if (Array.isArray(data)) horarios.value = data
     }
-    })
+})
 </script>
 
 <style scoped>
