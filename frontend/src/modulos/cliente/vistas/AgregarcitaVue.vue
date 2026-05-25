@@ -47,7 +47,18 @@
 					/>
 				</label>
 			</div>
-			<div v-if="horarios.length > 0" class="horario-info">
+
+			<div v-if="form.id_sucursal && !sucursalSeleccionadaActiva"
+				class="horario-info"
+				style="background: #fef2f2; border-color: #fecaca;">
+				<p class="horario-titulo" style="color: #991b1b;">Sucursal inactiva</p>
+				<div class="horario-tags">
+					<span class="horario-tag" style="background: #fee2e2; color: #991b1b;">
+						La sucursal en la que trabaja el doctor no está disponible para agendar citas.
+					</span>
+				</div>
+			</div>
+						<div v-if="horariosPorSucursal.length > 0" class="horario-info">
 				<p class="horario-titulo">Horario de atención</p>
 				<div v-for="grupo in horariosPorSucursal" :key="grupo.nombre" style="margin-bottom: 0.5rem;">
 					<p style="font-size: 0.82rem; font-weight: 700; color: #166534; margin: 0 0 0.3rem;">
@@ -71,7 +82,14 @@
 
 				<label>
 					<span>A qué hora</span>
-					<input v-model="form.hora_inicio" type="time" required />
+					<select v-model="form.hora_inicio" required :disabled="!form.fecha || !form.id_sucursal">
+						<option disabled value="">
+							{{ form.fecha && form.id_sucursal ? 'Selecciona una hora' : 'Elige fecha y sucursal primero' }}
+						</option>
+						<option v-for="slot in horariosDisponibles" :key="slot" :value="slot">
+							{{ slot }}
+						</option>
+					</select>
 				</label>
 
 				<label>
@@ -109,6 +127,17 @@
 					</span>
 					<span v-if="bloqueoActivo.motivo" class="horario-tag" style="background: #fee2e2; color: #991b1b;">
 						Motivo: {{ bloqueoActivo.motivo }}
+					</span>
+				</div>
+			</div>
+
+			<div v-if="!consultorioAutoAsignado && form.fecha && form.hora_inicio && form.id_sucursal && !bloqueoActivo" 
+				class="horario-info" 
+				style="background: #fef2f2; border-color: #fecaca;">
+				<p class="horario-titulo" style="color: #991b1b;">No es posible agendar esta cita</p>
+				<div class="horario-tags">
+					<span class="horario-tag" style="background: #fee2e2; color: #991b1b;">
+						El doctor no tiene horario disponible en esa sucursal, día y hora seleccionados.
 					</span>
 				</div>
 			</div>
@@ -415,6 +444,47 @@ const seleccionarPaciente = (p: any) => {
     form.id_paciente           = p.id_paciente  // ← agrega este campo al form también
 }
 
+const sucursalSeleccionadaActiva = computed(() => {
+    if (!form.id_sucursal) return true
+    const s = sucursales.value.find(s => s.id_sucursal === Number(form.id_sucursal))
+    return s?.activa ?? true
+})
+
+const horariosDisponibles = computed(() => {
+    if (!form.fecha || !form.id_sucursal || !horarios.value.length) return []
+
+    const diaSemana = new Date(`${form.fecha}T00:00:00`).getDay()
+    const slots: string[] = []
+    const duracion = doctorSeleccionado.value?.duracion_consulta ?? 30
+
+    const horariosDelDia = horarios.value.filter(h => {
+        if (Number(h.dia_semana) !== diaSemana) return false
+        const c = consultorios.value.find(c => Number(c.id_consultorio) === Number(h.id_consultorio))
+        return Number(c?.id_sucursal) === Number(form.id_sucursal)
+    })
+
+    for (const h of horariosDelDia) {
+        const partes    = h.hora_inicio.slice(0, 5).split(':')
+        const partesFin = h.hora_fin.slice(0, 5).split(':')
+        const hIni = Number(partes[0] ?? 0)
+        const mIni = Number(partes[1] ?? 0)
+        const hFin = Number(partesFin[0] ?? 0)
+        const mFin = Number(partesFin[1] ?? 0)
+
+        let   totalIni = hIni * 60 + mIni
+        const totalFin = hFin * 60 + mFin
+
+        while (totalIni + duracion <= totalFin) {
+            const hh = String(Math.floor(totalIni / 60)).padStart(2, '0')
+            const mm = String(totalIni % 60).padStart(2, '0')
+            slots.push(`${hh}:${mm}`)
+            totalIni += duracion
+        }
+    }
+
+    return slots
+})
+
 // Autoasigna el consultorio según el día y hora seleccionados
 const consultorioAutoAsignado = computed(() => {
     if (!form.fecha || !form.hora_inicio || !horarios.value.length || !form.id_sucursal) return null
@@ -430,7 +500,13 @@ const consultorioAutoAsignado = computed(() => {
         const consultorio = consultorios.value.find(
             c => Number(c.id_consultorio) === Number(h.id_consultorio)
         )
-        return Number(consultorio?.id_sucursal) === Number(form.id_sucursal)
+        if (!consultorio) return false
+
+        // Verifica que la sucursal esté activa
+        const sucursal = sucursales.value.find(s => s.id_sucursal === consultorio.id_sucursal)
+        if (!sucursal?.activa) return false
+
+        return Number(consultorio.id_sucursal) === Number(form.id_sucursal)
     }) ?? null
 })
 
@@ -514,11 +590,28 @@ const sucursalesDoctor = computed(() => {
 })
 
 // Al cambiar especialidad, resetea doctor y sucursal
-watch(() => form.especialidad_filtro, () => {
-    form.id_doctor      = ''
+watch(() => form.id_doctor, async (nuevoId) => {
+    horarios.value      = []
+    bloqueos.value      = []
     form.id_sucursal    = ''
     form.id_consultorio = ''
-    horarios.value      = []
+    if (!nuevoId) return
+
+    try {
+        const [resHorarios, resBloqueos] = await Promise.all([
+            fetch(`http://localhost:3001/api/horario/doctor/${nuevoId}`),
+            fetch(`http://localhost:3001/api/bloqueo/doctor/${nuevoId}`)
+        ])
+        const dataHorarios = await resHorarios.json()
+        const dataBloqueos = await resBloqueos.json()
+        if (Array.isArray(dataHorarios)) horarios.value = dataHorarios
+        if (Array.isArray(dataBloqueos)) bloqueos.value = dataBloqueos
+    } catch { /* silencioso */ }
+
+    // Autoselecciona sucursal ACTIVA después de cargar horarios
+    if (sucursalesDoctor.value.length === 1) {
+		form.id_sucursal = String(sucursalesDoctor.value[0]?.id_sucursal ?? '')
+	}
 })
 
 // Al cambiar doctor, autoselecciona sucursal si solo tiene una

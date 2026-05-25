@@ -36,29 +36,62 @@ export const registraSucursal = async (nuevo) => {
 export const editaSucursal = async (datos) => {
     try {
         const validacion = editarSucursalSchema.safeParse(datos);
-        if (!validacion.success) {
+        if (!validacion.success)
             return { error: validacion.error };
-        }
-        const [existe] = await conexion.query('SELECT id_sucursal FROM sucursal WHERE id_sucursal = ? LIMIT 1', [datos.id_sucursal]);
-        if (existe.length === 0) {
+        const [existe] = await conexion.query('SELECT id_sucursal, nombre, activa FROM sucursal WHERE id_sucursal = ? LIMIT 1', [datos.id_sucursal]);
+        if (existe.length === 0)
             return { error: 'No se encuentra la sucursal' };
+        const estabaActiva = existe[0].activa;
+        const nombreSucursal = existe[0].nombre;
+        await conexion.query(`UPDATE sucursal SET nombre=?, calle=?, numero=?, colonia=?, ciudad=?,
+             codigo_postal=?, telefono=?, correo=?, activa=? WHERE id_sucursal=?`, [datos.nombre, datos.calle, datos.numero, datos.colonia, datos.ciudad,
+            datos.codigo_postal, datos.telefono, datos.correo, datos.activa, datos.id_sucursal]);
+        // Si se está desactivando, cancela citas futuras y devuelve anticipos
+        if (estabaActiva && !datos.activa) {
+            const [citasFuturas] = await conexion.query(`
+                SELECT c.id_cita, c.fecha, c.hora_inicio, c.registrado_por,
+                       p.id_usuario AS id_usuario_paciente,
+                       d.id_usuario AS id_usuario_doctor
+                FROM cita c
+                INNER JOIN consultorio co ON c.id_consultorio = co.id_consultorio
+                INNER JOIN paciente p     ON c.id_paciente    = p.id_paciente
+                LEFT  JOIN doctor d       ON c.id_doctor      = d.id_doctor
+                WHERE co.id_sucursal = ?
+                  AND c.estado       = 'Programada'
+                  AND c.fecha        >= CURDATE()
+            `, [datos.id_sucursal]);
+            for (const cita of citasFuturas) {
+                await conexion.query("UPDATE cita SET estado = 'Cancelada' WHERE id_cita = ?", [cita.id_cita]);
+                await conexion.query(`INSERT INTO cancelacion(id_cita, cancelado_por, motivo, aplica_reembolso, porcentaje_reembolso)
+                     VALUES(?, ?, ?, 1, 100.00)`, [cita.id_cita, cita.registrado_por, `Sucursal ${nombreSucursal} desactivada`]);
+                // Devuelve el anticipo al saldo del paciente
+                const [anticipo] = await conexion.query(`SELECT monto FROM pago WHERE id_cita = ? AND tipo_pago = 'Anticipo' AND estado = 'Completado' LIMIT 1`, [cita.id_cita]);
+                if (anticipo.length > 0) {
+                    await conexion.query('UPDATE paciente SET saldo_pendiente = saldo_pendiente + ? WHERE id_usuario = ?', [anticipo[0].monto, cita.id_usuario_paciente]);
+                }
+                const fechaStr = typeof cita.fecha === 'string'
+                    ? cita.fecha.split('T')[0]
+                    : cita.fecha.toISOString().split('T')[0];
+                const horaStr = String(cita.hora_inicio).slice(0, 5);
+                await notificacionServices.creaNotificacion({
+                    id_usuario: cita.id_usuario_paciente,
+                    titulo: 'Cita cancelada por sucursal inactiva',
+                    mensaje: `Tu cita del ${fechaStr} a las ${horaStr} fue cancelada porque la sucursal ${nombreSucursal} fue desactivada. Se devolverá el 100% de tu anticipo.`
+                });
+                if (cita.id_usuario_doctor) {
+                    await notificacionServices.creaNotificacion({
+                        id_usuario: cita.id_usuario_doctor,
+                        titulo: 'Cita cancelada por sucursal inactiva',
+                        mensaje: `La cita del ${fechaStr} a las ${horaStr} fue cancelada porque la sucursal ${nombreSucursal} fue desactivada.`
+                    });
+                }
+            }
         }
-        await conexion.query(`UPDATE sucursal SET
-                nombre = ?,
-                calle = ?,
-                numero = ?,
-                colonia = ?,
-                ciudad = ?,
-                codigo_postal = ?,
-                telefono = ?,
-                correo = ?,
-                activa = ?
-            WHERE id_sucursal = ?`, [datos.nombre, datos.calle, datos.numero, datos.colonia, datos.ciudad, datos.codigo_postal, datos.telefono, datos.correo, datos.activa, datos.id_sucursal]);
         return { mensaje: 'Sucursal actualizada correctamente' };
     }
     catch (err) {
-        console.log("ERROR EN BD:", err);
-        return { error: "No se puede editar la sucursal" };
+        console.log('ERROR EN BD:', err);
+        return { error: 'No se puede editar la sucursal' };
     }
 };
 export const borrarSucursal = async (id_sucursal) => {

@@ -177,6 +177,13 @@ export const registraCita = async (nuevo) => {
         if (citaExistente.length > 0) {
             return { error: 'El doctor ya tiene una cita en ese horario' };
         }
+        // Verifica que la sucursal del consultorio esté activa
+        const [sucursalActiva] = await conexion.query(`SELECT s.activa FROM consultorio c
+            INNER JOIN sucursal s ON c.id_sucursal = s.id_sucursal
+            WHERE c.id_consultorio = ? LIMIT 1`, [nuevo.id_consultorio]);
+        if (!sucursalActiva.length || !sucursalActiva[0].activa) {
+            return { error: 'No se puede agendar una cita en una sucursal inactiva.' };
+        }
         // Registra la cita
         const [result] = await conexion.query(`INSERT INTO cita(id_paciente, id_doctor, id_consultorio, id_recepcionista, fecha, hora_inicio, hora_fin, estado, motivo_consulta, costo_total, registrado_por)
             values(?,?,?,?,?,?,?,?,?,?,?)`, [nuevo.id_paciente, nuevo.id_doctor, nuevo.id_consultorio, nuevo.id_recepcionista ?? null, nuevo.fecha, nuevo.hora_inicio, nuevo.hora_fin, 'Programada', nuevo.motivo_consulta, nuevo.costo_total, nuevo.registrado_por]);

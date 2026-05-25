@@ -46,10 +46,9 @@ INSERT INTO Consultorio (id_sucursal, numero, piso, descripcion, activo) VALUES
 -- ------------------------------------------------------------
 -- 6. Doctor
 -- ------------------------------------------------------------
-INSERT INTO Doctor (id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta) VALUES
-(2, 'Medicina General', 'VELD900512AB1', '1234567', 500.00),
-(3, 'Cardiología',      'LOBR850318CD2', '7654321', 800.00);
-
+INSERT INTO Doctor (id_usuario, especialidad, rfc, cedula_profesional, tarifa_consulta, duracion_consulta) VALUES
+(2, 'Medicina General', 'VELD900512AB1', '1234567', 500.00, 30),
+(3, 'Cardiología',      'LOBR850318CD2', '7654321', 800.00, 45);
 -- ------------------------------------------------------------
 -- 7. Paciente
 -- ------------------------------------------------------------
